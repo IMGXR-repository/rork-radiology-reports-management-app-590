@@ -1,0 +1,1464 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Platform,
+  ActivityIndicator,
+  TextInput,
+
+} from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { Audio } from 'expo-av';
+import { Mic, Square, FileText, Send, ChevronDown, ChevronUp, Copy, Trash2, RotateCcw } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+
+import { lightTheme, darkTheme } from '@/constants/theme';
+import { SearchBar } from '@/components/SearchBar';
+import { Report } from '@/types';
+
+interface RecordingState {
+  isRecording: boolean;
+  isPaused: boolean;
+  duration: number;
+  uri: string | null;
+}
+
+interface WebRecordingState {
+  mediaRecorder: MediaRecorder | null;
+  audioChunks: Blob[];
+  stream: MediaStream | null;
+}
+
+interface TranscriptionResult {
+  text: string;
+  language: string;
+}
+
+export default function RecordingScreen() {
+  const { reportId, initialText } = useLocalSearchParams<{ reportId?: string; initialText?: string }>();
+  const { settings, reports } = useApp();
+
+  const theme = settings && settings.theme === 'dark' ? darkTheme : lightTheme;
+  const insets = useSafeAreaInsets();
+  
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [webRecording, setWebRecording] = useState<WebRecordingState>({
+    mediaRecorder: null,
+    audioChunks: [],
+    stream: null,
+  });
+  const [recordingState, setRecordingState] = useState<RecordingState>({
+    isRecording: false,
+    isPaused: false,
+    duration: 0,
+    uri: null,
+  });
+  
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [transcribedText, setTranscribedText] = useState<string>('');
+  const [lastTranscription, setLastTranscription] = useState<string>('');
+  const [finalReport, setFinalReport] = useState<string>('');
+  const [findings, setFindings] = useState<string>('');
+  const [conclusions, setConclusions] = useState<string>('');
+  const [differentials, setDifferentials] = useState<string>('');
+  const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [reportSearchQuery, setReportSearchQuery] = useState<string>('');
+  const [isRecordingUnloaded, setIsRecordingUnloaded] = useState<boolean>(false);
+  const [isReportSelectorExpanded, setIsReportSelectorExpanded] = useState<boolean>(false);
+  
+  const filteredReports = reports ? reports.filter(report =>
+    report && report.title && report.content &&
+    (report.title.toLowerCase().includes(reportSearchQuery.toLowerCase()) ||
+    report.content.toLowerCase().includes(reportSearchQuery.toLowerCase()))
+  ) : [];
+
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      if (Platform.OS === 'web') {
+        if (webRecording.mediaRecorder && webRecording.mediaRecorder.state === 'recording') {
+          webRecording.mediaRecorder.stop();
+        }
+        if (webRecording.stream) {
+          webRecording.stream.getTracks().forEach(track => track.stop());
+        }
+      } else {
+        if (recording && !isRecordingUnloaded) {
+          recording.stopAndUnloadAsync().catch((error) => {
+            console.error('Error during cleanup:', error);
+          });
+        }
+      }
+    };
+  }, [recording, isRecordingUnloaded, webRecording]);
+
+  // Preseleccionar el informe si se pasa reportId
+  useEffect(() => {
+    if (reportId && reports.length > 0) {
+      const preselectedReport = reports.find(report => report.id === reportId);
+      if (preselectedReport) {
+        setSelectedReport(preselectedReport);
+      }
+    }
+  }, [reportId, reports]);
+
+  // Cargar texto inicial si se pasa desde otra pantalla
+  useEffect(() => {
+    if (initialText && typeof initialText === 'string') {
+      setTranscribedText(initialText);
+    }
+  }, [initialText]);
+
+  const startRecording = async () => {
+    try {
+      console.log('Iniciando grabación...');
+      
+
+      if (Platform.OS === 'web') {
+        // Web implementation using MediaRecorder
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
+        
+        // Use the most compatible format
+        let mimeType = 'audio/webm';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/mp4';
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'audio/wav';
+          }
+        }
+        
+        console.log('Usando formato:', mimeType);
+        const mediaRecorder = new MediaRecorder(stream, { mimeType });
+        const audioChunks: Blob[] = [];
+        
+        const localAudioChunks: Blob[] = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            localAudioChunks.push(event.data);
+            console.log('Chunk recibido:', event.data.size, 'bytes');
+          }
+        };
+        
+        mediaRecorder.onstop = async () => {
+          console.log('Grabación web detenida, procesando...');
+          const audioBlob = new Blob(localAudioChunks, { type: mimeType });
+          
+          console.log('Audio blob creado:', {
+            size: audioBlob.size,
+            type: audioBlob.type,
+            chunks: localAudioChunks.length
+          });
+          
+          if (audioBlob.size > 0) {
+            await transcribeAudioFromBlob(audioBlob);
+          } else {
+            console.warn('Audio vacío, no se puede transcribir');
+            Alert.alert('Aviso', 'No se detectó audio para transcribir.');
+          }
+          
+          // Limpiar recursos
+          stream.getTracks().forEach(track => track.stop());
+        };
+        
+        mediaRecorder.onerror = (event) => {
+          console.error('Error en MediaRecorder:', event);
+          Alert.alert('Error', 'Error durante la grabación.');
+        };
+        
+        setWebRecording({
+          mediaRecorder,
+          audioChunks: localAudioChunks,
+          stream,
+        });
+        
+        mediaRecorder.start(1000); // Chunks más pequeños para mejor captura
+        
+        setRecordingState({
+          isRecording: true,
+          isPaused: false,
+          duration: 0,
+          uri: null,
+        });
+        
+        console.log('Grabación web iniciada');
+      } else {
+        // Mobile implementation
+        const { status } = await Audio.requestPermissionsAsync();
+        
+        if (status !== 'granted') {
+          Alert.alert('Error', 'Se requieren permisos de micrófono.');
+          return;
+        }
+
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+
+        // Configuración optimizada para transcripción
+        const { recording: newRecording } = await Audio.Recording.createAsync({
+          android: {
+            extension: '.m4a',
+            outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+            audioEncoder: Audio.AndroidAudioEncoder.AAC,
+            sampleRate: 44100,
+            numberOfChannels: 2,
+            bitRate: 128000,
+          },
+          ios: {
+            extension: '.wav',
+            outputFormat: Audio.IOSOutputFormat.LINEARPCM,
+            audioQuality: Audio.IOSAudioQuality.HIGH,
+            sampleRate: 44100,
+            numberOfChannels: 2,
+            bitRate: 128000,
+            linearPCMBitDepth: 16,
+            linearPCMIsBigEndian: false,
+            linearPCMIsFloat: false,
+          },
+          web: {
+            mimeType: 'audio/webm',
+            bitsPerSecond: 128000,
+          },
+        });
+        
+        setRecording(newRecording);
+        setIsRecordingUnloaded(false);
+        setRecordingState({
+          isRecording: true,
+          isPaused: false,
+          duration: 0,
+          uri: null,
+        });
+        
+        console.log('Grabación móvil iniciada');
+      }
+    } catch (error) {
+      console.error('Error al iniciar grabación:', error);
+      Alert.alert('Error', `No se pudo iniciar la grabación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      console.log('Deteniendo grabación...');
+      
+
+      setRecordingState(prev => ({
+        ...prev,
+        isRecording: false,
+        isPaused: false,
+      }));
+      
+      if (Platform.OS === 'web') {
+        if (webRecording.mediaRecorder && webRecording.mediaRecorder.state === 'recording') {
+          webRecording.mediaRecorder.stop();
+          console.log('MediaRecorder detenido');
+        }
+      } else {
+        if (!recording || isRecordingUnloaded) {
+          console.log('No hay grabación activa');
+          return;
+        }
+        
+        const uri = recording.getURI();
+        await recording.stopAndUnloadAsync();
+        setIsRecordingUnloaded(true);
+        
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+        });
+        
+        console.log('Grabación guardada:', uri);
+        setRecording(null);
+        
+        if (uri) {
+          await transcribeAudioFromUri(uri);
+        }
+      }
+    } catch (error) {
+      console.error('Error al detener grabación:', error);
+      setRecording(null);
+      setIsRecordingUnloaded(true);
+      Alert.alert('Error', 'Error al detener la grabación.');
+    }
+  };
+
+  const processVoiceCommands = (text: string): string => {
+    let processed = text;
+    
+    processed = processed.replace(/\b(\d+)\s+por\s+(\d+)\b/gi, '$1x$2');
+    
+    processed = processed.replace(/\bcoma\b/gi, ',');
+    processed = processed.replace(/\bpunto\b/gi, '.');
+    processed = processed.replace(/\bpunto y coma\b/gi, ';');
+    processed = processed.replace(/\bdos puntos\b/gi, ':');
+    processed = processed.replace(/\binterrogación\b/gi, '?');
+    processed = processed.replace(/\bexclamación\b/gi, '!');
+    processed = processed.replace(/\bguión\b/gi, '-');
+    processed = processed.replace(/\bparéntesis abierto\b/gi, '(');
+    processed = processed.replace(/\bparéntesis cerrado\b/gi, ')');
+    processed = processed.replace(/\bcomillas\b/gi, '"');
+    
+    processed = processed.replace(/\bnuevo párrafo\b/gi, '\n\n');
+    processed = processed.replace(/\bnueva línea\b/gi, '\n');
+    
+    processed = processed.replace(/\bcentímetros cúbicos\b/gi, 'cc');
+    processed = processed.replace(/\bcentimetros cubicos\b/gi, 'cc');
+    processed = processed.replace(/\bcentímetro cúbico\b/gi, 'cc');
+    processed = processed.replace(/\bcentimetro cubico\b/gi, 'cc');
+    processed = processed.replace(/\bcentímetros\b/gi, 'cm');
+    processed = processed.replace(/\bcentimetros\b/gi, 'cm');
+    processed = processed.replace(/\bcentímetro\b/gi, 'cm');
+    processed = processed.replace(/\bcentimetro\b/gi, 'cm');
+    processed = processed.replace(/\bmilímetros\b/gi, 'mm');
+    processed = processed.replace(/\bmilimetros\b/gi, 'mm');
+    processed = processed.replace(/\bmilímetro\b/gi, 'mm');
+    processed = processed.replace(/\bmilimetro\b/gi, 'mm');
+    processed = processed.replace(/\bmetros\b/gi, 'm');
+    processed = processed.replace(/\bmetro\b/gi, 'm');
+    processed = processed.replace(/\bkilómetros\b/gi, 'km');
+    processed = processed.replace(/\bkilometros\b/gi, 'km');
+    processed = processed.replace(/\bkilómetro\b/gi, 'km');
+    processed = processed.replace(/\bkilometro\b/gi, 'km');
+    processed = processed.replace(/\bgramos\b/gi, 'g');
+    processed = processed.replace(/\bgramo\b/gi, 'g');
+    processed = processed.replace(/\bkilogramos\b/gi, 'kg');
+    processed = processed.replace(/\bkilogramo\b/gi, 'kg');
+    processed = processed.replace(/\bmiligramos\b/gi, 'mg');
+    processed = processed.replace(/\bmiligramo\b/gi, 'mg');
+    processed = processed.replace(/\bmicrogramos\b/gi, 'mcg');
+    processed = processed.replace(/\bmicrogramo\b/gi, 'mcg');
+    processed = processed.replace(/\blitros\b/gi, 'L');
+    processed = processed.replace(/\blitro\b/gi, 'L');
+    processed = processed.replace(/\bmililitros\b/gi, 'ml');
+    processed = processed.replace(/\bmililitro\b/gi, 'ml');
+    processed = processed.replace(/\bmicrolitros\b/gi, 'μl');
+    processed = processed.replace(/\bmicrolitro\b/gi, 'μl');
+    processed = processed.replace(/\bsegundos\b/gi, 's');
+    processed = processed.replace(/\bsegundo\b/gi, 's');
+    processed = processed.replace(/\bminutos\b/gi, 'min');
+    processed = processed.replace(/\bminuto\b/gi, 'min');
+    processed = processed.replace(/\bhoras\b/gi, 'h');
+    processed = processed.replace(/\bhora\b/gi, 'h');
+    
+    return processed;
+  };
+
+  // Función para transcribir desde Blob (web)
+  const transcribeAudioFromBlob = async (audioBlob: Blob) => {
+    setIsTranscribing(true);
+    
+    try {
+      console.log('🎤 Transcribiendo audio web:', {
+        size: audioBlob.size,
+        type: audioBlob.type
+      });
+      
+      if (audioBlob.size === 0) {
+        throw new Error('Audio vacío - no se grabó contenido');
+      }
+      
+      if (audioBlob.size < 1000) {
+        console.warn('Audio muy pequeño:', audioBlob.size, 'bytes');
+        Alert.alert('Aviso', 'El audio es muy corto. Intenta grabar por más tiempo.');
+        return;
+      }
+      
+      const formData = new FormData();
+      
+      // Determinar extensión por tipo MIME
+      let fileName = 'recording.webm';
+      if (audioBlob.type.includes('mp4')) {
+        fileName = 'recording.mp4';
+      } else if (audioBlob.type.includes('wav')) {
+        fileName = 'recording.wav';
+      }
+      
+      formData.append('audio', audioBlob, fileName);
+      
+      console.log('📤 Enviando a transcripción:', fileName, audioBlob.size, 'bytes');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log('⏰ Timeout de transcripción');
+      }, 30000);
+      
+      const response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      console.log('📥 Respuesta transcripción:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Error respuesta:', response.status, errorText);
+        
+        if (response.status === 413) {
+          throw new Error('El archivo de audio es demasiado grande');
+        } else if (response.status === 415) {
+          throw new Error('Formato de audio no soportado');
+        } else if (response.status >= 500) {
+          throw new Error('Error del servidor. Intenta de nuevo en unos momentos');
+        } else {
+          throw new Error(`Error ${response.status}: ${errorText || 'Error desconocido'}`);
+        }
+      }
+      
+      const result: TranscriptionResult = await response.json();
+      console.log('✅ Transcripción completada:', {
+        text: result.text?.substring(0, 100) + '...',
+        language: result.language,
+        length: result.text?.length
+      });
+      
+      if (!result.text || result.text.trim() === '') {
+        console.warn('⚠️ Transcripción vacía');
+        Alert.alert('Aviso', 'No se detectó texto claro en el audio. Intenta hablar más cerca del micrófono.');
+        return;
+      }
+      
+      const rawText = result.text.trim();
+      const processedText = processVoiceCommands(rawText);
+      setLastTranscription(processedText);
+      
+      const updatedText = transcribedText + (transcribedText.trim() ? '\n\n' : '') + processedText;
+      setTranscribedText(updatedText);
+      
+      console.log('Raw text:', rawText);
+      console.log('Processed text:', processedText);
+      
+
+      console.log('✨ Texto agregado exitosamente');
+    } catch (error) {
+      console.error('❌ Error transcripción:', error);
+      
+      if (error instanceof Error && error.name === 'AbortError') {
+        Alert.alert('Timeout', 'La transcripción está tomando demasiado tiempo. Verifica tu conexión e intenta de nuevo.');
+      } else {
+        Alert.alert('Error de Transcripción', error instanceof Error ? error.message : 'Error desconocido al transcribir el audio');
+      }
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  // Función para transcribir desde URI (móvil)
+  const transcribeAudioFromUri = async (uri: string) => {
+    setIsTranscribing(true);
+    
+    try {
+      console.log('📱 Transcribiendo desde móvil:', uri);
+      
+      if (!uri) {
+        throw new Error('URI de audio no válida');
+      }
+      
+      const formData = new FormData();
+      const uriParts = uri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+      
+      const audioFile = {
+        uri,
+        name: `recording.${fileType}`,
+        type: `audio/${fileType}`,
+      } as any;
+      
+      formData.append('audio', audioFile);
+      
+      console.log('📤 Enviando archivo móvil:', audioFile.name, 'tipo:', audioFile.type);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log('⏰ Timeout de transcripción móvil');
+      }, 30000);
+      
+      const response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      console.log('📥 Respuesta móvil:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Error respuesta móvil:', response.status, errorText);
+        
+        if (response.status === 413) {
+          throw new Error('El archivo de audio es demasiado grande');
+        } else if (response.status === 415) {
+          throw new Error('Formato de audio no soportado');
+        } else if (response.status >= 500) {
+          throw new Error('Error del servidor. Intenta de nuevo en unos momentos');
+        } else {
+          throw new Error(`Error ${response.status}: ${errorText || 'Error desconocido'}`);
+        }
+      }
+      
+      const result: TranscriptionResult = await response.json();
+      console.log('✅ Transcripción móvil completada:', {
+        text: result.text?.substring(0, 100) + '...',
+        language: result.language,
+        length: result.text?.length
+      });
+      
+      if (!result.text || result.text.trim() === '') {
+        console.warn('⚠️ Transcripción móvil vacía');
+        Alert.alert('Aviso', 'No se detectó texto claro en el audio. Intenta hablar más cerca del micrófono.');
+        return;
+      }
+      
+      const rawText = result.text.trim();
+      const processedText = processVoiceCommands(rawText);
+      setLastTranscription(processedText);
+      
+      const updatedText = transcribedText + (transcribedText.trim() ? '\n\n' : '') + processedText;
+      setTranscribedText(updatedText);
+      
+      console.log('Raw text:', rawText);
+      console.log('Processed text:', processedText);
+      
+
+      console.log('✨ Transcripción móvil agregada exitosamente');
+    } catch (error) {
+      console.error('❌ Error transcripción móvil:', error);
+      
+      if (error instanceof Error && error.name === 'AbortError') {
+        Alert.alert('Timeout', 'La transcripción está tomando demasiado tiempo. Verifica tu conexión e intenta de nuevo.');
+      } else {
+        Alert.alert('Error de Transcripción', error instanceof Error ? error.message : 'Error desconocido al transcribir el audio');
+      }
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const clearTranscriptionBox = () => {
+    setTranscribedText('');
+    setLastTranscription('');
+    setFindings('');
+    setConclusions('');
+    setDifferentials('');
+    setFinalReport('');
+  };
+
+  const deleteLastTranscription = () => {
+    if (!lastTranscription) {
+      Alert.alert('Información', 'No hay transcripción reciente para eliminar.');
+      return;
+    }
+    
+    setTranscribedText(prev => {
+      const lastIndex = prev.lastIndexOf(lastTranscription);
+      if (lastIndex === -1) return prev;
+      
+      let newText = prev.substring(0, lastIndex) + prev.substring(lastIndex + lastTranscription.length);
+      // Limpiar saltos de línea extra
+      newText = newText.replace(/\n\n\n+/g, '\n\n').trim();
+      return newText;
+    });
+    
+    setLastTranscription('');
+  };
+
+  const clearAllTranscriptions = () => {
+    Alert.alert(
+      'Confirmar',
+      '¿Estás seguro de que quieres borrar todo el texto?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Borrar Todo', 
+          style: 'destructive',
+          onPress: () => {
+            setTranscribedText('');
+            setLastTranscription('');
+            
+
+          }
+        }
+      ]
+    );
+  };
+
+  const generateFinalReport = async () => {
+    if (!transcribedText.trim()) {
+      Alert.alert('Error', 'Asegúrate de tener texto transcrito o pegado.');
+      return;
+    }
+
+    setIsGenerating(true);
+    
+    try {
+      console.log('Generando informe final...');
+      
+      let prompt = '';
+      
+      if (selectedReport) {
+        prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico final coherente y profesional.
+
+INFORME BASE ESTRUCTURADO:
+${selectedReport.content}
+
+OBSERVACIONES DICTADAS (NUEVOS HALLAZGOS):
+${transcribedText}
+
+INSTRUCCIONES CRÍTICAS DE COHERENCIA MÉDICA:
+1. ANÁLISIS DE COHERENCIA OBLIGATORIO:
+   - ANTES de escribir, analiza si las observaciones dictadas contradicen el informe base
+   - Si hay contradicciones (ej: informe base dice "no hay lesiones" pero dictado describe "tumor"), ELIMINA o MODIFICA las partes contradictorias del informe base
+   - PRIORIZA SIEMPRE las observaciones dictadas más recientes sobre el informe base
+   - Asegura coherencia absoluta entre TODOS los hallazgos y la conclusión final
+
+2. REGLAS DE ELIMINACIÓN AUTOMÁTICA:
+   - Si dictado menciona lesiones/tumores/masas → ELIMINA frases como "no hay procesos expansivos", "ausencia de lesiones"
+   - Si dictado menciona restricción de difusión → ELIMINA "difusión normal" del informe base
+   - Si dictado menciona edema/inflamación → ELIMINA "sin signos de edema" del informe base
+   - Si dictado menciona hemorragia → ELIMINA "ausencia de sangrado" del informe base
+   - NUNCA mantengas afirmaciones negativas que contradigan hallazgos positivos dictados
+
+3. ESTRUCTURA DE PÁRRAFOS SEPARADOS:
+   - MANTÉN cada tópico anatómico en párrafo separado (sustancia blanca, sustancia gris, ventrículos, etc.)
+   - NO combines párrafos que estaban separados en el informe original
+   - RESPETA los saltos de línea entre diferentes estructuras anatómicas
+   - Cada párrafo debe tratar UN solo tópico anatómico o hallazgo
+
+4. CONTENIDO POR SECCIONES:
+   HALLAZGOS:
+   - Descripción detallada y técnica de cada estructura anatómica
+   - Integra observaciones dictadas en el párrafo correspondiente a cada estructura
+   - Usa terminología médica precisa para especialistas
+   - NO incluyas interpretaciones o conclusiones aquí
+   - Mantén separación clara entre diferentes estructuras/órganos
+   
+   CONCLUSIÓN:
+   - Máximo 2-3 líneas, concisa y directa
+   - DEBE ser 100% congruente con TODOS los hallazgos descritos
+   - NO repitas descripciones detalladas
+   - Enfócate en el diagnóstico principal y significado clínico
+   
+   DIAGNÓSTICOS DIFERENCIALES:
+   - Mínimo 6 diagnósticos con porcentajes realistas
+   - Ordena por probabilidad (mayor a menor)
+   - Incluye diagnósticos tanto comunes como raros pero relevantes
+   - Los porcentajes deben sumar aproximadamente 100%
+
+5. RESTRICCIONES ABSOLUTAS:
+   - NO incluyas preguntas, sugerencias o comentarios adicionales
+   - NO uses símbolos como ###, ---, *** 
+   - NO agregues texto como "¿Deseas...?", "¿Te gustaría...?"
+   - Termina directamente sin texto adicional
+   - Usa solo terminología médica profesional
+
+FORMATO FINAL REQUERIDO:
+HALLAZGOS:
+[Párrafo 1: Estructura anatómica específica]
+
+[Párrafo 2: Otra estructura anatómica específica]
+
+[Párrafo 3: Otra estructura anatómica específica]
+
+[Continúa con cada estructura en párrafo separado]
+
+CONCLUSIÓN:
+[Conclusión concisa de máximo 3 líneas, coherente con TODOS los hallazgos]
+
+DIAGNÓSTICOS DIFERENCIALES:
+1. [Diagnóstico más probable] - [X]%
+2. [Segundo diagnóstico] - [X]%
+3. [Tercer diagnóstico] - [X]%
+4. [Cuarto diagnóstico] - [X]%
+5. [Quinto diagnóstico] - [X]%
+6. [Sexto diagnóstico] - [X]%`;
+      } else {
+        prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico profesional a partir de las siguientes observaciones clínicas.
+
+OBSERVACIONES CLÍNICAS:
+${transcribedText}
+
+INSTRUCCIONES PARA CREAR EL INFORME:
+1. ANÁLISIS DEL TEXTO:
+   - Analiza cuidadosamente todas las observaciones proporcionadas
+   - Identifica estructuras anatómicas mencionadas
+   - Detecta hallazgos patológicos y normales
+   - Organiza la información de manera lógica y estructurada
+
+2. ESTRUCTURA DE PÁRRAFOS SEPARADOS:
+   - Organiza cada estructura anatómica o sistema en párrafo separado
+   - Mantén claridad y separación entre diferentes hallazgos
+   - Usa saltos de línea entre diferentes estructuras
+   - Cada párrafo debe tratar UN solo tópico anatómico
+
+3. CONTENIDO POR SECCIONES:
+   HALLAZGOS:
+   - Descripción detallada y técnica de cada estructura anatómica mencionada
+   - Usa terminología médica precisa para especialistas
+   - Incluye medidas, características y localizaciones específicas
+   - NO incluyas interpretaciones o conclusiones aquí
+   - Mantén separación clara entre diferentes estructuras/órganos
+   
+   CONCLUSIÓN:
+   - Máximo 2-3 líneas, concisa y directa
+   - Resume los hallazgos más relevantes
+   - Proporciona impresión diagnóstica principal
+   - Enfócate en el significado clínico
+   
+   DIAGNÓSTICOS DIFERENCIALES:
+   - Mínimo 6 diagnósticos con porcentajes realistas
+   - Ordena por probabilidad (mayor a menor)
+   - Incluye diagnósticos tanto comunes como raros pero relevantes
+   - Los porcentajes deben sumar aproximadamente 100%
+   - Basa los diagnósticos en los hallazgos descritos
+
+4. RESTRICCIONES ABSOLUTAS:
+   - NO incluyas preguntas, sugerencias o comentarios adicionales
+   - NO uses símbolos como ###, ---, *** 
+   - NO agregues texto como "¿Deseas...?", "¿Te gustaría...?"
+   - Termina directamente sin texto adicional
+   - Usa solo terminología médica profesional
+
+FORMATO FINAL REQUERIDO:
+HALLAZGOS:
+[Párrafo 1: Estructura anatómica específica]
+
+[Párrafo 2: Otra estructura anatómica específica]
+
+[Párrafo 3: Otra estructura anatómica específica]
+
+[Continúa con cada estructura en párrafo separado]
+
+CONCLUSIÓN:
+[Conclusión concisa de máximo 3 líneas basada en los hallazgos]
+
+DIAGNÓSTICOS DIFERENCIALES:
+1. [Diagnóstico más probable] - [X]%
+2. [Segundo diagnóstico] - [X]%
+3. [Tercer diagnóstico] - [X]%
+4. [Cuarto diagnóstico] - [X]%
+5. [Quinto diagnóstico] - [X]%
+6. [Sexto diagnóstico] - [X]%`;
+      }
+      
+      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error en generación: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Informe final generado');
+      
+      const reportContent = result.completion;
+      setFinalReport(reportContent);
+      
+      // Separar hallazgos, conclusiones y diferenciales
+      const findingsMatch = reportContent.match(/(?:hallazgos?|findings?)\s*:?\s*([\s\S]*?)(?=(?:conclusi[oó]n|conclusion|diagn[oó]sticos?\s+diferenciales?)|$)/i);
+      const conclusionsMatch = reportContent.match(/(?:conclusi[oó]n|conclusion)\s*:?\s*([\s\S]*?)(?=(?:diagn[oó]sticos?\s+diferenciales?)|$)/i);
+      const differentialsMatch = reportContent.match(/(?:diagn[oó]sticos?\s+diferenciales?)\s*:?\s*([\s\S]*?)$/i);
+      
+      if (findingsMatch) {
+        let findings = findingsMatch[1].trim();
+        // Limpiar texto no deseado pero preservar estructura de párrafos
+        findings = findings.replace(/¿Deseas que prepare también.*?$/gi, '');
+        findings = findings.replace(/¿Te gustaría.*?$/gi, '');
+        findings = findings.replace(/Si necesitas.*?$/gi, '');
+        findings = findings.replace(/¿.*?$/gi, '');
+        findings = findings.replace(/###.*$/gi, '');
+        findings = findings.replace(/---.*$/gi, '');
+        findings = findings.replace(/\*\*.*?\*\*/gi, '');
+        // Preservar saltos de línea y estructura de párrafos
+        findings = findings.replace(/\n\s*\n/g, '\n\n'); // Normalizar dobles saltos de línea
+        findings = findings.trim();
+        setFindings(findings);
+      }
+      
+      if (conclusionsMatch) {
+        let conclusion = conclusionsMatch[1].trim();
+        // Remover texto no deseado de la conclusión
+        conclusion = conclusion.replace(/¿Deseas que prepare también.*?$/gi, '');
+        conclusion = conclusion.replace(/¿Te gustaría.*?$/gi, '');
+        conclusion = conclusion.replace(/Si necesitas.*?$/gi, '');
+        conclusion = conclusion.replace(/¿.*?$/gi, '');
+        conclusion = conclusion.replace(/###.*$/gi, '');
+        conclusion = conclusion.replace(/---.*$/gi, '');
+        conclusion = conclusion.replace(/\*\*.*?\*\*/gi, '');
+        conclusion = conclusion.trim();
+        setConclusions(conclusion);
+      }
+      
+      if (differentialsMatch) {
+        let differentials = differentialsMatch[1].trim();
+        // Remover texto no deseado de los diferenciales
+        differentials = differentials.replace(/¿Deseas que prepare también.*?$/gi, '');
+        differentials = differentials.replace(/¿Te gustaría.*?$/gi, '');
+        differentials = differentials.replace(/Si necesitas.*?$/gi, '');
+        differentials = differentials.replace(/¿.*?$/gi, '');
+        differentials = differentials.replace(/###.*$/gi, '');
+        differentials = differentials.replace(/---.*$/gi, '');
+        differentials = differentials.replace(/\*\*.*?\*\*/gi, '');
+        differentials = differentials.trim();
+        setDifferentials(differentials);
+      }
+    } catch (error) {
+      console.error('Error al generar informe:', error);
+      Alert.alert('Error', 'No se pudo generar el informe final.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const resetAll = async () => {
+    // Clean up recording resources
+    if (Platform.OS === 'web') {
+      if (webRecording.mediaRecorder && webRecording.mediaRecorder.state === 'recording') {
+        webRecording.mediaRecorder.stop();
+      }
+      if (webRecording.stream) {
+        webRecording.stream.getTracks().forEach(track => track.stop());
+      }
+      setWebRecording({
+        mediaRecorder: null,
+        audioChunks: [],
+        stream: null,
+      });
+    } else {
+      if (recording && !isRecordingUnloaded) {
+        try {
+          await recording.stopAndUnloadAsync();
+          setIsRecordingUnloaded(true);
+        } catch (error) {
+          console.error('Error stopping recording during reset:', error);
+        }
+        setRecording(null);
+      }
+    }
+    
+    setSelectedReport(null);
+    setTranscribedText('');
+    setLastTranscription('');
+    setFinalReport('');
+    setFindings('');
+    setConclusions('');
+    setDifferentials('');
+    setRecordingState({
+      isRecording: false,
+      isPaused: false,
+      duration: 0,
+      uri: null,
+    });
+    setReportSearchQuery('');
+    setIsRecordingUnloaded(false);
+    
+
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
+          <View style={[styles.titleContainer, { backgroundColor: '#2196F3' }]}>
+            <Text style={[styles.title, { color: '#FFFFFF' }]}>Generación de Informes RAD-IA</Text>
+          </View>
+          
+          {/* Selector de Informe Compacto */}
+          <View style={[styles.compactSection, { backgroundColor: theme.surface }]}>
+            <TouchableOpacity 
+              style={styles.selectorHeader}
+              onPress={() => setIsReportSelectorExpanded(!isReportSelectorExpanded)}
+            >
+              <Text style={[styles.compactSectionTitle, { color: theme.onSurface }]}>
+                Informe Base: {selectedReport ? selectedReport.title : 'Seleccionar'}
+              </Text>
+              {isReportSelectorExpanded ? (
+                <ChevronUp size={20} color={theme.onSurface} />
+              ) : (
+                <ChevronDown size={20} color={theme.onSurface} />
+              )}
+            </TouchableOpacity>
+            
+            {isReportSelectorExpanded && (
+              <View style={styles.expandedSelector}>
+                <View style={styles.searchBar}>
+                  <SearchBar
+                    value={reportSearchQuery}
+                    onChangeText={setReportSearchQuery}
+                    placeholder="Buscar informe..."
+                  />
+                </View>
+                
+                <ScrollView style={styles.compactReportsList} nestedScrollEnabled>
+                  {filteredReports.map((report) => (
+                    <TouchableOpacity
+                      key={report.id}
+                      style={[
+                        styles.compactReportItem,
+                        {
+                          backgroundColor: selectedReport?.id === report.id ? theme.surfaceVariant : theme.surface,
+                          borderColor: theme.outline,
+                        },
+                      ]}
+                      onPress={() => {
+                        setSelectedReport(report);
+                        setIsReportSelectorExpanded(false);
+                      }}
+                    >
+                      <FileText
+                        size={16}
+                        color={selectedReport?.id === report.id ? theme.primary : theme.onSurface}
+                      />
+                      <Text
+                        style={[
+                          styles.compactReportTitle,
+                          {
+                            color: selectedReport?.id === report.id ? theme.primary : theme.onSurface,
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {report.title}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* Sección de Grabación */}
+          <View style={[styles.section, { backgroundColor: theme.surface }]}>
+            {/* Botones de Grabación y Limpiar */}
+            <View style={styles.recordingButtonsRow}>
+              {!recordingState.isRecording ? (
+                <TouchableOpacity
+                  style={[styles.wideRecordButton, { backgroundColor: '#4CAF50' }]}
+                  onPress={startRecording}
+                >
+                  <Mic size={20} color="#FFFFFF" />
+                  <Text style={[styles.wideButtonText, { color: '#FFFFFF' }]}>GRABAR</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.wideRecordButton, { backgroundColor: '#FF5722' }]}
+                  onPress={stopRecording}
+                  disabled={isTranscribing}
+                >
+                  <Square size={20} color="#FFFFFF" />
+                  <Text style={[styles.wideButtonText, { color: '#FFFFFF' }]}>DETENER</Text>
+                </TouchableOpacity>
+              )}
+              
+              <TouchableOpacity
+                style={[styles.clearButton, { backgroundColor: theme.surfaceVariant }]}
+                onPress={clearTranscriptionBox}
+                disabled={!transcribedText.trim()}
+              >
+                <RotateCcw size={18} color={theme.onSurface} />
+                <Text style={[styles.clearButtonText, { color: theme.onSurface }]}>LIMPIAR</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Mostrar estado de transcripción automática */}
+            {isTranscribing && (
+              <View style={[styles.transcriptionStatus, { backgroundColor: theme.surfaceVariant }]}>
+                <ActivityIndicator size="small" color={theme.primary} />
+                <Text style={[styles.transcriptionStatusText, { color: theme.onSurface }]}>
+                  Transcribiendo automáticamente...
+                </Text>
+              </View>
+            )}
+            
+            <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>TEXTO LIBRE / GRABACIÓN</Text>
+            
+            {/* Caja de Transcripción Automática */}
+            <View style={[styles.textInputContainer, { 
+              backgroundColor: theme.background, 
+              borderColor: isTranscribing ? theme.primary : theme.outline,
+              borderWidth: isTranscribing ? 2 : 1
+            }]}>
+              <TextInput
+                style={[styles.textInput, { color: theme.onBackground }]}
+                value={transcribedText}
+                onChangeText={setTranscribedText}
+                placeholder={isTranscribing ? "Transcribiendo audio..." : "El texto transcrito aparecerá aquí automáticamente..."}
+                placeholderTextColor={theme.outline}
+                multiline
+                textAlignVertical="top"
+                editable={!isTranscribing}
+              />
+            </View>
+            
+            {/* Botones de Control de Texto */}
+            <View style={styles.textControlButtons}>
+              {transcribedText.trim() && (
+                <TouchableOpacity
+                  style={[styles.controlButton, styles.generateButton, { backgroundColor: theme.secondary }]}
+                  onPress={generateFinalReport}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <ActivityIndicator size="small" color={theme.onSecondary} />
+                  ) : (
+                    <Send size={16} color={theme.onSecondary} />
+                  )}
+                  <Text style={[styles.controlButtonText, { color: theme.onSecondary }]}>
+                    {isGenerating ? 'Generando...' : 'Crear Informe'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              
+              {lastTranscription && (
+                <TouchableOpacity
+                  style={[styles.controlButton, { backgroundColor: theme.outline }]}
+                  onPress={deleteLastTranscription}
+                >
+                  <Trash2 size={16} color={theme.onSurface} />
+                  <Text style={[styles.controlButtonText, { color: theme.onSurface }]}>Borrar Último</Text>
+                </TouchableOpacity>
+              )}
+              
+              {transcribedText.trim() && (
+                <TouchableOpacity
+                  style={[styles.controlButton, { backgroundColor: theme.error }]}
+                  onPress={clearAllTranscriptions}
+                >
+                  <Trash2 size={16} color={theme.onError} />
+                  <Text style={[styles.controlButtonText, { color: theme.onError }]}>Borrar Todo</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* Hallazgos */}
+          <View style={[styles.section, { backgroundColor: theme.surface }]}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Hallazgos</Text>
+              <TouchableOpacity
+                style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
+                onPress={async () => {
+                  if (findings.trim()) {
+                    await Clipboard.setStringAsync(findings);
+                    Alert.alert('Copiado', 'Hallazgos copiados al portapapeles');
+                  }
+                }}
+                disabled={!findings.trim()}
+              >
+                <Copy size={16} color={theme.onPrimary} />
+                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>COPIAR</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
+              <TextInput
+                style={[styles.textInput, { color: theme.onBackground }]}
+                value={findings}
+                onChangeText={setFindings}
+                placeholder="Los hallazgos aparecerán aquí..."
+                placeholderTextColor={theme.outline}
+                multiline
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+
+          {/* Conclusiones */}
+          <View style={[styles.section, { backgroundColor: theme.surface }]}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Conclusión</Text>
+              <TouchableOpacity
+                style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
+                onPress={async () => {
+                  if (conclusions.trim()) {
+                    await Clipboard.setStringAsync(conclusions);
+                    Alert.alert('Copiado', 'Conclusión copiada al portapapeles');
+                  }
+                }}
+                disabled={!conclusions.trim()}
+              >
+                <Copy size={16} color={theme.onPrimary} />
+                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>COPIAR</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
+              <TextInput
+                style={[styles.textInput, { color: theme.onBackground }]}
+                value={conclusions}
+                onChangeText={setConclusions}
+                placeholder="Las conclusiones aparecerán aquí..."
+                placeholderTextColor={theme.outline}
+                multiline
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+
+          {/* Diagnósticos Diferenciales */}
+          <View style={[styles.section, { backgroundColor: theme.surface }]}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Diferenciales</Text>
+              <TouchableOpacity
+                style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
+                onPress={async () => {
+                  if (differentials.trim()) {
+                    await Clipboard.setStringAsync(differentials);
+                    Alert.alert('Copiado', 'Diagnósticos diferenciales copiados al portapapeles');
+                  }
+                }}
+                disabled={!differentials.trim()}
+              >
+                <Copy size={16} color={theme.onPrimary} />
+                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>COPIAR</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
+              <TextInput
+                style={[styles.textInput, { color: theme.onBackground }]}
+                value={differentials}
+                onChangeText={setDifferentials}
+                placeholder="Los diagnósticos diferenciales aparecerán aquí..."
+                placeholderTextColor={theme.outline}
+                multiline
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.resetButton, { backgroundColor: theme.outline }]}
+            onPress={resetAll}
+          >
+            <Text style={[styles.buttonText, { color: theme.onSurface }]}>Nuevo Informe</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+  },
+  titleContainer: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  section: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  searchBar: {
+    marginBottom: 12,
+  },
+  compactSection: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  selectorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  compactSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  expandedSelector: {
+    marginTop: 12,
+  },
+  compactReportsList: {
+    maxHeight: 150,
+  },
+  compactReportItem: {
+    flexDirection: 'row',
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginBottom: 6,
+    alignItems: 'center',
+  },
+  compactReportTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    flex: 1,
+  },
+  compactRecordingControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reportsList: {
+    maxHeight: 200,
+  },
+  reportItem: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  reportInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  reportTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  reportPreview: {
+    fontSize: 14,
+  },
+  recordingControls: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  recordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  recordButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  transcribeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  generateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  compactButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  textContainer: {
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 12,
+    minHeight: 100,
+  },
+  textInputContainer: {
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 120,
+  },
+  textInput: {
+    fontSize: 16,
+    lineHeight: 24,
+    padding: 12,
+    minHeight: 120,
+  },
+  transcribedText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  finalReportText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  copyButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recordingButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  textControlButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    marginTop: 12,
+    gap: 8,
+  },
+  controlButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 120,
+  },
+  controlButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    minWidth: 120,
+  },
+  clearButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  wideRecordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    minWidth: 150,
+  },
+  wideTranscribeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    minWidth: 150,
+  },
+  wideButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  wideCopyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    minWidth: 80,
+  },
+  copyButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  transcriptionStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 8,
+  },
+  transcriptionStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+});
