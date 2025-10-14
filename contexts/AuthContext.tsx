@@ -27,16 +27,30 @@ const generateUserSyncCode = (userId: string): string => {
   return `radia-sync-${userId}-${Date.now()}`;
 };
 
+const DEMO_USER: User = {
+  id: 'demo-user-123',
+  email: 'demo@radia.com',
+  name: 'Dr. Demo Usuario',
+  dni: '12345678',
+  country: 'España',
+  city: 'Madrid',
+  medicalLicense: 'COL-12345',
+  medicalSpecialty: 'Radiología',
+  pin: '1234',
+  createdAt: new Date().toISOString(),
+  isRegistered: true,
+};
+
 export const [AuthProvider, useAuth] = createContextHook(() => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(DEMO_USER);
+  const [isLoading, setIsLoading] = useState(false);
   const [sharedItems, setSharedItems] = useState<SharedItem[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [showQRSyncModal, setShowQRSyncModal] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [userSyncCode, setUserSyncCode] = useState<string>(() => {
-    return generateUserSyncCode('temp-' + Date.now());
+    return generateUserSyncCode('demo-user-123');
   });
 
   const signOut = useCallback(async () => {
@@ -93,17 +107,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        await loadUserFromFirestore(firebaseUser.uid);
-      } else {
-        setShowLoginModal(true);
-      }
-      setIsLoading(false);
-    });
-    
-    return () => unsubscribe();
-  }, [loadUserFromFirestore]);
+    setUser(DEMO_USER);
+    setIsAuthenticated(true);
+    setIsLoading(false);
+    console.log('Usuario demo activado: demo@radia.com / PIN: 1234');
+  }, []);
 
   const signIn = useCallback(async () => {
     setShowLoginModal(true);
