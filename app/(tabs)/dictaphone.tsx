@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send } from 'lucide-react-native';
+import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Sparkles } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -40,6 +40,7 @@ export default function DictaphoneScreen() {
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [correctingGrammar, setCorrectingGrammar] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -259,6 +260,84 @@ export default function DictaphoneScreen() {
     return processed.trim();
   };
 
+  const correctGrammar = async (text: string, recordingId: string): Promise<void> => {
+    setCorrectingGrammar(recordingId);
+    try {
+      const response = await fetch(new URL('/agent/chat', process.env['EXPO_PUBLIC_TOOLKIT_URL'] || 'https://toolkit.rork.com').toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: `Eres un asistente especializado en corrección de textos médicos. Tu tarea es corregir la gramática, ortografía y puntuación del siguiente texto transcrito, manteniendo el significado original y el formato (saltos de línea, párrafos). NO agregues información adicional, solo corrige errores gramaticales y ortográficos.
+
+Texto a corregir:
+${text}
+
+Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicionales.`,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en corrección: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No se pudo leer la respuesta');
+      }
+
+      const decoder = new TextDecoder();
+      let correctedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const jsonStr = line.substring(2);
+              const data = JSON.parse(jsonStr);
+              if (data.type === 'text-delta' && data.textDelta) {
+                correctedText += data.textDelta;
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
+            }
+          }
+        }
+      }
+
+      if (correctedText.trim()) {
+        setRecordings(prev =>
+          prev.map(rec =>
+            rec.id === recordingId
+              ? { ...rec, transcription: correctedText.trim() }
+              : rec
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error correcting grammar:', error);
+      if (Platform.OS === 'web') {
+        alert('Error al corregir la gramática. Se mantendrá el texto original.');
+      } else {
+        Alert.alert('Error', 'Error al corregir la gramática. Se mantendrá el texto original.');
+      }
+    } finally {
+      setCorrectingGrammar(null);
+    }
+  };
+
   const transcribeRecording = async (uri: string) => {
     setIsTranscribing(true);
     try {
@@ -288,6 +367,8 @@ export default function DictaphoneScreen() {
       const rawTranscription = result.text;
       const transcription = processVoiceCommands(rawTranscription);
       
+      const recordingId = recordings.find(r => r.uri === uri)?.id;
+      
       setRecordings(prev => 
         prev.map(rec => 
           rec.uri === uri 
@@ -298,6 +379,10 @@ export default function DictaphoneScreen() {
       
       console.log('Raw Transcription:', rawTranscription);
       console.log('Processed Transcription:', transcription);
+      
+      if (recordingId) {
+        await correctGrammar(transcription, recordingId);
+      }
     } catch (error) {
       console.error('Error transcribing:', error);
       if (Platform.OS === 'web') {
@@ -329,9 +414,12 @@ export default function DictaphoneScreen() {
       const rawTranscription = result.text;
       const transcription = processVoiceCommands(rawTranscription);
       
+      let recordingId: string | undefined;
+      
       setRecordings(prev => {
         const firstRecording = prev[0];
         if (firstRecording) {
+          recordingId = firstRecording.id;
           return prev.map((rec, index) => 
             index === 0 
               ? { ...rec, transcription } 
@@ -343,6 +431,10 @@ export default function DictaphoneScreen() {
       
       console.log('Raw Transcription:', rawTranscription);
       console.log('Processed Transcription:', transcription);
+      
+      if (recordingId) {
+        await correctGrammar(transcription, recordingId);
+      }
     } catch (error) {
       console.error('Error transcribing:', error);
       alert('Error al transcribir el audio.');
@@ -549,6 +641,16 @@ export default function DictaphoneScreen() {
 
                 {rec.transcription && (
                   <View style={styles.transcriptionWrapper}>
+                    {correctingGrammar === rec.id && (
+                      <View style={styles.correctingContainer}>
+                        <ActivityIndicator size="small" color={theme.primary} />
+                        <Sparkles size={16} color={theme.primary} />
+                        <Text style={[styles.correctingText, { color: theme.primary }]}>
+                          Corrigiendo gramática...
+                        </Text>
+                      </View>
+                    )}
+                    
                     <TouchableOpacity
                       onPress={() => copyToClipboard(rec.transcription!)}
                       activeOpacity={0.7}
@@ -760,5 +862,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  correctingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+  },
+  correctingText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
