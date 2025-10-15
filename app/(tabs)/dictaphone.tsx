@@ -244,9 +244,11 @@ export default function DictaphoneScreen() {
     processed = processed.replace(/\bnuevo\s+(párrafo|parrafo|bárrafo|barrafo)\b/gi, '\n\n__CAPITALIZE__');
     processed = processed.replace(/\bnueva\s+(línea|linea)\b/gi, '\n__CAPITALIZE__');
     
-    processed = processed.replace(/__CAPITALIZE__\s*(\w)/g, (match, letter) => {
-      return letter.toUpperCase();
+    processed = processed.replace(/__CAPITALIZE__(\s*)(\w)/g, (match, whitespace, letter) => {
+      return whitespace + letter.toUpperCase();
     });
+    
+    processed = processed.replace(/__CAPITALIZE__/g, '');
     
     processed = processed.replace(/\s+([.,;:?!)])/g, '$1');
     
