@@ -210,9 +210,7 @@ Sé directo y conciso.`;
   };
 
   return (
-    <View style={[styles.safeContainer, { backgroundColor: theme.background }]}>
-      <View style={[styles.topSafeArea, { height: insets.top, backgroundColor: theme.surface }]} />
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
         <Stack.Screen
           options={{
             title: 'Crear Informe',
@@ -470,18 +468,11 @@ Sé directo y conciso.`;
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-  },
-  topSafeArea: {
-    width: '100%',
-  },
   container: {
     flex: 1,
   },
