@@ -728,7 +728,7 @@ export default function ChatScreen() {
               </View>
             )}
             
-            <View style={[styles.searchContainer, { backgroundColor: theme.surface }]}>
+            <View style={[styles.searchContainer, { backgroundColor: theme.surface, borderColor: theme.primary }]}>
               <TextInput
                 style={[styles.searchInput, { color: theme.onSurface }]}
                 placeholder="Buscar por nombre..."
@@ -1073,13 +1073,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 12,
     gap: 12,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
+    fontWeight: '500',
   },
   usersList: {
     flex: 1,
