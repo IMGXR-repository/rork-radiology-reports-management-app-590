@@ -248,7 +248,13 @@ export default function DictaphoneScreen() {
       return letter.toUpperCase();
     });
     
-    return processed;
+    processed = processed.replace(/\s+([.,;:?!)])/g, '$1');
+    
+    processed = processed.replace(/([.,;:?!])\1+/g, '$1');
+    
+    processed = processed.replace(/([.,;:?!])(?!\s|$)/g, '$1 ');
+    
+    return processed.trim();
   };
 
   const transcribeRecording = async (uri: string) => {
