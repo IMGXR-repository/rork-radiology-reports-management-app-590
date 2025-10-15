@@ -38,6 +38,9 @@ interface ChatUser {
   lastSeen?: Date;
   avatar?: string;
   groups: ContactGroup[];
+  lastMessage?: string;
+  lastMessageTime?: Date;
+  unreadCount?: number;
 }
 
 interface ContactGroup {
@@ -83,7 +86,10 @@ const mockUsers: ChatUser[] = [
     name: 'Ana García', 
     email: 'ana.garcia@email.com',
     isOnline: true,
-    groups: [defaultContactGroups[0], defaultContactGroups[4]]
+    groups: [defaultContactGroups[0], defaultContactGroups[4]],
+    lastMessage: 'Perfecto, nos vemos entonces',
+    lastMessageTime: new Date(Date.now() - 300000),
+    unreadCount: 2
   },
   { 
     id: '2', 
@@ -91,14 +97,19 @@ const mockUsers: ChatUser[] = [
     email: 'carlos.lopez@email.com',
     isOnline: false, 
     lastSeen: new Date(Date.now() - 300000),
-    groups: [defaultContactGroups[1]]
+    groups: [defaultContactGroups[1]],
+    lastMessage: '¡Gracias por la información!',
+    lastMessageTime: new Date(Date.now() - 3600000),
   },
   { 
     id: '3', 
     name: 'María Rodríguez', 
     email: 'maria.rodriguez@email.com',
     isOnline: true,
-    groups: [defaultContactGroups[0], defaultContactGroups[3]]
+    groups: [defaultContactGroups[0], defaultContactGroups[3]],
+    lastMessage: 'https://www.instagram.com/reel/...',
+    lastMessageTime: new Date(Date.now() - 7200000),
+    unreadCount: 1
   },
   { 
     id: '4', 
@@ -106,7 +117,9 @@ const mockUsers: ChatUser[] = [
     email: 'juan.perez@email.com',
     isOnline: false, 
     lastSeen: new Date(Date.now() - 3600000),
-    groups: [defaultContactGroups[2]]
+    groups: [defaultContactGroups[2]],
+    lastMessage: 'Llamada perdida',
+    lastMessageTime: new Date(Date.now() - 14400000),
   },
 ];
 
@@ -449,6 +462,31 @@ export default function ChatScreen() {
     }
   };
 
+  const formatChatTime = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (days === 0) {
+      return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    } else if (days === 1) {
+      return 'Ayer';
+    } else if (days < 7) {
+      return date.toLocaleDateString('es-ES', { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+    }
+  };
+
+  const getInitials = (name: string) => {
+    const words = name.split(' ');
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
   const renderMessage = ({ item }: { item: ChatMessage }) => (
     <View style={[
       styles.messageContainer,
@@ -522,42 +560,49 @@ export default function ChatScreen() {
   const renderUser = ({ item }: { item: ChatUser }) => (
     <TouchableOpacity 
       style={[
-        styles.userItem,
-        { backgroundColor: theme.surface, borderColor: theme.outline },
+        styles.chatItem,
+        { backgroundColor: theme.background },
       ]}
       onPress={() => router.push(`/chat/${item.id}`)}
     >
-      <View style={styles.userInfo}>
-        <View style={styles.userHeader}>
-          <View style={styles.userMainInfo}>
-            <Text style={[styles.userName, { color: theme.onSurface }]}>
-              {item.name}
-            </Text>
-            <Text style={[styles.userEmail, { color: theme.outline }]}>
-              {item.email}
-            </Text>
-          </View>
-          <View style={[
-            styles.statusIndicator,
-            { backgroundColor: item.isOnline ? '#4CAF50' : theme.outline },
-          ]} />
-        </View>
-        
-        <View style={styles.userGroups}>
-          {item.groups.map((group, index) => (
-            <View key={group.id} style={[styles.groupChip, { backgroundColor: group.color + '20' }]}>
-              <Text style={[styles.groupChipText, { color: group.color }]}>
-                {group.name}
-              </Text>
-            </View>
-          ))}
-        </View>
-        
-        {!item.isOnline && item.lastSeen && (
-          <Text style={[styles.lastSeen, { color: theme.outline }]}>
-            {formatLastSeen(item.lastSeen)}
-          </Text>
+      <View style={[styles.avatarContainer, { backgroundColor: theme.primary + '20' }]}>
+        <Text style={[styles.avatarText, { color: theme.primary }]}>
+          {getInitials(item.name)}
+        </Text>
+        {item.isOnline && (
+          <View style={[styles.onlineBadge, { backgroundColor: '#4CAF50' }]} />
         )}
+      </View>
+      
+      <View style={styles.chatContent}>
+        <View style={styles.chatHeader}>
+          <Text style={[styles.chatName, { color: theme.onSurface }]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          {item.lastMessageTime && (
+            <Text style={[styles.chatTime, { color: theme.outline }]}>
+              {formatChatTime(item.lastMessageTime)}
+            </Text>
+          )}
+        </View>
+        
+        <View style={styles.chatFooter}>
+          <Text 
+            style={[
+              styles.lastMessageText, 
+              { color: item.unreadCount ? theme.onSurface : theme.outline },
+              item.unreadCount && { fontWeight: '600' }
+            ]} 
+            numberOfLines={1}
+          >
+            {item.lastMessage || 'Sin mensajes'}
+          </Text>
+          {item.unreadCount && item.unreadCount > 0 && (
+            <View style={[styles.unreadBadge, { backgroundColor: theme.primary }]}>
+              <Text style={styles.unreadBadgeText}>{item.unreadCount}</Text>
+            </View>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -728,7 +773,7 @@ export default function ChatScreen() {
               </View>
             )}
             
-            <View style={[styles.searchContainer, { backgroundColor: theme.surface, borderColor: theme.primary }]}>
+            <View style={[styles.searchContainer, { backgroundColor: theme.surfaceVariant, borderColor: 'transparent' }]}>
               <TextInput
                 style={[styles.searchInput, { color: theme.onSurface }]}
                 placeholder="Buscar por nombre..."
@@ -1072,17 +1117,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
-    marginVertical: 12,
+    marginVertical: 8,
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
     gap: 12,
-    borderWidth: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
   },
   searchInput: {
     flex: 1,
@@ -1573,6 +1613,76 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   contactsListContainer: {
+    paddingHorizontal: 0,
+  },
+  chatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  avatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  onlineBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  chatContent: {
+    flex: 1,
+    gap: 4,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chatName: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+  },
+  chatTime: {
+    fontSize: 12,
+    marginLeft: 8,
+  },
+  chatFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  lastMessageText: {
+    fontSize: 14,
+    flex: 1,
+  },
+  unreadBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    marginLeft: 8,
+  },
+  unreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
