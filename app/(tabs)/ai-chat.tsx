@@ -14,7 +14,7 @@ import {
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Send, Bot, User, Stethoscope, MessageSquare, FileText, Link, Zap } from 'lucide-react-native';
+import { Send, Bot, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -43,6 +43,7 @@ export default function AIChatScreen() {
   const [isExtendedResponse, setIsExtendedResponse] = useState<boolean>(false);
   const [isLinkedQuestions, setIsLinkedQuestions] = useState<boolean>(false);
   const [isAbsoluteMode, setIsAbsoluteMode] = useState<boolean>(false);
+  const [isConfigExpanded, setIsConfigExpanded] = useState<boolean>(false);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -360,108 +361,119 @@ ${systemInstructions}${redirectInstruction}`;
           </View>
         </View>
         
-        {/* Switch para tipo de respuesta */}
-        <View style={[
-          styles.responseTypeContainer,
-          { borderTopColor: theme.outline }
-        ]}>
-          <View style={styles.responseTypeContent}>
-            <View style={styles.responseTypeLeft}>
-              {isExtendedResponse ? (
-                <FileText size={16} color={theme.primary} />
-              ) : (
-                <MessageSquare size={16} color={theme.primary} />
-              )}
-              <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
-                {isExtendedResponse ? 'Respuesta Extendida' : 'Respuesta Corta'}
-              </Text>
-            </View>
-            
-            <Switch
-              value={isExtendedResponse}
-              onValueChange={setIsExtendedResponse}
-              trackColor={{ 
-                false: theme.outline + '40', 
-                true: theme.primary + '40' 
-              }}
-              thumbColor={isExtendedResponse ? theme.primary : theme.outline}
-              ios_backgroundColor={theme.outline + '40'}
-            />
-          </View>
-          
-          <Text style={[styles.responseTypeDescription, { color: theme.outline }]}>
-            {isExtendedResponse 
-              ? 'La IA proporcionará respuestas detalladas y completas'
-              : 'La IA proporcionará respuestas breves y concisas'
-            }
+        {/* Botón expandible de configuración */}
+        <TouchableOpacity 
+          style={[styles.configToggle, { borderTopColor: theme.outline }]}
+          onPress={() => setIsConfigExpanded(!isConfigExpanded)}
+        >
+          <Text style={[styles.configToggleText, { color: theme.onSurface }]}>
+            Configuración del Chat
           </Text>
-        </View>
+          {isConfigExpanded ? (
+            <ChevronUp size={20} color={theme.primary} />
+          ) : (
+            <ChevronDown size={20} color={theme.primary} />
+          )}
+        </TouchableOpacity>
         
-        {/* Switch para preguntas vinculadas */}
-        <View style={[
-          styles.responseTypeContainer,
-          { borderTopColor: theme.outline }
-        ]}>
-          <View style={styles.responseTypeContent}>
-            <View style={styles.responseTypeLeft}>
-              <Link size={16} color={theme.primary} />
-              <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
-                Preguntas Vinculadas
+        {/* Panel de configuración expandible */}
+        {isConfigExpanded && (
+          <View style={[styles.configPanel, { borderTopColor: theme.outline }]}>
+            {/* Switch para tipo de respuesta */}
+            <View style={styles.configItem}>
+              <View style={styles.responseTypeContent}>
+                <View style={styles.responseTypeLeft}>
+                  {isExtendedResponse ? (
+                    <FileText size={16} color={theme.primary} />
+                  ) : (
+                    <MessageSquare size={16} color={theme.primary} />
+                  )}
+                  <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
+                    {isExtendedResponse ? 'Respuesta Extendida' : 'Respuesta Corta'}
+                  </Text>
+                </View>
+                
+                <Switch
+                  value={isExtendedResponse}
+                  onValueChange={setIsExtendedResponse}
+                  trackColor={{ 
+                    false: theme.outline + '40', 
+                    true: theme.primary + '40' 
+                  }}
+                  thumbColor={isExtendedResponse ? theme.primary : theme.outline}
+                  ios_backgroundColor={theme.outline + '40'}
+                />
+              </View>
+              
+              <Text style={[styles.responseTypeDescription, { color: theme.outline }]}>
+                {isExtendedResponse 
+                  ? 'La IA proporcionará respuestas detalladas y completas'
+                  : 'La IA proporcionará respuestas breves y concisas'
+                }
               </Text>
             </View>
             
-            <Switch
-              value={isLinkedQuestions}
-              onValueChange={setIsLinkedQuestions}
-              trackColor={{ 
-                false: theme.outline + '40', 
-                true: theme.primary + '40' 
-              }}
-              thumbColor={isLinkedQuestions ? theme.primary : theme.outline}
-              ios_backgroundColor={theme.outline + '40'}
-            />
-          </View>
-          
-          <Text style={[styles.responseTypeDescription, { color: theme.outline }]}>
-            {isLinkedQuestions 
-              ? 'La IA mantendrá el contexto de la conversación previa'
-              : 'Cada pregunta será independiente sin contexto previo'
-            }
-          </Text>
-        </View>
-        
-        {/* Switch para modo absoluto */}
-        <View style={[
-          styles.responseTypeContainer,
-          { borderTopColor: theme.outline }
-        ]}>
-          <View style={styles.responseTypeContent}>
-            <View style={styles.responseTypeLeft}>
-              <Zap size={16} color={theme.primary} />
-              <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
-                Modo Absoluto
+            {/* Switch para preguntas vinculadas */}
+            <View style={styles.configItem}>
+              <View style={styles.responseTypeContent}>
+                <View style={styles.responseTypeLeft}>
+                  <Link size={16} color={theme.primary} />
+                  <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
+                    Preguntas Vinculadas
+                  </Text>
+                </View>
+                
+                <Switch
+                  value={isLinkedQuestions}
+                  onValueChange={setIsLinkedQuestions}
+                  trackColor={{ 
+                    false: theme.outline + '40', 
+                    true: theme.primary + '40' 
+                  }}
+                  thumbColor={isLinkedQuestions ? theme.primary : theme.outline}
+                  ios_backgroundColor={theme.outline + '40'}
+                />
+              </View>
+              
+              <Text style={[styles.responseTypeDescription, { color: theme.outline }]}>
+                {isLinkedQuestions 
+                  ? 'La IA mantendrá el contexto de la conversación previa'
+                  : 'Cada pregunta será independiente sin contexto previo'
+                }
               </Text>
             </View>
             
-            <Switch
-              value={isAbsoluteMode}
-              onValueChange={setIsAbsoluteMode}
-              trackColor={{ 
-                false: theme.outline + '40', 
-                true: theme.primary + '40' 
-              }}
-              thumbColor={isAbsoluteMode ? theme.primary : theme.outline}
-              ios_backgroundColor={theme.outline + '40'}
-            />
+            {/* Switch para modo absoluto */}
+            <View style={styles.configItem}>
+              <View style={styles.responseTypeContent}>
+                <View style={styles.responseTypeLeft}>
+                  <Zap size={16} color={theme.primary} />
+                  <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
+                    Modo Absoluto
+                  </Text>
+                </View>
+                
+                <Switch
+                  value={isAbsoluteMode}
+                  onValueChange={setIsAbsoluteMode}
+                  trackColor={{ 
+                    false: theme.outline + '40', 
+                    true: theme.primary + '40' 
+                  }}
+                  thumbColor={isAbsoluteMode ? theme.primary : theme.outline}
+                  ios_backgroundColor={theme.outline + '40'}
+                />
+              </View>
+              
+              <Text style={[styles.responseTypeDescription, { color: theme.outline }]}>
+                {isAbsoluteMode 
+                  ? 'Respuestas directas sin relleno, transiciones ni preguntas'
+                  : 'Respuestas con tono profesional y contextualizado'
+                }
+              </Text>
+            </View>
           </View>
-          
-          <Text style={[styles.responseTypeDescription, { color: theme.outline }]}>
-            {isAbsoluteMode 
-              ? 'Respuestas directas sin relleno, transiciones ni preguntas'
-              : 'Respuestas con tono profesional y contextualizado'
-            }
-          </Text>
-        </View>
+        )}
       </View>
 
       {chatMessages.length === 0 ? (
@@ -549,10 +561,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
-  responseTypeContainer: {
+  configToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    marginTop: 8,
+    borderTopWidth: 1,
+  },
+  configToggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  configPanel: {
     paddingTop: 12,
     borderTopWidth: 1,
     marginTop: 8,
+  },
+  configItem: {
+    marginBottom: 12,
   },
   responseTypeContent: {
     flexDirection: 'row',
