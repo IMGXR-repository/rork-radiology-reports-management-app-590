@@ -347,18 +347,6 @@ ${systemInstructions}${redirectInstruction}`;
               Chat IA Médico
             </Text>
           </View>
-          
-          <View style={styles.specialtyContainer}>
-            <CustomPicker
-              value={selectedSpecialty}
-              onValueChange={(value: string) => {
-                setSelectedSpecialty(value);
-              }}
-              options={MEDICAL_SPECIALTIES}
-              placeholder="Seleccionar Especialidad"
-              icon={<Stethoscope size={16} color={theme.primary} />}
-            />
-          </View>
         </View>
         
         {/* Botón expandible de configuración */}
@@ -366,9 +354,14 @@ ${systemInstructions}${redirectInstruction}`;
           style={[styles.configToggle, { borderTopColor: theme.outline }]}
           onPress={() => setIsConfigExpanded(!isConfigExpanded)}
         >
-          <Text style={[styles.configToggleText, { color: theme.onSurface }]}>
-            Configuración del Chat
-          </Text>
+          <View style={styles.configToggleContent}>
+            <Text style={[styles.configToggleText, { color: theme.onSurface }]}>
+              Configuración
+            </Text>
+            <Text style={[styles.configToggleSubtext, { color: theme.outline }]}>
+              {selectedSpecialty}
+            </Text>
+          </View>
           {isConfigExpanded ? (
             <ChevronUp size={20} color={theme.primary} />
           ) : (
@@ -379,6 +372,27 @@ ${systemInstructions}${redirectInstruction}`;
         {/* Panel de configuración expandible */}
         {isConfigExpanded && (
           <View style={[styles.configPanel, { borderTopColor: theme.outline }]}>
+            {/* Selector de especialidad */}
+            <View style={styles.configItem}>
+              <View style={styles.responseTypeLeft}>
+                <Stethoscope size={16} color={theme.primary} />
+                <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
+                  Especialidad
+                </Text>
+              </View>
+              <View style={styles.specialtyPickerContainer}>
+                <CustomPicker
+                  value={selectedSpecialty}
+                  onValueChange={(value: string) => {
+                    setSelectedSpecialty(value);
+                  }}
+                  options={MEDICAL_SPECIALTIES}
+                  placeholder="Seleccionar Especialidad"
+                  icon={<Stethoscope size={16} color={theme.primary} />}
+                />
+              </View>
+            </View>
+            
             {/* Switch para tipo de respuesta */}
             <View style={styles.configItem}>
               <View style={styles.responseTypeContent}>
@@ -569,9 +583,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderTopWidth: 1,
   },
+  configToggleContent: {
+    flex: 1,
+  },
   configToggleText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  configToggleSubtext: {
+    fontSize: 13,
+    marginTop: 2,
   },
   configPanel: {
     paddingTop: 12,
@@ -601,6 +622,9 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 16,
   },
+  specialtyPickerContainer: {
+    marginTop: 8,
+  },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -615,9 +639,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-  },
-  specialtyContainer: {
-    maxWidth: 180,
   },
   content: {
     flex: 1,
