@@ -84,7 +84,7 @@ export default function DictaphoneScreen() {
             date: new Date(),
           };
           
-          setRecordings(prev => [...prev, newRecording]);
+          setRecordings(prev => [newRecording, ...prev]);
           
           stream.getTracks().forEach(track => track.stop());
           
@@ -164,7 +164,7 @@ export default function DictaphoneScreen() {
             date: new Date(),
           };
           
-          setRecordings(prev => [...prev, newRecording]);
+          setRecordings(prev => [newRecording, ...prev]);
           
           await Audio.setAudioModeAsync({
             allowsRecordingIOS: false,
@@ -322,10 +322,10 @@ export default function DictaphoneScreen() {
       const transcription = processVoiceCommands(rawTranscription);
       
       setRecordings(prev => {
-        const lastRecording = prev[prev.length - 1];
-        if (lastRecording) {
+        const firstRecording = prev[0];
+        if (firstRecording) {
           return prev.map((rec, index) => 
-            index === prev.length - 1 
+            index === 0 
               ? { ...rec, transcription } 
               : rec
           );
