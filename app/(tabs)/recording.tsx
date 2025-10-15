@@ -585,23 +585,29 @@ export default function RecordingScreen() {
   };
 
   const clearAllTranscriptions = () => {
-    Alert.alert(
-      'Confirmar',
-      '¿Estás seguro de que quieres borrar todo el texto?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Borrar Todo', 
-          style: 'destructive',
-          onPress: () => {
-            setTranscribedText('');
-            setLastTranscription('');
-            
-
+    if (Platform.OS === 'web') {
+      const confirmed = confirm('¿Estás seguro de que quieres borrar todo el texto?');
+      if (confirmed) {
+        setTranscribedText('');
+        setLastTranscription('');
+      }
+    } else {
+      Alert.alert(
+        'Confirmar',
+        '¿Estás seguro de que quieres borrar todo el texto?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Borrar Todo', 
+            style: 'destructive',
+            onPress: () => {
+              setTranscribedText('');
+              setLastTranscription('');
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const generateFinalReport = async () => {
