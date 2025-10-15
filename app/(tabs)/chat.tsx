@@ -735,6 +735,7 @@ export default function ChatScreen() {
                 placeholderTextColor={theme.outline}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                underlineColorAndroid="transparent"
               />
             </View>
             
