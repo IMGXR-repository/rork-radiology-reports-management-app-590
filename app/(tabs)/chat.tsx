@@ -1087,6 +1087,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
+    backgroundColor: 'transparent',
   },
   usersList: {
     flex: 1,
