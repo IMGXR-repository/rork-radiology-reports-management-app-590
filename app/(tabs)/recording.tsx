@@ -976,7 +976,6 @@ DIAGNÓSTICOS DIFERENCIALES:
                 <TouchableOpacity
                   style={[styles.wideRecordButton, { backgroundColor: '#FF5722' }]}
                   onPress={stopRecording}
-                  disabled={isTranscribing}
                 >
                   <Square size={20} color="#FFFFFF" />
                   <Text style={[styles.wideButtonText, { color: '#FFFFFF' }]}>DETENER</Text>
