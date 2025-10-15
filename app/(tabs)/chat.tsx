@@ -692,16 +692,6 @@ export default function ChatScreen() {
 
       {showUsers ? (
         <View style={styles.usersSection}>
-          <View style={[styles.searchContainer, { backgroundColor: theme.surface }]}>
-            <TextInput
-              style={[styles.searchInput, { color: theme.onSurface }]}
-              placeholder="Buscar en contactos..."
-              placeholderTextColor={theme.outline}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-          
           <ScrollView style={styles.groupsList} showsVerticalScrollIndicator={false}>
             <View style={styles.groupsSectionHeader}>
               <Text style={[styles.sectionTitle, { color: theme.onSurface, marginVertical: 0 }]}>Grupos de Contactos</Text>
@@ -723,11 +713,7 @@ export default function ChatScreen() {
             {showContactGroups && (
               <View style={[styles.groupFiltersContainer, { backgroundColor: theme.surfaceVariant }]}>
                 <View style={styles.groupFiltersGrid}>
-                  {groupedUsers.map(({ group, count }) => (
-                    <View key={group.id}>
-                      {renderGroupFilter({ group, count })}
-                    </View>
-                  ))}
+                  {groupedUsers.map(({ group, count }) => renderGroupFilter({ group, count }))}
                 </View>
                 {selectedGroup && (
                   <TouchableOpacity
@@ -742,14 +728,26 @@ export default function ChatScreen() {
               </View>
             )}
             
-            <Text style={[styles.sectionTitle, { color: theme.onSurface, marginTop: 20 }]}>
+            <View style={[styles.searchContainer, { backgroundColor: theme.surface }]}>
+              <TextInput
+                style={[styles.searchInput, { color: theme.onSurface }]}
+                placeholder="Buscar por nombre..."
+                placeholderTextColor={theme.outline}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+            
+            <Text style={[styles.sectionTitle, { color: theme.onSurface, marginTop: 8 }]}>
               {selectedGroup ? `Contactos en ${selectedGroup.name}` : 'Todos los Contactos'}
             </Text>
-            {filteredUsers.map(user => (
-              <View key={user.id}>
-                {renderUser({ item: user })}
-              </View>
-            ))}
+            <View style={styles.contactsListContainer}>
+              {filteredUsers.map(user => (
+                <View key={user.id}>
+                  {renderUser({ item: user })}
+                </View>
+              ))}
+            </View>
           </ScrollView>
         </View>
       ) : showGroupManager ? (
@@ -817,69 +815,7 @@ export default function ChatScreen() {
             })}
           </ScrollView>
         </View>
-      ) : (
-        <View style={styles.usersSection}>
-          <View style={[styles.searchContainer, { backgroundColor: theme.surface }]}>
-            <TextInput
-              style={[styles.searchInput, { color: theme.onSurface }]}
-              placeholder="Buscar en contactos..."
-              placeholderTextColor={theme.outline}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-          
-          <ScrollView style={styles.groupsList} showsVerticalScrollIndicator={false}>
-            <View style={styles.groupsSectionHeader}>
-              <Text style={[styles.sectionTitle, { color: theme.onSurface, marginVertical: 0 }]}>Grupos de Contactos</Text>
-              <TouchableOpacity
-                style={[styles.toggleGroupsButton, { backgroundColor: theme.surface, borderColor: theme.outline }]}
-                onPress={toggleContactGroupsVisibility}
-              >
-                {showContactGroups ? (
-                  <ChevronUp size={16} color={theme.primary} />
-                ) : (
-                  <ChevronDown size={16} color={theme.primary} />
-                )}
-                <Text style={[styles.toggleGroupsText, { color: theme.primary }]}>
-                  {showContactGroups ? 'Ocultar' : 'Mostrar'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            
-            {showContactGroups && (
-              <View style={[styles.groupFiltersContainer, { backgroundColor: theme.surfaceVariant }]}>
-                <View style={styles.groupFiltersGrid}>
-                  {groupedUsers.map(({ group, count }) => (
-                    <View key={group.id}>
-                      {renderGroupFilter({ group, count })}
-                    </View>
-                  ))}
-                </View>
-                {selectedGroup && (
-                  <TouchableOpacity
-                    style={[styles.clearFiltersButton, { backgroundColor: theme.outline + '20' }]}
-                    onPress={() => setSelectedGroup(null)}
-                  >
-                    <Text style={[styles.clearFiltersText, { color: theme.outline }]}>
-                      Mostrar todos los contactos
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-            
-            <Text style={[styles.sectionTitle, { color: theme.onSurface, marginTop: 20 }]}>
-              {selectedGroup ? `Contactos en ${selectedGroup.name}` : 'Todos los Contactos'}
-            </Text>
-            {filteredUsers.map(user => (
-              <View key={user.id}>
-                {renderUser({ item: user })}
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
+      ) : null}
       
       {/* Category Creation/Edit Modal */}
       <Modal
@@ -1134,8 +1070,11 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginHorizontal: 16,
+    marginVertical: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderRadius: 12,
     gap: 12,
   },
   searchInput: {
@@ -1400,12 +1339,12 @@ const styles = StyleSheet.create({
   groupFilterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 12,
     borderWidth: 1,
-    gap: 8,
-    minWidth: 80,
+    gap: 6,
+    width: '31%',
   },
   groupFilterIcon: {
     width: 20,
@@ -1623,5 +1562,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  contactsListContainer: {
+    paddingHorizontal: 16,
   },
 });
