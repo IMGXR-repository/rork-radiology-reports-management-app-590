@@ -560,8 +560,6 @@ ${systemInstructions}${redirectInstruction}`;
           <Send size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
-
-
     </KeyboardAvoidingView>
   );
 }
