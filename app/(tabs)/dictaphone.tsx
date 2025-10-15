@@ -236,11 +236,8 @@ export default function DictaphoneScreen() {
     processed = processed.replace(/\bexclamación\b/gi, '!');
     processed = processed.replace(/\bguión\b/gi, '-');
     
-    let parenthesisOpen = false;
-    processed = processed.replace(/\bparéntesis\b/gi, () => {
-      parenthesisOpen = !parenthesisOpen;
-      return parenthesisOpen ? '(' : ')';
-    });
+    processed = processed.replace(/\b(abrir|abre)\s+paréntesis\b/gi, '(');
+    processed = processed.replace(/\b(cerrar|cierra)\s+paréntesis\b/gi, ')');
     
     processed = processed.replace(/\bcomillas\b/gi, '"');
     
