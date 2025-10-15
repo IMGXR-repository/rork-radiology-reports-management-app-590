@@ -22,6 +22,7 @@ export default function CreateReportScreen() {
   const [structureLevel, setStructureLevel] = useState(50);
   const [useStoredReports, setUseStoredReports] = useState(false);
   const [showAIOptions, setShowAIOptions] = useState(false);
+  const [extraInstructions, setExtraInstructions] = useState('');
 
   const visibleCategories = reportCategories.filter(cat => cat.isVisible);
   const activeFilters = reportFilters.filter(filter => filter.isActive);
@@ -169,6 +170,10 @@ Sé directo y conciso.`;
         }
       }
 
+      if (extraInstructions.trim()) {
+        prompt += `\n\nIndicaciones adicionales del usuario: ${extraInstructions.trim()}`;
+      }
+
       const generatedContent = await generateText(prompt);
       setContent(generatedContent);
     } catch (error) {
@@ -297,6 +302,24 @@ Sé directo y conciso.`;
                         <Text style={[styles.sliderEndLabel, { color: theme.outline }]}>Narrativo</Text>
                         <Text style={[styles.sliderEndLabel, { color: theme.outline }]}>Anatómico</Text>
                       </View>
+                    </View>
+
+                    <View style={styles.extraInstructionsSection}>
+                      <Text style={[styles.extraInstructionsLabel, { color: theme.onSurface }]}>Indicación extra para la creación de informe</Text>
+                      <TextInput
+                        style={[styles.extraInstructionsInput, { 
+                          color: theme.onSurface, 
+                          borderColor: theme.outline,
+                          backgroundColor: theme.surface 
+                        }]}
+                        value={extraInstructions}
+                        onChangeText={setExtraInstructions}
+                        placeholder="Ej: Incluir datos de mediciones específicas, énfasis en ciertas áreas..."
+                        placeholderTextColor={theme.outline}
+                        multiline
+                        textAlignVertical="top"
+                        maxLength={500}
+                      />
                     </View>
 
                     <View style={styles.switchSection}>
@@ -639,5 +662,21 @@ const styles = StyleSheet.create({
   generateNowButtonText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  extraInstructionsSection: {
+    marginBottom: 20,
+  },
+  extraInstructionsLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  extraInstructionsInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    minHeight: 80,
   },
 });
