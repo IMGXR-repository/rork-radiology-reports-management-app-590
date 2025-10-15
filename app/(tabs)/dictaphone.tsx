@@ -224,6 +224,96 @@ export default function DictaphoneScreen() {
     }
   };
 
+  const processVoiceCommandsWithAI = async (text: string): Promise<string> => {
+    try {
+      const response = await fetch(new URL('/agent/chat', process.env['EXPO_PUBLIC_TOOLKIT_URL'] || 'https://toolkit.rork.com').toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: `Eres un asistente especializado en procesar transcripciones de voz médicas en español. Tu tarea es:
+
+1. DETECTAR Y APLICAR COMANDOS DE VOZ:
+   - "nuevo párrafo" / "nuevo parrafo" / "bárrafo" / "barrafo" → Insertar doble salto de línea (\n\n) y capitalizar la siguiente palabra
+   - "nueva línea" / "nueva linea" → Insertar salto de línea (\n) y capitalizar la siguiente palabra
+   - "punto" → .
+   - "coma" → ,
+   - "punto y coma" → ;
+   - "dos puntos" → :
+   - "abrir paréntesis" / "abre paréntesis" → (
+   - "cerrar paréntesis" / "cierra paréntesis" / "cierre paréntesis" → )
+   - "[número] por [número]" (ej: "3 por 2") → [número]x[número] (ej: 3x2)
+
+2. CORREGIR ERRORES DE TRANSCRIPCIÓN:
+   - Palabras médicas mal transcritas
+   - Abreviaciones médicas (ej: "AP" para Anteroposterior, "T" para Transversal, "CC" para Craneocaudal)
+   - Unidades de medida (mm, cm, etc.)
+
+3. CAPITALIZACIÓN:
+   - Después de punto, la siguiente palabra debe empezar en mayúscula
+   - Después de comandos de "nuevo párrafo" o "nueva línea", capitalizar la siguiente palabra
+   - NO agregar espacios extra al inicio de párrafos nuevos
+
+4. FORMATO:
+   - Eliminar espacios antes de puntuación
+   - Agregar espacio después de puntuación (excepto al final)
+   - NO agregar información adicional
+   - Mantener el contenido médico exacto
+
+Texto transcrito:
+${text}
+
+Devuelve ÚNICAMENTE el texto procesado con los comandos aplicados y errores corregidos. Sin explicaciones.`,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en procesamiento: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No se pudo leer la respuesta');
+      }
+
+      const decoder = new TextDecoder();
+      let processedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const jsonStr = line.substring(2);
+              const data = JSON.parse(jsonStr);
+              if (data.type === 'text-delta' && data.textDelta) {
+                processedText += data.textDelta;
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
+            }
+          }
+        }
+      }
+
+      return processedText.trim();
+    } catch (error) {
+      console.error('Error processing with AI:', error);
+      return text;
+    }
+  };
+
   const processVoiceCommands = (text: string): string => {
     let processed = text;
     
@@ -371,7 +461,10 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       
       const result = await response.json();
       const rawTranscription = result.text;
-      const transcription = processVoiceCommands(rawTranscription);
+      
+      const aiProcessedText = await processVoiceCommandsWithAI(rawTranscription);
+      
+      const transcription = processVoiceCommands(aiProcessedText);
       
       const recordingId = recordings.find(r => r.uri === uri)?.id;
       
@@ -384,7 +477,8 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       );
       
       console.log('Raw Transcription:', rawTranscription);
-      console.log('Processed Transcription:', transcription);
+      console.log('AI Processed:', aiProcessedText);
+      console.log('Final Transcription:', transcription);
       
       if (recordingId) {
         await correctGrammar(transcription, recordingId);
@@ -418,7 +512,10 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       
       const result = await response.json();
       const rawTranscription = result.text;
-      const transcription = processVoiceCommands(rawTranscription);
+      
+      const aiProcessedText = await processVoiceCommandsWithAI(rawTranscription);
+      
+      const transcription = processVoiceCommands(aiProcessedText);
       
       let recordingId: string | undefined;
       
@@ -436,7 +533,8 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       });
       
       console.log('Raw Transcription:', rawTranscription);
-      console.log('Processed Transcription:', transcription);
+      console.log('AI Processed:', aiProcessedText);
+      console.log('Final Transcription:', transcription);
       
       if (recordingId) {
         await correctGrammar(transcription, recordingId);
