@@ -39,7 +39,7 @@ const STORAGE_KEYS = {
 const defaultReportCategories: ReportCategory[] = [
   {
     id: 'report_cat_1',
-    name: 'Técnica',
+    name: 'TECNICAS',
     isVisible: true,
     color: '#2196F3',
     icon: 'Settings',
@@ -47,18 +47,10 @@ const defaultReportCategories: ReportCategory[] = [
   },
   {
     id: 'report_cat_2',
-    name: 'Sistema/Órgano',
+    name: 'ORGANO / SISTEMA',
     isVisible: true,
     color: '#4CAF50',
     icon: 'Heart',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'report_cat_3',
-    name: 'Hallazgos',
-    isVisible: true,
-    color: '#FF9800',
-    icon: 'Search',
     createdAt: new Date().toISOString(),
   },
 ];
@@ -93,12 +85,15 @@ const defaultPhraseCategories: PhraseCategory[] = [
 const defaultReportFilters: ReportFilter[] = [
   { id: 'report_filter_1', name: 'TC', categoryId: 'report_cat_1', isActive: true, createdAt: new Date().toISOString() },
   { id: 'report_filter_2', name: 'RM', categoryId: 'report_cat_1', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'report_filter_3', name: 'Ecografía', categoryId: 'report_cat_1', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'report_filter_4', name: 'Radiografía', categoryId: 'report_cat_1', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'report_filter_5', name: 'Tórax', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'report_filter_6', name: 'Abdomen', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'report_filter_7', name: 'Pelvis', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
-  { id: 'report_filter_8', name: 'Cráneo', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_3', name: 'ECO', categoryId: 'report_cat_1', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_4', name: 'RX', categoryId: 'report_cat_1', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_5', name: 'MAMO', categoryId: 'report_cat_1', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_6', name: 'NEURO', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_7', name: 'MSK', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_8', name: 'MAMA', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_9', name: 'TORAX', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_10', name: 'ABDOMEN', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
+  { id: 'report_filter_11', name: 'VASCULAR', categoryId: 'report_cat_2', isActive: true, createdAt: new Date().toISOString() },
 ];
 
 const defaultPhraseFilters: PhraseFilter[] = [
