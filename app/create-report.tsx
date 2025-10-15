@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   },
   formSection: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 6,
   },
   label: {
     fontSize: 16,
