@@ -253,65 +253,8 @@ Sé directo y conciso.`;
         />
 
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.voiceCommandSection}>
-            <TouchableOpacity
-              onPress={handleVoiceCommand}
-              style={[
-                styles.voiceButton,
-                {
-                  backgroundColor: recordingState.isRecording ? theme.error : theme.primary,
-                  opacity: isTranscribing || isProcessingVoice ? 0.7 : 1,
-                },
-              ]}
-              disabled={isTranscribing || isProcessingVoice}
-            >
-              {recordingState.isRecording ? (
-                <Square size={24} color={theme.onPrimary} fill={theme.onPrimary} />
-              ) : isTranscribing || isProcessingVoice ? (
-                <ActivityIndicator size="small" color={theme.onPrimary} />
-              ) : (
-                <Mic size={24} color={theme.onPrimary} />
-              )}
-              <Text style={[styles.voiceButtonText, { color: theme.onPrimary }]}>
-                {recordingState.isRecording
-                  ? 'Detener Grabación'
-                  : isTranscribing
-                  ? 'Transcribiendo...'
-                  : isProcessingVoice
-                  ? 'Procesando...'
-                  : 'Comando de Voz'}
-              </Text>
-            </TouchableOpacity>
-            {recordingState.isRecording && (
-              <View style={[styles.recordingIndicator, { backgroundColor: theme.surfaceVariant }]}>
-                <View style={[styles.recordingDot, { backgroundColor: theme.error }]} />
-                <Text style={[styles.recordingText, { color: theme.onSurface }]}>
-                  Grabando... {Math.floor(recordingState.duration / 60)}:{String(recordingState.duration % 60).padStart(2, '0')}
-                </Text>
-              </View>
-            )}
-            <Text style={[styles.voiceHint, { color: theme.outline }]}>
-              Ejemplo: &quot;Haz un informe de RX de tórax normal para un niño de 5 años&quot;
-            </Text>
-          </View>
-
           <View style={styles.formSection}>
             <View style={styles.titleRow}>
-              <TouchableOpacity
-                onPress={handleVoiceCommand}
-                style={[styles.micButton, {
-                  backgroundColor: recordingState.isRecording ? theme.error : '#22C55E',
-                }]}
-                disabled={isTranscribing || isProcessingVoice}
-              >
-                {recordingState.isRecording ? (
-                  <Square size={16} color="#FFFFFF" fill="#FFFFFF" />
-                ) : isTranscribing || isProcessingVoice ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Mic size={16} color="#FFFFFF" />
-                )}
-              </TouchableOpacity>
               <View style={styles.titleInputContainer}>
                 <Text style={[styles.label, { color: theme.onSurface }]}>
                   Título del Informe *
@@ -330,6 +273,21 @@ Sé directo y conciso.`;
                   maxLength={100}
                 />
               </View>
+              <TouchableOpacity
+                onPress={handleVoiceCommand}
+                style={[styles.micButton, {
+                  backgroundColor: recordingState.isRecording ? theme.error : '#22C55E',
+                }]}
+                disabled={isTranscribing || isProcessingVoice}
+              >
+                {recordingState.isRecording ? (
+                  <Square size={16} color="#FFFFFF" fill="#FFFFFF" />
+                ) : isTranscribing || isProcessingVoice ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Mic size={16} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
             </View>
             {recordingState.isRecording && (
               <View style={[styles.recordingIndicatorSmall, { backgroundColor: theme.surfaceVariant }]}>
@@ -569,33 +527,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
   },
-  voiceCommandSection: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  voiceButton: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    gap: 12,
-  },
-  voiceButtonText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  recordingIndicator: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
   recordingDot: {
     width: 8,
     height: 8,
@@ -604,12 +535,6 @@ const styles = StyleSheet.create({
   recordingText: {
     fontSize: 14,
     fontWeight: '500' as const,
-  },
-  voiceHint: {
-    fontSize: 13,
-    textAlign: 'center' as const,
-    fontStyle: 'italic' as const,
-    paddingHorizontal: 8,
   },
   titleRow: {
     flexDirection: 'row' as const,
@@ -622,7 +547,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    marginTop: 24,
+    marginTop: 32,
   },
   titleInputContainer: {
     flex: 1,
@@ -636,7 +561,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     gap: 6,
     marginTop: 8,
-    marginLeft: 40,
   },
   label: {
     fontSize: 16,
