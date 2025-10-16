@@ -296,22 +296,49 @@ Sé directo y conciso.`;
           </View>
 
           <View style={styles.formSection}>
-            <Text style={[styles.label, { color: theme.onSurface }]}>
-              Título del Informe *
-            </Text>
-            <TextInput
-              style={[styles.titleInput, { 
-                color: theme.onSurface, 
-                borderColor: theme.outline,
-                backgroundColor: theme.surface 
-              }]}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Ej: RM Cerebral Estructurado"
-              placeholderTextColor={theme.outline}
-              multiline={false}
-              maxLength={100}
-            />
+            <View style={styles.titleRow}>
+              <TouchableOpacity
+                onPress={handleVoiceCommand}
+                style={[styles.micButton, {
+                  backgroundColor: recordingState.isRecording ? theme.error : '#22C55E',
+                }]}
+                disabled={isTranscribing || isProcessingVoice}
+              >
+                {recordingState.isRecording ? (
+                  <Square size={16} color="#FFFFFF" fill="#FFFFFF" />
+                ) : isTranscribing || isProcessingVoice ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Mic size={16} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+              <View style={styles.titleInputContainer}>
+                <Text style={[styles.label, { color: theme.onSurface }]}>
+                  Título del Informe *
+                </Text>
+                <TextInput
+                  style={[styles.titleInput, { 
+                    color: theme.onSurface, 
+                    borderColor: theme.outline,
+                    backgroundColor: theme.surface 
+                  }]}
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="Ej: RM Cerebral Estructurado"
+                  placeholderTextColor={theme.outline}
+                  multiline={false}
+                  maxLength={100}
+                />
+              </View>
+            </View>
+            {recordingState.isRecording && (
+              <View style={[styles.recordingIndicatorSmall, { backgroundColor: theme.surfaceVariant }]}>
+                <View style={[styles.recordingDot, { backgroundColor: theme.error }]} />
+                <Text style={[styles.recordingText, { color: theme.onSurface }]}>
+                  Grabando... {Math.floor(recordingState.duration / 60)}:{String(recordingState.duration % 60).padStart(2, '0')}
+                </Text>
+              </View>
+            )}
             {title.trim().length > 0 && (
               <View style={styles.aiSection}>
                 <TouchableOpacity
@@ -583,6 +610,33 @@ const styles = StyleSheet.create({
     textAlign: 'center' as const,
     fontStyle: 'italic' as const,
     paddingHorizontal: 8,
+  },
+  titleRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    gap: 8,
+  },
+  micButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginTop: 24,
+  },
+  titleInputContainer: {
+    flex: 1,
+  },
+  recordingIndicatorSmall: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    gap: 6,
+    marginTop: 8,
+    marginLeft: 40,
   },
   label: {
     fontSize: 16,
