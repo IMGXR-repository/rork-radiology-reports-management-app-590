@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, ActivityIndicator, Switch } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Save, X, Tag, Sparkles } from 'lucide-react-native';
+import { Save, X, Tag, Sparkles, Mic, Square } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { Report } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { generateText } from '@rork/toolkit-sdk';
 import CustomSlider from '@/components/CustomSlider';
+import { useAudioRecording } from '@/hooks/useAudioRecording';
 
 export default function CreateReportScreen() {
   const { reportCategories, reportFilters, addReport, settings, reports } = useApp();
@@ -23,9 +24,49 @@ export default function CreateReportScreen() {
   const [useStoredReports, setUseStoredReports] = useState(false);
   const [showAIOptions, setShowAIOptions] = useState(false);
   const [extraInstructions, setExtraInstructions] = useState('');
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
 
   const visibleCategories = reportCategories.filter(cat => cat.isVisible);
   const activeFilters = reportFilters.filter(filter => filter.isActive);
+
+  const processVoiceCommand = async (transcribedText: string) => {
+    setIsProcessingVoice(true);
+    try {
+      console.log('🎙️ Procesando comando de voz:', transcribedText);
+
+      const extractedTitle = transcribedText.toUpperCase();
+      setTitle(extractedTitle);
+      
+      setExtraInstructions(transcribedText);
+      
+      setStructureLevel(80);
+      setShowAIOptions(true);
+      
+      setTimeout(async () => {
+        console.log('🚀 Iniciando generación automática de informe...');
+        await handleGenerateStructuredReport();
+      }, 500);
+      
+      console.log('✅ Comando procesado correctamente');
+    } catch (error) {
+      console.error('❌ Error procesando comando de voz:', error);
+      if (Platform.OS === 'web') {
+        alert('Error al procesar el comando de voz');
+      } else {
+        Alert.alert('Error', 'Error al procesar el comando de voz');
+      }
+    } finally {
+      setIsProcessingVoice(false);
+    }
+  };
+
+  const { recordingState, isTranscribing, startRecording, stopRecording } = useAudioRecording({
+    onTranscriptionComplete: processVoiceCommand,
+    onError: (error) => {
+      console.error('Error en transcripción:', error);
+      setIsProcessingVoice(false);
+    },
+  });
 
   const getFiltersForCategory = (categoryId: string) => {
     return activeFilters.filter(filter => filter.categoryId === categoryId);
@@ -188,6 +229,14 @@ Sé directo y conciso.`;
     }
   };
 
+  const handleVoiceCommand = async () => {
+    if (recordingState.isRecording) {
+      await stopRecording();
+    } else {
+      await startRecording();
+    }
+  };
+
   const handleCancel = () => {
     if (title.trim() || content.trim() || selectedFilters.length > 0) {
       if (Platform.OS === 'web') {
@@ -235,22 +284,49 @@ Sé directo y conciso.`;
 
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.formSection}>
-            <Text style={[styles.label, { color: theme.onSurface }]}>
-              Título del Informe *
-            </Text>
-            <TextInput
-              style={[styles.titleInput, { 
-                color: theme.onSurface, 
-                borderColor: theme.outline,
-                backgroundColor: theme.surface 
-              }]}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Ej: RM Cerebral Estructurado"
-              placeholderTextColor={theme.outline}
-              multiline={false}
-              maxLength={100}
-            />
+            <View style={styles.titleRow}>
+              <View style={styles.titleInputContainer}>
+                <Text style={[styles.label, { color: theme.onSurface }]}>
+                  Título del Informe *
+                </Text>
+                <TextInput
+                  style={[styles.titleInput, { 
+                    color: theme.onSurface, 
+                    borderColor: theme.outline,
+                    backgroundColor: theme.surface 
+                  }]}
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="Ej: RM Cerebral Estructurado"
+                  placeholderTextColor={theme.outline}
+                  multiline={false}
+                  maxLength={100}
+                />
+              </View>
+              <TouchableOpacity
+                onPress={handleVoiceCommand}
+                style={[styles.micButton, {
+                  backgroundColor: recordingState.isRecording ? theme.error : '#22C55E',
+                }]}
+                disabled={isTranscribing || isProcessingVoice}
+              >
+                {recordingState.isRecording ? (
+                  <Square size={16} color="#FFFFFF" fill="#FFFFFF" />
+                ) : isTranscribing || isProcessingVoice ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Mic size={16} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+            </View>
+            {recordingState.isRecording && (
+              <View style={[styles.recordingIndicatorSmall, { backgroundColor: theme.surfaceVariant }]}>
+                <View style={[styles.recordingDot, { backgroundColor: theme.error }]} />
+                <Text style={[styles.recordingText, { color: theme.onSurface }]}>
+                  Grabando... {Math.floor(recordingState.duration / 60)}:{String(recordingState.duration % 60).padStart(2, '0')}
+                </Text>
+              </View>
+            )}
             {title.trim().length > 0 && (
               <View style={styles.aiSection}>
                 <TouchableOpacity
@@ -487,9 +563,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
   },
+  titleRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    gap: 8,
+  },
+  titleInputContainer: {
+    flex: 1,
+  },
+  micButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginTop: 32,
+  },
+  recordingIndicatorSmall: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    gap: 6,
+    marginTop: 8,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  recordingText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+  },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     marginBottom: 8,
   },
   titleInput: {
