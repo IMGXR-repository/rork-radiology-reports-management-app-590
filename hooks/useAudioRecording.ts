@@ -113,14 +113,24 @@ export const useAudioRecording = ({
   const requestPermissions = async (): Promise<boolean> => {
     try {
       if (Platform.OS === 'web') {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('🌐 Solicitando permisos de micrófono web...');
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        console.log('✅ Permisos web concedidos');
         return true;
       } else {
-        const { status } = await Audio.requestPermissionsAsync();
-        return status === 'granted';
+        console.log('📱 Solicitando permisos de micrófono móvil...');
+        const { status, granted } = await Audio.requestPermissionsAsync();
+        console.log('📱 Estado de permisos:', status, 'granted:', granted);
+        if (granted) {
+          console.log('✅ Permisos móvil concedidos');
+        } else {
+          console.log('❌ Permisos móvil denegados');
+        }
+        return granted;
       }
     } catch (error) {
-      console.error('Error requesting permissions:', error);
+      console.error('❌ Error solicitando permisos:', error);
       return false;
     }
   };
@@ -362,42 +372,66 @@ export const useAudioRecording = ({
       }
 
       if (Platform.OS === 'web') {
+        console.log('🌐 Iniciando grabación web...');
         const stream = await navigator.mediaDevices.getUserMedia({ 
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: true,
-            sampleRate: 44100,
+            sampleRate: 48000,
           } 
         });
         
-        let mimeType = 'audio/webm';
+        console.log('📡 Stream obtenido:', stream.getTracks().length, 'pistas');
+        
+        let mimeType = 'audio/webm;codecs=opus';
         if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = 'audio/mp4';
+          mimeType = 'audio/webm';
           if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = 'audio/wav';
+            mimeType = 'audio/mp4';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+              mimeType = 'audio/ogg;codecs=opus';
+            }
           }
         }
         
-        console.log('Usando formato:', mimeType);
-        const mediaRecorder = new MediaRecorder(stream, { 
+        console.log('🎵 Usando formato:', mimeType, 'soportado:', MediaRecorder.isTypeSupported(mimeType));
+        
+        const options: MediaRecorderOptions = { 
           mimeType,
           audioBitsPerSecond: 128000,
-        });
+        };
+        
+        const mediaRecorder = new MediaRecorder(stream, options);
         const localAudioChunks: Blob[] = [];
         
         mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
+          if (event.data && event.data.size > 0) {
+            console.log('📦 Chunk recibido:', event.data.size, 'bytes, tipo:', event.data.type);
             localAudioChunks.push(event.data);
-            console.log('Chunk recibido:', event.data.size, 'bytes');
+          } else {
+            console.warn('⚠️ Chunk vacío recibido');
           }
         };
         
         mediaRecorder.onstop = async () => {
-          console.log('Grabación web detenida, procesando...');
+          console.log('🛑 Grabación web detenida, procesando...');
+          console.log('📦 Chunks totales:', localAudioChunks.length);
+          
+          if (localAudioChunks.length === 0) {
+            console.error('❌ No se recibieron chunks de audio');
+            if (Platform.OS === 'web') {
+              alert('No se grabó ningún audio. Verifica que el micrófono esté funcionando.');
+            } else {
+              Alert.alert('Error', 'No se grabó ningún audio. Verifica que el micrófono esté funcionando.');
+            }
+            stream.getTracks().forEach(track => track.stop());
+            return;
+          }
+          
           const audioBlob = new Blob(localAudioChunks, { type: mimeType });
           
-          console.log('Audio blob creado:', {
+          console.log('🎵 Audio blob creado:', {
             size: audioBlob.size,
             type: audioBlob.type,
             chunks: localAudioChunks.length
@@ -406,7 +440,7 @@ export const useAudioRecording = ({
           if (audioBlob.size > 0) {
             await transcribeAudioFromBlob(audioBlob);
           } else {
-            console.warn('Audio vacío, no se puede transcribir');
+            console.warn('⚠️ Audio vacío, no se puede transcribir');
             if (Platform.OS === 'web') {
               alert('No se detectó audio para transcribir.');
             } else {
@@ -414,7 +448,11 @@ export const useAudioRecording = ({
             }
           }
           
-          stream.getTracks().forEach(track => track.stop());
+          console.log('🔇 Deteniendo pistas de audio...');
+          stream.getTracks().forEach(track => {
+            console.log('Deteniendo pista:', track.kind, track.label);
+            track.stop();
+          });
         };
         
         mediaRecorder.onerror = (event) => {
@@ -432,7 +470,9 @@ export const useAudioRecording = ({
           stream,
         });
         
-        mediaRecorder.start(1000);
+        mediaRecorder.start(100);
+        
+        console.log('▶️ MediaRecorder iniciado, estado:', mediaRecorder.state);
         
         setRecordingState({
           isRecording: true,
@@ -441,15 +481,18 @@ export const useAudioRecording = ({
           uri: null,
         });
         
-        console.log('Grabación web iniciada');
+        console.log('✅ Grabación web iniciada correctamente');
         return true;
       } else {
+        console.log('📱 Configurando modo de audio móvil...');
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
           playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
         });
 
-        const { recording: newRecording } = await Audio.Recording.createAsync({
+        console.log('🎙️ Creando grabación móvil...');
+        const recordingOptions: Audio.RecordingOptions = {
           android: {
             extension: '.m4a',
             outputFormat: Audio.AndroidOutputFormat.MPEG_4,
@@ -459,21 +502,27 @@ export const useAudioRecording = ({
             bitRate: 128000,
           },
           ios: {
-            extension: '.wav',
-            outputFormat: Audio.IOSOutputFormat.LINEARPCM,
+            extension: '.m4a',
+            outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
             audioQuality: Audio.IOSAudioQuality.HIGH,
             sampleRate: 44100,
             numberOfChannels: 2,
             bitRate: 128000,
-            linearPCMBitDepth: 16,
-            linearPCMIsBigEndian: false,
-            linearPCMIsFloat: false,
           },
           web: {
             mimeType: 'audio/webm',
             bitsPerSecond: 128000,
           },
-        });
+        };
+        
+        console.log('🎙️ Opciones de grabación:', JSON.stringify(recordingOptions, null, 2));
+        
+        const { recording: newRecording, status } = await Audio.Recording.createAsync(
+          recordingOptions
+        );
+        
+        console.log('📱 Estado de grabación:', status);
+        console.log('✅ Grabación móvil creada');
         
         setRecording(newRecording);
         setIsRecordingUnloaded(false);
@@ -484,7 +533,7 @@ export const useAudioRecording = ({
           uri: null,
         });
         
-        console.log('Grabación móvil iniciada');
+        console.log('✅ Grabación móvil iniciada correctamente');
         return true;
       }
     } catch (error) {
@@ -511,29 +560,39 @@ export const useAudioRecording = ({
       }));
       
       if (Platform.OS === 'web') {
-        if (webRecording.mediaRecorder && webRecording.mediaRecorder.state === 'recording') {
+        console.log('🛑 Deteniendo grabación web, estado:', webRecording.mediaRecorder?.state);
+        if (webRecording.mediaRecorder && webRecording.mediaRecorder.state !== 'inactive') {
           webRecording.mediaRecorder.stop();
-          console.log('MediaRecorder detenido');
+          console.log('✅ MediaRecorder detenido');
+        } else {
+          console.warn('⚠️ MediaRecorder no está activo o no existe');
         }
       } else {
+        console.log('🛑 Deteniendo grabación móvil...');
         if (!recording || isRecordingUnloaded) {
-          console.log('No hay grabación activa');
+          console.log('⚠️ No hay grabación activa');
           return;
         }
         
+        console.log('📱 Obteniendo URI y deteniendo...');
         const uri = recording.getURI();
+        console.log('📍 URI:', uri);
+        
         await recording.stopAndUnloadAsync();
         setIsRecordingUnloaded(true);
         
+        console.log('🔇 Desactivando modo de grabación...');
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
         });
         
-        console.log('Grabación guardada:', uri);
+        console.log('✅ Grabación móvil guardada:', uri);
         setRecording(null);
         
         if (uri) {
           await transcribeAudioFromUri(uri);
+        } else {
+          console.error('❌ URI de grabación es nulo');
         }
       }
     } catch (error) {
