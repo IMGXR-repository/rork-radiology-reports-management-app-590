@@ -1,5 +1,5 @@
 import { Tabs, router } from 'expo-router';
-import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, FileBarChart, FileEdit } from 'lucide-react-native';
+import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, FileBarChart, FileEdit, Brain } from 'lucide-react-native';
 import React from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -58,7 +58,7 @@ export default function TabLayout() {
         name="ai-chat"
         options={{
           title: 'Chat IA',
-          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Brain color={color} size={size} />,
         }}
       />
       <Tabs.Screen
