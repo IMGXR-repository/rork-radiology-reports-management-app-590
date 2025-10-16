@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, FileBarChart, FileEdit } from 'lucide-react-native';
 import React from 'react';
 import { useApp } from '@/contexts/AppContext';
@@ -44,8 +44,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create-report-tab"
         options={{
-          title: 'Crear Informe',
+          title: 'Crear',
           tabBarIcon: ({ color, size }) => <FileEdit color={color} size={size} />,
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.push('/create-report');
+          },
         }}
       />
       <Tabs.Screen
