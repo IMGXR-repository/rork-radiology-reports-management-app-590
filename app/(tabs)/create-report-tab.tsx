@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, ActivityIndicator, Switch } from 'react-native';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Sparkles, Tag } from 'lucide-react-native';
+import { Sparkles, Tag, Mic, Square } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { Report } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { generateText } from '@rork/toolkit-sdk';
 import CustomSlider from '@/components/CustomSlider';
+import { useAudioRecording } from '@/hooks/useAudioRecording';
 
 export default function CreateReportTabScreen() {
   const { reportCategories, reportFilters, addReport, settings, reports } = useApp();
@@ -23,9 +24,49 @@ export default function CreateReportTabScreen() {
   const [useStoredReports, setUseStoredReports] = useState(false);
   const [showAIOptions, setShowAIOptions] = useState(false);
   const [extraInstructions, setExtraInstructions] = useState('');
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
 
   const visibleCategories = reportCategories.filter(cat => cat.isVisible);
   const activeFilters = reportFilters.filter(filter => filter.isActive);
+
+  const processVoiceCommand = async (transcribedText: string) => {
+    setIsProcessingVoice(true);
+    try {
+      console.log('🎙️ Procesando comando de voz:', transcribedText);
+
+      const extractedTitle = transcribedText.toUpperCase();
+      setTitle(extractedTitle);
+      
+      setExtraInstructions(transcribedText);
+      
+      setStructureLevel(80);
+      setShowAIOptions(true);
+      
+      setTimeout(async () => {
+        console.log('🚀 Iniciando generación automática de informe...');
+        await handleGenerateStructuredReport();
+      }, 500);
+      
+      console.log('✅ Comando procesado correctamente');
+    } catch (error) {
+      console.error('❌ Error procesando comando de voz:', error);
+      if (Platform.OS === 'web') {
+        alert('Error al procesar el comando de voz');
+      } else {
+        Alert.alert('Error', 'Error al procesar el comando de voz');
+      }
+    } finally {
+      setIsProcessingVoice(false);
+    }
+  };
+
+  const { recordingState, isTranscribing, startRecording, stopRecording } = useAudioRecording({
+    onTranscriptionComplete: processVoiceCommand,
+    onError: (error) => {
+      console.error('Error en transcripción:', error);
+      setIsProcessingVoice(false);
+    },
+  });
 
   const getFiltersForCategory = (categoryId: string) => {
     return activeFilters.filter(filter => filter.categoryId === categoryId);
@@ -89,6 +130,14 @@ export default function CreateReportTabScreen() {
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleVoiceCommand = async () => {
+    if (recordingState.isRecording) {
+      await stopRecording();
+    } else {
+      await startRecording();
     }
   };
 
@@ -204,6 +253,48 @@ Sé directo y conciso.`;
         />
 
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.voiceCommandSection}>
+            <TouchableOpacity
+              onPress={handleVoiceCommand}
+              style={[
+                styles.voiceButton,
+                {
+                  backgroundColor: recordingState.isRecording ? theme.error : theme.primary,
+                  opacity: isTranscribing || isProcessingVoice ? 0.7 : 1,
+                },
+              ]}
+              disabled={isTranscribing || isProcessingVoice}
+            >
+              {recordingState.isRecording ? (
+                <Square size={24} color={theme.onPrimary} fill={theme.onPrimary} />
+              ) : isTranscribing || isProcessingVoice ? (
+                <ActivityIndicator size="small" color={theme.onPrimary} />
+              ) : (
+                <Mic size={24} color={theme.onPrimary} />
+              )}
+              <Text style={[styles.voiceButtonText, { color: theme.onPrimary }]}>
+                {recordingState.isRecording
+                  ? 'Detener Grabación'
+                  : isTranscribing
+                  ? 'Transcribiendo...'
+                  : isProcessingVoice
+                  ? 'Procesando...'
+                  : 'Comando de Voz'}
+              </Text>
+            </TouchableOpacity>
+            {recordingState.isRecording && (
+              <View style={[styles.recordingIndicator, { backgroundColor: theme.surfaceVariant }]}>
+                <View style={[styles.recordingDot, { backgroundColor: theme.error }]} />
+                <Text style={[styles.recordingText, { color: theme.onSurface }]}>
+                  Grabando... {Math.floor(recordingState.duration / 60)}:{String(recordingState.duration % 60).padStart(2, '0')}
+                </Text>
+              </View>
+            )}
+            <Text style={[styles.voiceHint, { color: theme.outline }]}>
+              Ejemplo: &quot;Haz un informe de RX de tórax normal para un niño de 5 años&quot;
+            </Text>
+          </View>
+
           <View style={styles.formSection}>
             <Text style={[styles.label, { color: theme.onSurface }]}>
               Título del Informe *
@@ -450,6 +541,48 @@ const styles = StyleSheet.create({
   formSection: {
     paddingHorizontal: 16,
     paddingVertical: 6,
+  },
+  voiceCommandSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  voiceButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    gap: 12,
+  },
+  voiceButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  recordingIndicator: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  recordingText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+  },
+  voiceHint: {
+    fontSize: 13,
+    textAlign: 'center' as const,
+    fontStyle: 'italic' as const,
+    paddingHorizontal: 8,
   },
   label: {
     fontSize: 16,
