@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    marginTop: 32,
+    marginTop: 26,
   },
   recordingIndicatorSmall: {
     flexDirection: 'row' as const,
