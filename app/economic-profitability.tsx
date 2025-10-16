@@ -7,7 +7,7 @@ import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
 
 export default function EconomicProfitabilityScreen() {
-  const { settings, saveEconomicProfitability } = useApp();
+  const { settings, saveEconomicProfitability, stats } = useApp();
   const theme = settings.theme === 'dark' ? darkTheme : lightTheme;
   const insets = useSafeAreaInsets();
   
@@ -310,6 +310,62 @@ export default function EconomicProfitabilityScreen() {
             </TouchableOpacity>
           </View>
         )}
+        
+        {stats?.monthlyProfitability && Object.keys(stats.monthlyProfitability).length > 0 && (
+          <View style={styles.chartsSection}>
+            <View style={[styles.chartCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+              <Text style={[styles.chartTitle, { color: theme.onSurface }]}>Rentabilidad Mensual (€)</Text>
+              <View style={styles.monthlyChart}>
+                {Object.entries(stats.monthlyProfitability)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .slice(-6)
+                  .map(([month, benefit]) => {
+                    const maxBenefit = Math.max(...Object.values(stats.monthlyProfitability));
+                    const heightPercent = (benefit / maxBenefit) * 100;
+                    const [year, monthNum] = month.split('-');
+                    const monthName = new Date(parseInt(year), parseInt(monthNum) - 1).toLocaleDateString('es-ES', { month: 'short' });
+                    
+                    return (
+                      <View key={month} style={styles.monthBar}>
+                        <View style={styles.barWrapper}>
+                          <View
+                            style={[
+                              styles.monthBarFill,
+                              {
+                                height: `${Math.max(5, heightPercent)}%`,
+                                backgroundColor: theme.success,
+                              },
+                            ]}
+                          />
+                        </View>
+                        <Text style={[styles.monthLabel, { color: theme.onSurface }]}>
+                          {monthName}
+                        </Text>
+                        <Text style={[styles.monthValue, { color: theme.success }]}>
+                          €{benefit.toFixed(0)}
+                        </Text>
+                      </View>
+                    );
+                  })}
+              </View>
+            </View>
+            
+            <View style={[styles.chartCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+              <Text style={[styles.chartTitle, { color: theme.onSurface }]}>Proyección Anual</Text>
+              <View style={styles.annualProjection}>
+                <View style={styles.projectionBar}>
+                  <View style={[styles.projectionFill, { backgroundColor: theme.primary, width: '100%' }]} />
+                </View>
+                <View style={styles.projectionDetails}>
+                  <Text style={[styles.projectionLabel, { color: theme.outline }]}>Total Anualizado:</Text>
+                  <Text style={[styles.projectionValue, { color: theme.primary }]}>
+                    €{(Object.values(stats.monthlyProfitability).reduce((a, b) => a + b, 0) * 12 / Object.keys(stats.monthlyProfitability).length).toFixed(0)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -532,5 +588,86 @@ const styles = StyleSheet.create({
   resetButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  chartsSection: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  chartCard: {
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  monthlyChart: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 150,
+    paddingHorizontal: 8,
+  },
+  monthBar: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 2,
+  },
+  barWrapper: {
+    height: 100,
+    width: '100%',
+    justifyContent: 'flex-end',
+    marginBottom: 8,
+  },
+  monthBarFill: {
+    width: '100%',
+    borderRadius: 4,
+    minHeight: 4,
+  },
+  monthLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  monthValue: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  annualProjection: {
+    alignItems: 'center',
+  },
+  projectionBar: {
+    width: '100%',
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  projectionFill: {
+    height: '100%',
+    borderRadius: 20,
+  },
+  projectionDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  projectionLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  projectionValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
 });

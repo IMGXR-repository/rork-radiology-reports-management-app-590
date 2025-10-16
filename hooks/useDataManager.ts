@@ -128,6 +128,9 @@ const defaultStats: ProductivityStats = {
   aiHallazgosCopied: 0,
   aiConclusionsCopied: 0,
   aiDiferencialesCopied: 0,
+  reportsShared: 0,
+  phrasesShared: 0,
+  monthlyProfitability: {},
 };
 
 export function useDataManager() {
@@ -503,9 +506,32 @@ export function useDataManager() {
   };
 
   const saveEconomicProfitability = async (data: EconomicProfitabilityData) => {
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
     const updatedStats = {
       ...stats,
       economicProfitability: data,
+      monthlyProfitability: {
+        ...stats.monthlyProfitability,
+        [monthKey]: data.monthlyBenefit,
+      },
+    };
+    await saveStats(updatedStats);
+  };
+  
+  const trackReportShare = async () => {
+    const updatedStats = {
+      ...stats,
+      reportsShared: stats.reportsShared + 1,
+    };
+    await saveStats(updatedStats);
+  };
+  
+  const trackPhraseShare = async () => {
+    const updatedStats = {
+      ...stats,
+      phrasesShared: stats.phrasesShared + 1,
     };
     await saveStats(updatedStats);
   };
@@ -521,7 +547,7 @@ export function useDataManager() {
       settings,
       stats,
       exportDate: new Date().toISOString(),
-      version: '2.0.0',
+      version: '2.1.0',
       // Legacy compatibility
       categories: reportCategories,
       filters: reportFilters,

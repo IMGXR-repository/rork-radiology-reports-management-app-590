@@ -3,20 +3,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
-  BarChart3, 
   Copy, 
-  TrendingUp, 
-  Calendar, 
   Clock, 
   Mic, 
-  Brain, 
-  Timer, 
-  Star,
-  Activity,
-  Target,
-  Award,
-  Zap,
-  Euro
+  Euro,
+  FileText,
+  MessageSquare,
+  Share2
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -39,25 +32,14 @@ export default function ProductivityScreen() {
     };
   }, [sessionStartTime, trackInteractionTime]);
 
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  
   // Calculate comprehensive stats
   const totalReportsCopied = stats?.reportsCopied || 0;
   const totalPhrasesCopied = stats?.phrasesCopied || 0;
-  const todaysCopies = stats?.todaysCopies || 0;
-  const weekCopies = stats?.weekCopies || 0;
-  const monthCopies = stats?.monthCopies || 0;
   const recordingsCount = stats?.recordingsCount || 0;
-  const aiReportsGenerated = stats?.aiReportsGenerated || 0;
-  const aiChatQueries = stats?.aiChatQueries || 0;
   const totalInteractionTime = stats?.totalInteractionTime || 0;
   const aiHallazgosCopied = stats?.aiHallazgosCopied || 0;
   const aiConclusionsCopied = stats?.aiConclusionsCopied || 0;
   const aiDiferencialesCopied = stats?.aiDiferencialesCopied || 0;
-  const satisfactionRating = stats?.appSatisfactionRating;
-  const productivity = calculateProductivity();
   
   // Calculate days since first use
   const firstUseDate = stats?.firstUseDate;
@@ -68,24 +50,14 @@ export default function ProductivityScreen() {
   // Calculate total AI copies
   const totalAICopies = aiHallazgosCopied + aiConclusionsCopied + aiDiferencialesCopied;
   const totalAllCopies = totalReportsCopied + totalPhrasesCopied + totalAICopies;
-  
-  // Generate weekly data from actual stats
-  const weeklyData: Array<{ day: string; copies: number; date: string }> = [];
-  const today = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-    const dayName = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][date.getDay()];
-    weeklyData.push({
-      day: dayName,
-      copies: stats?.dailyStats[dateStr] || 0,
-      date: dateStr
-    });
-  }
+  const totalRecordings = recordingsCount;
+  const totalReportsCreated = reports.length;
+  const totalPhrasesCreated = phrases.length;
+  const reportsShared = stats?.reportsShared || 0;
   
   // Generate interaction time data
-  const interactionData: Array<{ day: string; minutes: number; date: string }> = [];
+  const interactionData: { day: string; minutes: number; date: string }[] = [];
+  const today = new Date();
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
@@ -98,7 +70,6 @@ export default function ProductivityScreen() {
     });
   }
   
-  const maxWeeklyCopies = Math.max(...weeklyData.map(d => d.copies), 1);
   const maxInteractionTime = Math.max(...interactionData.map(d => d.minutes), 1);
   
   const renderStatCard = (
@@ -134,65 +105,12 @@ export default function ProductivityScreen() {
     </TouchableOpacity>
   );
   
-  const renderCompactStatCard = (
-    icon: React.ReactNode,
-    title: string,
-    value: string | number,
-    color?: string
-  ) => (
-    <View style={[styles.compactStatCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
-      <View style={[styles.compactStatIcon, { backgroundColor: color || theme.primary + '20' }]}>
-        {icon}
-      </View>
-      <Text style={[styles.compactStatValue, { color: color || theme.primary }]}>
-        {value}
-      </Text>
-      <Text style={[styles.compactStatTitle, { color: theme.onSurface }]}>
-        {title}
-      </Text>
-    </View>
-  );
-
-  const renderWeeklyChart = () => (
-    <View style={[styles.chartCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
-      <View style={styles.chartHeader}>
-        <Copy size={20} color={theme.primary} />
-        <Text style={[styles.chartTitle, { color: theme.onSurface }]}>
-          Copias por Día (Última Semana)
-        </Text>
-      </View>
-      <View style={styles.chartContainer}>
-        {weeklyData.map((item) => (
-          <View key={item.date} style={styles.barContainer}>
-            <View style={styles.barWrapper}>
-              <View 
-                style={[
-                  styles.bar,
-                  { 
-                    height: Math.max(4, (item.copies / maxWeeklyCopies) * 80),
-                    backgroundColor: item.copies === maxWeeklyCopies && item.copies > 0 ? theme.primary : theme.primary + '60'
-                  }
-                ]}
-              />
-            </View>
-            <Text style={[styles.barLabel, { color: theme.onSurface }]}>
-              {item.day}
-            </Text>
-            <Text style={[styles.barValue, { color: theme.outline }]}>
-              {item.copies}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-  
   const renderInteractionChart = () => (
     <View style={[styles.chartCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
       <View style={styles.chartHeader}>
-        <Timer size={20} color={theme.secondary} />
+        <Clock size={20} color={theme.secondary} />
         <Text style={[styles.chartTitle, { color: theme.onSurface }]}>
-          Tiempo de Interacción (Minutos)
+          Tiempo de Uso de la APP (Minutos/Día)
         </Text>
       </View>
       <View style={styles.chartContainer}>
@@ -221,83 +139,95 @@ export default function ProductivityScreen() {
     </View>
   );
 
-  const renderOverviewCard = () => (
-    <View style={[styles.overviewCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
-      <View style={styles.overviewHeader}>
-        <Text style={[styles.overviewTitle, { color: theme.onSurface }]}>
-          Resumen General
-        </Text>
-        {!satisfactionRating && (
-          <TouchableOpacity
-            onPress={() => setShowSatisfactionModal(true)}
-            style={[styles.ratingButton, { backgroundColor: theme.warning + '20' }]}
-          >
-            <Star size={16} color={theme.warning} />
-            <Text style={[styles.ratingButtonText, { color: theme.warning }]}>Calificar</Text>
-          </TouchableOpacity>
+  const renderMetricsGrid = () => (
+    <View style={styles.metricsSection}>
+      <View style={styles.metricsRow}>
+        {renderMetricCard(
+          <Copy size={24} color={theme.primary} />,
+          'Copias Totales',
+          totalAllCopies.toString(),
+          theme.primary
+        )}
+        {renderMetricCard(
+          <Mic size={24} color={theme.secondary} />,
+          'Grabaciones',
+          totalRecordings.toString(),
+          theme.secondary
         )}
       </View>
       
-      <View style={styles.overviewGrid}>
-        <View style={styles.overviewItem}>
-          <Text style={[styles.overviewNumber, { color: theme.primary }]}>
-            {totalAllCopies}
-          </Text>
-          <Text style={[styles.overviewLabel, { color: theme.onSurface }]}>
-            Total Copias
-          </Text>
-        </View>
-        <View style={styles.overviewItem}>
-          <Text style={[styles.overviewNumber, { color: theme.secondary }]}>
-            {recordingsCount}
-          </Text>
-          <Text style={[styles.overviewLabel, { color: theme.onSurface }]}>
-            Grabaciones
-          </Text>
-        </View>
-        <View style={styles.overviewItem}>
-          <Text style={[styles.overviewNumber, { color: theme.success }]}>
-            {aiReportsGenerated}
-          </Text>
-          <Text style={[styles.overviewLabel, { color: theme.onSurface }]}>
-            Informes IA
-          </Text>
-        </View>
-        <View style={styles.overviewItem}>
-          <Text style={[styles.overviewNumber, { color: theme.warning }]}>
-            {aiChatQueries}
-          </Text>
-          <Text style={[styles.overviewLabel, { color: theme.onSurface }]}>
-            Consultas Chat IA
-          </Text>
-        </View>
-        <View style={styles.overviewItem}>
-          <Text style={[styles.overviewNumber, { color: theme.info }]}>
-            {Math.round(totalInteractionTime / 60)}h
-          </Text>
-          <Text style={[styles.overviewLabel, { color: theme.onSurface }]}>
-            Tiempo Total
-          </Text>
-        </View>
+      <View style={styles.metricsRow}>
+        {renderMetricCard(
+          <FileText size={24} color={theme.success} />,
+          'Informes Creados',
+          totalReportsCreated.toString(),
+          theme.success
+        )}
+        {renderMetricCard(
+          <MessageSquare size={24} color={theme.warning} />,
+          'Frases Creadas',
+          totalPhrasesCreated.toString(),
+          theme.warning
+        )}
       </View>
       
-      {satisfactionRating && (
-        <View style={styles.satisfactionDisplay}>
-          <Text style={[styles.satisfactionLabel, { color: theme.outline }]}>
-            Tu calificación:
-          </Text>
-          <View style={styles.starsDisplay}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                size={16}
-                color={star <= satisfactionRating ? theme.warning : theme.outline}
-                fill={star <= satisfactionRating ? theme.warning : 'transparent'}
-              />
-            ))}
-          </View>
+      <View style={styles.metricsRow}>
+        {renderMetricCard(
+          <Share2 size={24} color={theme.info} />,
+          'Informes Compartidos',
+          reportsShared.toString(),
+          theme.info
+        )}
+        {renderMetricCard(
+          <Clock size={24} color='#9C27B0' />,
+          'Tiempo Total',
+          `${Math.round(totalInteractionTime / 60)}h`,
+          '#9C27B0'
+        )}
+      </View>
+      
+      <View style={[styles.detailsCopyCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+        <Text style={[styles.detailsCopyTitle, { color: theme.onSurface }]}>Desglose de Copias</Text>
+        <View style={styles.detailsCopyRow}>
+          <Text style={[styles.detailsCopyLabel, { color: theme.outline }]}>Informes:</Text>
+          <Text style={[styles.detailsCopyValue, { color: theme.primary }]}>{totalReportsCopied}</Text>
         </View>
-      )}
+        <View style={styles.detailsCopyRow}>
+          <Text style={[styles.detailsCopyLabel, { color: theme.outline }]}>Frases:</Text>
+          <Text style={[styles.detailsCopyValue, { color: theme.primary }]}>{totalPhrasesCopied}</Text>
+        </View>
+        <View style={styles.detailsCopyRow}>
+          <Text style={[styles.detailsCopyLabel, { color: theme.outline }]}>Textos transcritos:</Text>
+          <Text style={[styles.detailsCopyValue, { color: theme.primary }]}>{recordingsCount}</Text>
+        </View>
+        <View style={styles.detailsCopyRow}>
+          <Text style={[styles.detailsCopyLabel, { color: theme.outline }]}>Hallazgos IA:</Text>
+          <Text style={[styles.detailsCopyValue, { color: theme.primary }]}>{aiHallazgosCopied}</Text>
+        </View>
+        <View style={styles.detailsCopyRow}>
+          <Text style={[styles.detailsCopyLabel, { color: theme.outline }]}>Conclusiones IA:</Text>
+          <Text style={[styles.detailsCopyValue, { color: theme.primary }]}>{aiConclusionsCopied}</Text>
+        </View>
+        <View style={styles.detailsCopyRow}>
+          <Text style={[styles.detailsCopyLabel, { color: theme.outline }]}>Diferenciales IA:</Text>
+          <Text style={[styles.detailsCopyValue, { color: theme.primary }]}>{aiDiferencialesCopied}</Text>
+        </View>
+      </View>
+    </View>
+  );
+  
+  const renderMetricCard = (
+    icon: React.ReactNode,
+    title: string,
+    value: string,
+    color: string
+  ) => (
+    <View style={[styles.metricCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+      <View style={[styles.metricIconContainer, { backgroundColor: color + '20' }]}>
+        {icon}
+      </View>
+      <Text style={[styles.metricValue, { color }]}>{value}</Text>
+      <Text style={[styles.metricTitle, { color: theme.onSurface }]}>{title}</Text>
     </View>
   );
 
@@ -313,7 +243,9 @@ export default function ProductivityScreen() {
           }}
         />
 
-        {renderOverviewCard()}
+        {renderMetricsGrid()}
+        
+        {renderInteractionChart()}
         
         <TouchableOpacity
           style={[styles.profitabilityButton, { backgroundColor: theme.success, borderColor: theme.success }]}
@@ -322,31 +254,6 @@ export default function ProductivityScreen() {
           <Euro size={20} color="white" />
           <Text style={styles.profitabilityButtonText}>Cálculo de Rentabilidad Económica</Text>
         </TouchableOpacity>
-        
-        {stats?.economicProfitability && (
-          <View style={[styles.profitabilitySummary, { backgroundColor: theme.success + '15', borderColor: theme.success }]}>
-            <View style={styles.profitabilitySummaryHeader}>
-              <Euro size={16} color={theme.success} />
-              <Text style={[styles.profitabilitySummaryTitle, { color: theme.success }]}>
-                Último Cálculo de Rentabilidad
-              </Text>
-            </View>
-            <View style={styles.profitabilitySummaryContent}>
-              <Text style={[styles.profitabilitySummaryText, { color: theme.onSurface }]}>
-                Beneficio mensual: <Text style={{ fontWeight: 'bold', color: theme.success }}>€{stats.economicProfitability.monthlyBenefit.toFixed(0)}</Text>
-              </Text>
-              <Text style={[styles.profitabilitySummaryText, { color: theme.onSurface }]}>
-                Aumento de productividad: <Text style={{ fontWeight: 'bold', color: theme.success }}>{stats.economicProfitability.productivityIncrease}%</Text>
-              </Text>
-              <Text style={[styles.profitabilitySummaryDate, { color: theme.outline }]}>
-                Calculado: {new Date(stats.economicProfitability.calculatedAt).toLocaleDateString()}
-              </Text>
-            </View>
-          </View>
-        )}
-        
-        {renderWeeklyChart()}
-        {renderInteractionChart()}
 
 
 
@@ -656,5 +563,74 @@ const styles = StyleSheet.create({
   profitabilitySummaryDate: {
     fontSize: 12,
     marginTop: 4,
+  },
+  metricsSection: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  metricCard: {
+    width: '48%',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  metricIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  metricValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  metricTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  detailsCopyCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  detailsCopyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  detailsCopyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  detailsCopyLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  detailsCopyValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

@@ -89,8 +89,13 @@ export interface ProductivityStats {
   aiHallazgosCopied: number;
   aiConclusionsCopied: number;
   aiDiferencialesCopied: number;
+  // Sharing tracking
+  reportsShared: number;
+  phrasesShared: number;
   // Economic profitability data
   economicProfitability?: EconomicProfitabilityData;
+  // Monthly profitability tracking
+  monthlyProfitability: { [month: string]: number }; // Format: 'YYYY-MM' -> benefit
 }
 
 export interface EconomicProfitabilityData {
