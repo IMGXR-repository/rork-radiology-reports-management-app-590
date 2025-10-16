@@ -28,13 +28,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="ai-chat"
-        options={{
-          title: 'Chat IA',
-          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
         name="dictaphone"
         options={{
           title: 'Grabación',
@@ -59,6 +52,13 @@ export default function TabLayout() {
         options={{
           title: 'Predefinidos',
           tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ai-chat"
+        options={{
+          title: 'Chat IA',
+          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
         }}
       />
       <Tabs.Screen
