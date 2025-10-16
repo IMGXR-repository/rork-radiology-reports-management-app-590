@@ -1078,7 +1078,6 @@ DIAGNÓSTICOS DIFERENCIALES:
                 onPress={async () => {
                   if (findings.trim()) {
                     await Clipboard.setStringAsync(findings);
-                    Alert.alert('Copiado', 'Hallazgos copiados al portapapeles');
                   }
                 }}
                 disabled={!findings.trim()}
@@ -1109,7 +1108,6 @@ DIAGNÓSTICOS DIFERENCIALES:
                 onPress={async () => {
                   if (conclusions.trim()) {
                     await Clipboard.setStringAsync(conclusions);
-                    Alert.alert('Copiado', 'Conclusión copiada al portapapeles');
                   }
                 }}
                 disabled={!conclusions.trim()}
@@ -1140,7 +1138,6 @@ DIAGNÓSTICOS DIFERENCIALES:
                 onPress={async () => {
                   if (differentials.trim()) {
                     await Clipboard.setStringAsync(differentials);
-                    Alert.alert('Copiado', 'Diagnósticos diferenciales copiados al portapapeles');
                   }
                 }}
                 disabled={!differentials.trim()}
