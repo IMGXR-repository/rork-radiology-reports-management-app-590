@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, ActivityIndicator } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Save, X, Tag } from 'lucide-react-native';
+import { Save, X, Tag, Mic, Square } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { CommonPhrase } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
+import { useAudioRecording } from '@/hooks/useAudioRecording';
 
 export default function CreatePhraseScreen() {
   const { phraseCategories, phraseFilters, phrases, savePhrases, settings } = useApp();
@@ -15,6 +16,33 @@ export default function CreatePhraseScreen() {
   const [text, setText] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+
+  const processVoiceCommand = async (transcribedText: string) => {
+    setIsProcessingVoice(true);
+    try {
+      console.log('🎙️ Procesando transcripción de voz:', transcribedText);
+      setText(transcribedText);
+      console.log('✅ Transcripción procesada correctamente');
+    } catch (error) {
+      console.error('❌ Error procesando transcripción de voz:', error);
+      if (Platform.OS === 'web') {
+        alert('Error al procesar la transcripción de voz');
+      } else {
+        Alert.alert('Error', 'Error al procesar la transcripción de voz');
+      }
+    } finally {
+      setIsProcessingVoice(false);
+    }
+  };
+
+  const { recordingState, isTranscribing, startRecording, stopRecording } = useAudioRecording({
+    onTranscriptionComplete: processVoiceCommand,
+    onError: (error) => {
+      console.error('Error en transcripción:', error);
+      setIsProcessingVoice(false);
+    },
+  });
 
   const visibleCategories = phraseCategories.filter(cat => cat.isVisible);
   const activeFilters = phraseFilters.filter(filter => filter.isActive);
@@ -75,6 +103,14 @@ export default function CreatePhraseScreen() {
     }
   };
 
+  const handleVoiceCommand = async () => {
+    if (recordingState.isRecording) {
+      await stopRecording();
+    } else {
+      await startRecording();
+    }
+  };
+
   const handleCancel = () => {
     if (text.trim() || selectedFilters.length > 0) {
       if (Platform.OS === 'web') {
@@ -122,23 +158,50 @@ export default function CreatePhraseScreen() {
 
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.formSection}>
-            <Text style={[styles.label, { color: theme.onSurface }]}>
-              Texto de la Frase *
-            </Text>
-            <TextInput
-              style={[styles.textInput, { 
-                color: theme.onSurface, 
-                borderColor: theme.outline,
-                backgroundColor: theme.surface 
-              }]}
-              value={text}
-              onChangeText={setText}
-              placeholder="Escribe aquí la frase común que quieres guardar..."
-              placeholderTextColor={theme.outline}
-              multiline
-              textAlignVertical="top"
-              maxLength={1000}
-            />
+            <View style={styles.titleRow}>
+              <View style={styles.textInputContainer}>
+                <Text style={[styles.label, { color: theme.onSurface }]}>
+                  Texto de la Frase *
+                </Text>
+                <TextInput
+                  style={[styles.textInput, { 
+                    color: theme.onSurface, 
+                    borderColor: theme.outline,
+                    backgroundColor: theme.surface 
+                  }]}
+                  value={text}
+                  onChangeText={setText}
+                  placeholder="Escribe aquí la frase común que quieres guardar..."
+                  placeholderTextColor={theme.outline}
+                  multiline
+                  textAlignVertical="top"
+                  maxLength={1000}
+                />
+              </View>
+              <TouchableOpacity
+                onPress={handleVoiceCommand}
+                style={[styles.micButton, {
+                  backgroundColor: recordingState.isRecording ? theme.error : '#22C55E',
+                }]}
+                disabled={isTranscribing || isProcessingVoice}
+              >
+                {recordingState.isRecording ? (
+                  <Square size={16} color="#FFFFFF" fill="#FFFFFF" />
+                ) : isTranscribing || isProcessingVoice ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Mic size={16} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+            </View>
+            {recordingState.isRecording && (
+              <View style={[styles.recordingIndicatorSmall, { backgroundColor: theme.surfaceVariant }]}>
+                <View style={[styles.recordingDot, { backgroundColor: theme.error }]} />
+                <Text style={[styles.recordingText, { color: theme.onSurface }]}>
+                  Grabando... {Math.floor(recordingState.duration / 60)}:{String(recordingState.duration % 60).padStart(2, '0')}
+                </Text>
+              </View>
+            )}
             <Text style={[styles.characterCount, { color: theme.outline }]}>
               {text.length}/1000 caracteres
             </Text>
@@ -253,9 +316,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
   },
+  titleRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    gap: 8,
+  },
+  textInputContainer: {
+    flex: 1,
+  },
+  micButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginTop: 32,
+  },
+  recordingIndicatorSmall: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    gap: 6,
+    marginTop: 8,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  recordingText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+  },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     marginBottom: 8,
   },
   textInput: {
