@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, FileBarChart } from 'lucide-react-native';
+import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, FileBarChart, FileEdit } from 'lucide-react-native';
 import React from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -39,6 +39,13 @@ export default function TabLayout() {
         options={{
           title: 'Grabación',
           tabBarIcon: ({ color, size }) => <Mic color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="create-report-tab"
+        options={{
+          title: 'Crear Informe',
+          tabBarIcon: ({ color, size }) => <FileEdit color={color} size={size} />,
         }}
       />
       <Tabs.Screen
