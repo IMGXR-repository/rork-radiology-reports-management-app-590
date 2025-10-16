@@ -717,7 +717,7 @@ export default function ChatScreen() {
           <TouchableOpacity
             style={[styles.headerButton, { backgroundColor: showUsers ? theme.primary : 'transparent' }]}
             onPress={() => {
-              setShowUsers(!showUsers);
+              setShowUsers(true);
               setShowGroupManager(false);
             }}
           >
@@ -726,7 +726,7 @@ export default function ChatScreen() {
           <TouchableOpacity
             style={[styles.headerButton, { backgroundColor: showGroupManager ? theme.primary : 'transparent' }]}
             onPress={() => {
-              setShowGroupManager(!showGroupManager);
+              setShowGroupManager(true);
               setShowUsers(false);
             }}
           >
@@ -735,7 +735,7 @@ export default function ChatScreen() {
         </View>
       </View>
 
-      {showUsers ? (
+      {showUsers && (
         <View style={styles.usersSection}>
           <ScrollView style={styles.groupsList} showsVerticalScrollIndicator={false}>
             <View style={styles.groupsSectionHeader}>
@@ -796,7 +796,8 @@ export default function ChatScreen() {
             </View>
           </ScrollView>
         </View>
-      ) : showGroupManager ? (
+      )}
+      {showGroupManager && (
         <View style={styles.groupManagerSection}>
           <View style={styles.groupManagerHeader}>
             <Text style={[styles.sectionTitle, { color: theme.onSurface, marginVertical: 0 }]}>Gestionar Categorías</Text>
@@ -861,7 +862,7 @@ export default function ChatScreen() {
             })}
           </ScrollView>
         </View>
-      ) : null}
+      )}
       
       {/* Category Creation/Edit Modal */}
       <Modal
