@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Switch, ScrollView, Platform, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Switch, ScrollView, Platform, Image, Modal } from 'react-native';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Moon, Sun, Download, Upload, Heart, Info, User, LogIn, LogOut, Share2, Users, CreditCard, MapPin, Stethoscope, Edit, Monitor, QrCode, Clock } from 'lucide-react-native';
+import { Moon, Sun, Download, Upload, Heart, Info, User, LogIn, LogOut, Share2, Users, CreditCard, MapPin, Stethoscope, Edit, Monitor, QrCode, Clock, X } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadiaLogo } from '@/components/RadiaLogo';
@@ -18,6 +18,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const [showSharedItems, setShowSharedItems] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showFrequencyModal, setShowFrequencyModal] = useState(false);
 
   const sharedItemsReceived = getSharedItemsReceived();
   const sharedItemsSent = getSharedItemsSent();
@@ -39,16 +40,26 @@ export default function SettingsScreen() {
       lastAutoBackupDate: newValue ? new Date().toISOString() : settings.lastAutoBackupDate
     });
     
+    const frequencyText = `cada ${settings.autoBackupFrequencyDays || 3} día${(settings.autoBackupFrequencyDays || 3) > 1 ? 's' : ''}`;
+    
     if (Platform.OS === 'web') {
-      alert(newValue ? 'Respaldos automáticos activados. Se creará un respaldo cada 3 días.' : 'Respaldos automáticos desactivados.');
+      alert(newValue ? `Respaldos automáticos activados. Se creará un respaldo ${frequencyText}.` : 'Respaldos automáticos desactivados.');
     } else {
       const Alert = require('react-native').Alert;
       Alert.alert(
         'Respaldos automáticos',
-        newValue ? 'Respaldos automáticos activados. Se creará un respaldo cada 3 días.' : 'Respaldos automáticos desactivados.',
+        newValue ? `Respaldos automáticos activados. Se creará un respaldo ${frequencyText}.` : 'Respaldos automáticos desactivados.',
         [{ text: 'OK' }]
       );
     }
+  };
+
+  const handleFrequencyChange = async (days: number) => {
+    await saveSettings({ 
+      ...settings, 
+      autoBackupFrequencyDays: days
+    });
+    setShowFrequencyModal(false);
   };
 
 
@@ -357,8 +368,8 @@ export default function SettingsScreen() {
           <Clock size={20} color={theme.primary} />,
           'Respaldos automáticos',
           settings.autoBackupEnabled 
-            ? `Activado - Cada 3 días${settings.lastAutoBackupDate ? ' • Último: ' + new Date(settings.lastAutoBackupDate).toLocaleDateString() : ''}` 
-            : 'Crear respaldos automáticos cada 3 días',
+            ? `Activado - Cada ${settings.autoBackupFrequencyDays || 3} día${(settings.autoBackupFrequencyDays || 3) > 1 ? 's' : ''}${settings.lastAutoBackupDate ? ' • Último: ' + new Date(settings.lastAutoBackupDate).toLocaleDateString() : ''}` 
+            : `Crear respaldos automáticos cada ${settings.autoBackupFrequencyDays || 3} día${(settings.autoBackupFrequencyDays || 3) > 1 ? 's' : ''}`,
           handleAutoBackupToggle,
           <Switch
             value={settings.autoBackupEnabled}
@@ -366,6 +377,13 @@ export default function SettingsScreen() {
             trackColor={{ false: theme.outline, true: theme.primary }}
             thumbColor={settings.autoBackupEnabled ? theme.onPrimary : theme.onSurface}
           />
+        )}
+        
+        {settings.autoBackupEnabled && renderSettingItem(
+          <Clock size={20} color={theme.primary} />,
+          'Frecuencia de respaldo',
+          `Cada ${settings.autoBackupFrequencyDays || 3} día${(settings.autoBackupFrequencyDays || 3) > 1 ? 's' : ''}`,
+          () => setShowFrequencyModal(true)
         )}
         
         {renderSettingItem(
@@ -428,6 +446,56 @@ export default function SettingsScreen() {
         onClose={() => setShowQRModal(false)}
         userSyncCode={userSyncCode}
       />
+      
+      <Modal
+        visible={showFrequencyModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFrequencyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.onSurface }]}>
+                Frecuencia de respaldo
+              </Text>
+              <TouchableOpacity onPress={() => setShowFrequencyModal(false)}>
+                <X size={24} color={theme.onSurface} />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={[styles.modalSubtitle, { color: theme.outline }]}>
+              Selecciona cada cuántos días deseas crear un respaldo automático
+            </Text>
+            
+            <ScrollView style={styles.frequencyOptions}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((days) => (
+                <TouchableOpacity
+                  key={days}
+                  style={[
+                    styles.frequencyOption,
+                    { 
+                      backgroundColor: (settings.autoBackupFrequencyDays || 3) === days ? theme.primary : theme.background,
+                      borderColor: theme.outline 
+                    }
+                  ]}
+                  onPress={() => handleFrequencyChange(days)}
+                >
+                  <Text style={[
+                    styles.frequencyOptionText,
+                    { color: (settings.autoBackupFrequencyDays || 3) === days ? theme.onPrimary : theme.onSurface }
+                  ]}>
+                    Cada {days} día{days > 1 ? 's' : ''}
+                  </Text>
+                  {(settings.autoBackupFrequencyDays || 3) === days && (
+                    <View style={[styles.selectedIndicator, { backgroundColor: theme.onPrimary }]} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -574,5 +642,55 @@ const styles = StyleSheet.create({
   emptySharedText: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  frequencyOptions: {
+    maxHeight: 300,
+  },
+  frequencyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  frequencyOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  selectedIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

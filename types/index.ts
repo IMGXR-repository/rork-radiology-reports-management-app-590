@@ -68,6 +68,7 @@ export interface AppSettings {
   showFavoritesFirst: boolean;
   autoBackupEnabled: boolean;
   lastAutoBackupDate?: string;
+  autoBackupFrequencyDays: number;
 }
 
 export interface ProductivityStats {

@@ -110,6 +110,7 @@ const defaultSettings: AppSettings = {
   autoBackup: false,
   showFavoritesFirst: true,
   autoBackupEnabled: false,
+  autoBackupFrequencyDays: 3,
 };
 
 const defaultStats: ProductivityStats = {
@@ -169,8 +170,9 @@ export function useDataManager() {
     }
     
     const daysSinceLastBackup = Math.floor((now.getTime() - lastBackup.getTime()) / (1000 * 60 * 60 * 24));
+    const backupFrequency = settings.autoBackupFrequencyDays || 3;
     
-    if (daysSinceLastBackup >= 3) {
+    if (daysSinceLastBackup >= backupFrequency) {
       await performAutoBackup();
     }
   };
@@ -274,7 +276,11 @@ export function useDataManager() {
       setPhraseFilters(phraseFiltersData ? JSON.parse(phraseFiltersData) : defaultPhraseFilters);
       
       setPhrases(phrasesData ? JSON.parse(phrasesData) : []);
-      setSettings(settingsData ? JSON.parse(settingsData) : defaultSettings);
+      const loadedSettings = settingsData ? JSON.parse(settingsData) : defaultSettings;
+      if (loadedSettings && !loadedSettings.autoBackupFrequencyDays) {
+        loadedSettings.autoBackupFrequencyDays = 3;
+      }
+      setSettings(loadedSettings);
       
       // Load and update stats
       const loadedStats = statsData ? JSON.parse(statsData) : defaultStats;
