@@ -25,6 +25,7 @@ export default function CreateReportScreen() {
   const [showAIOptions, setShowAIOptions] = useState(false);
   const [extraInstructions, setExtraInstructions] = useState('');
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const [organStructure, setOrganStructure] = useState(false);
 
   const visibleCategories = reportCategories.filter(cat => cat.isVisible);
   const activeFilters = reportFilters.filter(filter => filter.isActive);
@@ -167,7 +168,25 @@ No incluyas párrafos concluyentes, diagnósticos ni patologías.
 Escribe directamente los hallazgos en un formato narrativo simple y profesional.
 Describe únicamente lo observado sin interpretaciones diagnósticas.`;
       } else if (structureLevel === 100) {
-        prompt = `${systemInstructions}
+        if (organStructure) {
+          prompt = `${systemInstructions}
+
+Genera un informe médico altamente estructurado basado en el siguiente título: "${title.trim()}"
+
+Genera ÚNICAMENTE los hallazgos médicos organizados por ÓRGANOS ANATÓMICOS.
+Cada órgano debe ser presentado en MAYÚSCULAS seguido de dos puntos (:), luego su descripción.
+Usa saltos de línea entre cada órgano.
+No incluyas títulos de secciones como "HALLAZGOS:", "CONCLUSIONES:", etc.
+No incluyas párrafos concluyentes, diagnósticos ni patologías.
+Escribe directamente los hallazgos organizados por órganos, usando formato:
+
+ÓRGANO 1: [Descripción breve y concisa del órgano]
+
+ÓRGANO 2: [Descripción breve y concisa del órgano]
+
+Sé directo, breve y preciso. Usa terminología médica exacta.`;
+        } else {
+          prompt = `${systemInstructions}
 
 Genera un informe médico altamente estructurado basado en el siguiente título: "${title.trim()}"
 
@@ -184,9 +203,24 @@ Escribe directamente los hallazgos organizados por anatomía, usando formato:
 [Estructura Anatómica 2]: [Descripción breve y concisa]
 
 Sé directo, breve y preciso. Usa terminología médica exacta.`;
+        }
       } else {
         const structureIntensity = structureLevel / 100;
-        prompt = `${systemInstructions}
+        if (organStructure) {
+          prompt = `${systemInstructions}
+
+Genera un informe médico con nivel de estructuración ${structureLevel}% basado en el siguiente título: "${title.trim()}"
+
+Genera ÚNICAMENTE los hallazgos médicos organizados por ÓRGANOS ANATÓMICOS.
+Cada órgano debe ser presentado en MAYÚSCULAS seguido de dos puntos (:), luego su descripción.
+Nivel de estructuración: ${structureLevel}% (donde 0% es texto corrido y 100% es completamente estructurado por órganos).
+A mayor porcentaje, más breve y estructurado debe ser el informe, con saltos de línea entre órganos.
+No incluyas títulos de secciones como "HALLAZGOS:", "CONCLUSIONES:", etc.
+No incluyas párrafos concluyentes, diagnósticos ni patologías.
+Escribe directamente los hallazgos organizados por órganos según el nivel de estructuración solicitado.
+Sé directo y conciso.`;
+        } else {
+          prompt = `${systemInstructions}
 
 Genera un informe médico con nivel de estructuración ${structureLevel}% basado en el siguiente título: "${title.trim()}"
 
@@ -197,6 +231,7 @@ No incluyas títulos de secciones como "HALLAZGOS:", "CONCLUSIONES:", etc.
 No incluyas párrafos concluyentes, diagnósticos ni patologías.
 Escribe directamente los hallazgos, mezclando descripción narrativa con referencias anatómicas según el nivel de estructuración solicitado.
 Sé directo y conciso.`;
+        }
       }
 
       if (useStoredReports) {
@@ -381,6 +416,30 @@ Sé directo y conciso.`;
                         <Text style={[styles.sliderEndLabel, { color: theme.outline }]}>Anatómico</Text>
                       </View>
                     </View>
+
+                    {structureLevel > 0 && (
+                      <TouchableOpacity
+                        onPress={() => setOrganStructure(!organStructure)}
+                        style={[
+                          styles.organButton,
+                          {
+                            backgroundColor: organStructure ? theme.primary : theme.surfaceVariant,
+                            borderColor: organStructure ? theme.primary : theme.outline,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.organButtonText,
+                            {
+                              color: organStructure ? theme.onPrimary : theme.onSurface,
+                            },
+                          ]}
+                        >
+                          {organStructure ? '✓ ' : ''}Estructurado por Órganos Anatómicos
+                        </Text>
+                      </TouchableOpacity>
+                    )}
 
                     <View style={styles.extraInstructionsSection}>
                       <Text style={[styles.extraInstructionsLabel, { color: theme.onSurface }]}>Indicación extra para la creación de informe</Text>
@@ -784,5 +843,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     minHeight: 80,
+  },
+  organButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center' as const,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  organButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
 });
