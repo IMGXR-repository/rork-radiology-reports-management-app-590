@@ -14,7 +14,7 @@ import {
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Send, Bot, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Send, Brain, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -273,7 +273,7 @@ ${systemInstructions}${redirectInstruction}`;
           {item.role === 'user' ? (
             <User size={16} color={item.role === 'user' ? '#FFFFFF' : theme.primary} />
           ) : (
-            <Bot size={16} color={theme.primary} />
+            <Brain size={16} color={theme.primary} />
           )}
           <Text style={[
             styles.messageRole,
@@ -299,7 +299,7 @@ ${systemInstructions}${redirectInstruction}`;
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Bot size={64} color={theme.outline} />
+      <Brain size={64} color={theme.outline} />
       <Text style={[styles.emptyTitle, { color: theme.onSurface }]}>
         Chat IA Médico
       </Text>
@@ -320,7 +320,7 @@ ${systemInstructions}${redirectInstruction}`;
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.loginPrompt}>
-          <Bot size={64} color={theme.outline} />
+          <Brain size={64} color={theme.outline} />
           <Text style={[styles.loginText, { color: theme.onSurface }]}>
             Inicia sesión para acceder al Chat IA Médico
           </Text>
@@ -344,7 +344,7 @@ ${systemInstructions}${redirectInstruction}`;
       ]}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
-            <Bot size={24} color={theme.primary} />
+            <Brain size={24} color={theme.primary} />
             <Text style={[styles.headerTitle, { color: theme.onSurface }]}>
               Chat IA Médico
             </Text>
