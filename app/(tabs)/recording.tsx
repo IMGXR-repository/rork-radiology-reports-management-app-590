@@ -167,7 +167,7 @@ export default function RecordingScreen() {
             await transcribeAudioFromBlob(audioBlob);
           } else {
             console.warn('Audio vacío, no se puede transcribir');
-            Alert.alert('Aviso', 'No se detectó audio para transcribir.');
+            console.warn('No se detectó audio para transcribir');
           }
           
           // Limpiar recursos
@@ -176,7 +176,7 @@ export default function RecordingScreen() {
         
         mediaRecorder.onerror = (event) => {
           console.error('Error en MediaRecorder:', event);
-          Alert.alert('Error', 'Error durante la grabación.');
+          console.error('Error durante la grabación');
         };
         
         setWebRecording({
@@ -200,7 +200,7 @@ export default function RecordingScreen() {
         const { status } = await Audio.requestPermissionsAsync();
         
         if (status !== 'granted') {
-          Alert.alert('Error', 'Se requieren permisos de micrófono.');
+          console.warn('Permisos de micrófono denegados');
           return;
         }
 
@@ -249,7 +249,7 @@ export default function RecordingScreen() {
       }
     } catch (error) {
       console.error('Error al iniciar grabación:', error);
-      Alert.alert('Error', `No se pudo iniciar la grabación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      console.error('No se pudo iniciar la grabación:', error);
     }
   };
 
@@ -294,7 +294,7 @@ export default function RecordingScreen() {
       console.error('Error al detener grabación:', error);
       setRecording(null);
       setIsRecordingUnloaded(true);
-      Alert.alert('Error', 'Error al detener la grabación.');
+      console.error('Error al detener la grabación');
     }
   };
 
@@ -375,7 +375,7 @@ export default function RecordingScreen() {
       
       if (audioBlob.size < 1000) {
         console.warn('Audio muy pequeño:', audioBlob.size, 'bytes');
-        Alert.alert('Aviso', 'El audio es muy corto. Intenta grabar por más tiempo.');
+        console.warn('Audio muy corto');
         return;
       }
       
@@ -433,7 +433,7 @@ export default function RecordingScreen() {
       
       if (!result.text || result.text.trim() === '') {
         console.warn('⚠️ Transcripción vacía');
-        Alert.alert('Aviso', 'No se detectó texto claro en el audio. Intenta hablar más cerca del micrófono.');
+        console.warn('No se detectó texto claro en el audio');
         return;
       }
       
@@ -453,9 +453,9 @@ export default function RecordingScreen() {
       console.error('❌ Error transcripción:', error);
       
       if (error instanceof Error && error.name === 'AbortError') {
-        Alert.alert('Timeout', 'La transcripción está tomando demasiado tiempo. Verifica tu conexión e intenta de nuevo.');
+        console.error('Timeout de transcripción');
       } else {
-        Alert.alert('Error de Transcripción', error instanceof Error ? error.message : 'Error desconocido al transcribir el audio');
+        console.error('Error de transcripción:', error);
       }
     } finally {
       setIsTranscribing(false);
@@ -527,7 +527,7 @@ export default function RecordingScreen() {
       
       if (!result.text || result.text.trim() === '') {
         console.warn('⚠️ Transcripción móvil vacía');
-        Alert.alert('Aviso', 'No se detectó texto claro en el audio. Intenta hablar más cerca del micrófono.');
+        console.warn('No se detectó texto claro en el audio');
         return;
       }
       
@@ -547,9 +547,9 @@ export default function RecordingScreen() {
       console.error('❌ Error transcripción móvil:', error);
       
       if (error instanceof Error && error.name === 'AbortError') {
-        Alert.alert('Timeout', 'La transcripción está tomando demasiado tiempo. Verifica tu conexión e intenta de nuevo.');
+        console.error('Timeout de transcripción');
       } else {
-        Alert.alert('Error de Transcripción', error instanceof Error ? error.message : 'Error desconocido al transcribir el audio');
+        console.error('Error de transcripción:', error);
       }
     } finally {
       setIsTranscribing(false);
@@ -567,7 +567,7 @@ export default function RecordingScreen() {
 
   const deleteLastTranscription = () => {
     if (!lastTranscription) {
-      Alert.alert('Información', 'No hay transcripción reciente para eliminar.');
+      console.log('No hay transcripción reciente para eliminar');
       return;
     }
     
@@ -612,7 +612,7 @@ export default function RecordingScreen() {
 
   const generateFinalReport = async () => {
     if (!transcribedText.trim()) {
-      Alert.alert('Error', 'Asegúrate de tener texto transcrito o pegado.');
+      console.warn('No hay texto transcrito para generar informe');
       return;
     }
 
@@ -843,7 +843,7 @@ DIAGNÓSTICOS DIFERENCIALES:
       }
     } catch (error) {
       console.error('Error al generar informe:', error);
-      Alert.alert('Error', 'No se pudo generar el informe final.');
+      console.error('No se pudo generar el informe final');
     } finally {
       setIsGenerating(false);
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import { Audio } from 'expo-av';
 
 interface RecordingState {
@@ -150,11 +150,7 @@ export const useAudioRecording = ({
       
       if (audioBlob.size < 1000) {
         console.warn('Audio muy pequeño:', audioBlob.size, 'bytes');
-        if (Platform.OS === 'web') {
-          alert('El audio es muy corto. Intenta grabar por más tiempo.');
-        } else {
-          Alert.alert('Aviso', 'El audio es muy corto. Intenta grabar por más tiempo.');
-        }
+        console.warn('El audio es muy corto');
         return;
       }
       
@@ -211,11 +207,7 @@ export const useAudioRecording = ({
       
       if (!result.text || result.text.trim() === '') {
         console.warn('⚠️ Transcripción vacía');
-        if (Platform.OS === 'web') {
-          alert('No se detectó texto claro en el audio. Intenta hablar más cerca del micrófono.');
-        } else {
-          Alert.alert('Aviso', 'No se detectó texto claro en el audio. Intenta hablar más cerca del micrófono.');
-        }
+        console.warn('No se detectó texto claro en el audio');
         return;
       }
       
@@ -241,11 +233,7 @@ export const useAudioRecording = ({
         onError(errorMessage);
       }
       
-      if (Platform.OS === 'web') {
-        alert(errorMessage);
-      } else {
-        Alert.alert('Error de Transcripción', errorMessage);
-      }
+      console.error('Error de transcripción:', errorMessage);
     } finally {
       setIsTranscribing(false);
     }
@@ -315,11 +303,7 @@ export const useAudioRecording = ({
       
       if (!result.text || result.text.trim() === '') {
         console.warn('⚠️ Transcripción móvil vacía');
-        if (Platform.OS === 'web') {
-          alert('No se detectó texto claro en el audio. Intenta hablar más cerca del micrófono.');
-        } else {
-          Alert.alert('Aviso', 'No se detectó texto claro en el audio. Intenta hablar más cerca del micrófono.');
-        }
+        console.warn('No se detectó texto claro en el audio');
         return;
       }
       
@@ -345,11 +329,7 @@ export const useAudioRecording = ({
         onError(errorMessage);
       }
       
-      if (Platform.OS === 'web') {
-        alert(errorMessage);
-      } else {
-        Alert.alert('Error de Transcripción', errorMessage);
-      }
+      console.error('Error de transcripción:', errorMessage);
     } finally {
       setIsTranscribing(false);
     }
@@ -362,12 +342,8 @@ export const useAudioRecording = ({
       const hasPermission = await requestPermissions();
       if (!hasPermission) {
         const errorMsg = 'Se requieren permisos de micrófono.';
+        console.warn(errorMsg);
         if (onError) onError(errorMsg);
-        if (Platform.OS === 'web') {
-          alert(errorMsg);
-        } else {
-          Alert.alert('Error', errorMsg);
-        }
         return false;
       }
 
@@ -420,11 +396,7 @@ export const useAudioRecording = ({
           
           if (localAudioChunks.length === 0) {
             console.error('❌ No se recibieron chunks de audio');
-            if (Platform.OS === 'web') {
-              alert('No se grabó ningún audio. Verifica que el micrófono esté funcionando.');
-            } else {
-              Alert.alert('Error', 'No se grabó ningún audio. Verifica que el micrófono esté funcionando.');
-            }
+            console.error('No se grabó ningún audio');
             stream.getTracks().forEach(track => track.stop());
             return;
           }
@@ -441,11 +413,7 @@ export const useAudioRecording = ({
             await transcribeAudioFromBlob(audioBlob);
           } else {
             console.warn('⚠️ Audio vacío, no se puede transcribir');
-            if (Platform.OS === 'web') {
-              alert('No se detectó audio para transcribir.');
-            } else {
-              Alert.alert('Aviso', 'No se detectó audio para transcribir.');
-            }
+            console.warn('No se detectó audio para transcribir');
           }
           
           console.log('🔇 Deteniendo pistas de audio...');
@@ -457,11 +425,7 @@ export const useAudioRecording = ({
         
         mediaRecorder.onerror = (event) => {
           console.error('Error en MediaRecorder:', event);
-          if (Platform.OS === 'web') {
-            alert('Error durante la grabación.');
-          } else {
-            Alert.alert('Error', 'Error durante la grabación.');
-          }
+          console.error('Error durante la grabación');
         };
         
         setWebRecording({
@@ -539,12 +503,8 @@ export const useAudioRecording = ({
     } catch (error) {
       console.error('Error al iniciar grabación:', error);
       const errorMsg = `No se pudo iniciar la grabación: ${error instanceof Error ? error.message : 'Error desconocido'}`;
+      console.error(errorMsg);
       if (onError) onError(errorMsg);
-      if (Platform.OS === 'web') {
-        alert(errorMsg);
-      } else {
-        Alert.alert('Error', errorMsg);
-      }
       return false;
     }
   };
@@ -600,12 +560,8 @@ export const useAudioRecording = ({
       setRecording(null);
       setIsRecordingUnloaded(true);
       const errorMsg = 'Error al detener la grabación.';
+      console.error(errorMsg);
       if (onError) onError(errorMsg);
-      if (Platform.OS === 'web') {
-        alert(errorMsg);
-      } else {
-        Alert.alert('Error', errorMsg);
-      }
     }
   };
 

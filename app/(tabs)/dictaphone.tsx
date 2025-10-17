@@ -134,11 +134,7 @@ export default function DictaphoneScreen() {
       }
     } catch (error) {
       console.error('Error starting recording:', error);
-      if (Platform.OS === 'web') {
-        alert('Error al iniciar la grabación. Verifica los permisos del micrófono.');
-      } else {
-        Alert.alert('Error', 'Error al iniciar la grabación. Verifica los permisos del micrófono.');
-      }
+      console.error('Error al iniciar la grabación. Verifica los permisos del micrófono.');
     }
   };
 
@@ -180,11 +176,7 @@ export default function DictaphoneScreen() {
       }
     } catch (error) {
       console.error('Error stopping recording:', error);
-      if (Platform.OS === 'web') {
-        alert('Error al detener la grabación.');
-      } else {
-        Alert.alert('Error', 'Error al detener la grabación.');
-      }
+      console.error('Error al detener la grabación.');
     }
   };
 
@@ -424,11 +416,7 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       }
     } catch (error) {
       console.error('Error correcting grammar:', error);
-      if (Platform.OS === 'web') {
-        alert('Error al corregir la gramática. Se mantendrá el texto original.');
-      } else {
-        Alert.alert('Error', 'Error al corregir la gramática. Se mantendrá el texto original.');
-      }
+      console.error('Error al corregir la gramática. Se mantendrá el texto original.');
     } finally {
       setCorrectingGrammar(null);
     }
@@ -485,11 +473,7 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       }
     } catch (error) {
       console.error('Error transcribing:', error);
-      if (Platform.OS === 'web') {
-        alert('Error al transcribir el audio.');
-      } else {
-        Alert.alert('Error', 'Error al transcribir el audio.');
-      }
+      console.error('Error al transcribir el audio.');
     } finally {
       setIsTranscribing(false);
     }
@@ -541,7 +525,7 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       }
     } catch (error) {
       console.error('Error transcribing:', error);
-      alert('Error al transcribir el audio.');
+      console.error('Error al transcribir el audio.');
     } finally {
       setIsTranscribing(false);
     }
@@ -571,18 +555,9 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
   const copyToClipboard = async (text: string) => {
     try {
       await Clipboard.setStringAsync(text);
-      if (Platform.OS === 'web') {
-        alert('Texto copiado al portapapeles');
-      } else {
-        Alert.alert('Éxito', 'Texto copiado al portapapeles');
-      }
+      console.log('Texto copiado al portapapeles');
     } catch (error) {
-      console.error('Error copying to clipboard:', error);
-      if (Platform.OS === 'web') {
-        alert('Error al copiar al portapapeles');
-      } else {
-        Alert.alert('Error', 'Error al copiar al portapapeles');
-      }
+      console.error('Error al copiar al portapapeles:', error);
     }
   };
 
