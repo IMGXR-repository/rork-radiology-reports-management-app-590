@@ -436,59 +436,66 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
           messages: [
             {
               role: 'user',
-              content: `Eres un asistente médico especializado en procesar transcripciones de informes radiológicos en español. Tu tarea es transformar el texto transcrito en un informe médico profesional.
+              content: `Eres un asistente médico experto en procesar transcripciones de informes radiológicos en español. Tu tarea es corregir y formatear el texto transcrito siguiendo estas reglas estrictas:
 
-**REGLAS ESTRICTAS DE FORMATO:**
+**1. CORRECCIÓN ORTOGRÁFICA MÉDICA (CRÍTICO):**
+   Corregir términos médicos mal transcritos:
+   - "intraestrepática" / "intrahestepatica" → "intrahepática"
+   - "biabiliar" / "biabilar" / "via biliar" → "vía biliar"
+   - "parenchima" → "parénquima"
+   - "litias" → "litiasis"
+   - "novo" / "novo párrafo" → "nuevo" / eliminar si es comando
+   - "celda pancrática" → "celda pancreática"
+   - "páncreda" / "pancrea" → "páncreas"
+   - "vesícula viliar" → "vesícula biliar"
+   - "suprarrenales" verificar que esté bien escrito
+   - Cualquier término anatómico o médico mal escrito debe corregirse
 
-1. ESTRUCTURA VISUAL:
-   - Cada hallazgo u órgano debe estar en una línea separada
-   - Una línea en blanco entre órganos/estructuras diferentes
-   - NO usar puntos seguidos en la misma línea si son hallazgos diferentes
-   - Formato: ÓRGANO: Descripción del hallazgo.
-
-2. PUNTUACIÓN:
-   - Eliminar TODAS las comas innecesarias antes de puntos finales
-   - NO poner coma antes de punto (.)
-   - Usar punto (.) al final de cada descripción completa
+**2. PUNTUACIÓN (CRÍTICO):**
+   - ELIMINAR todas las comas antes de puntos: ", ." → "."
+   - ELIMINAR espacios antes de puntuación: " ," → "," y " ." → "."
+   - Agregar espacio después de comas: "," → ", "
    - NO usar punto y coma (;) en informes médicos
-   - Espaciado correcto: una coma seguida de espacio
+   - Eliminar puntos múltiples: ".." → "."
 
-3. ORTOGRAFÍA MÉDICA:
-   - Corregir términos mal transcritos:
-     * "intraestrepática" → "intrahepática"
-     * "biabiliar" → "vía biliar"
-     * "parenchima" → "parénquima"
-     * "realce" está correcto
-   - Verificar nombres de órganos y estructuras anatómicas
-   - Corregir mayúsculas/minúsculas según contexto
+**3. CAPITALIZACIÓN:**
+   - Primera letra de cada oración en mayúscula
+   - Después de punto, nueva oración con mayúscula
+   - Nombres de órganos al inicio de descripción en mayúscula
 
-4. COHERENCIA:
+**4. ESTRUCTURA Y FORMATO:**
+   - Mantener párrafos separados con líneas en blanco
+   - Cada órgano o estructura anatómica en su propia sección
+   - Formato preferido: ÓRGANO: Descripción.
+   - Si no hay formato de órgano, mantener el texto pero mejorar la estructura
+
+**5. ELIMINAR COMANDOS DE VOZ:**
+   - Eliminar frases como "nuevo párrafo", "nova párrafo", "nova línea"
+   - Aplicar la acción (párrafo nuevo) pero eliminar el comando del texto final
+
+**6. COHERENCIA:**
    - Eliminar espacios dobles
-   - Eliminar espacios antes de puntos
-   - Un solo espacio después de punto
-   - Remover repeticiones de puntuación
+   - Remover puntuación duplicada
+   - Mantener números y medidas exactas
 
-5. MANTENER INTACTO:
-   - Números y medidas exactas
-   - Nombres de órganos mencionados
-   - Hallazgos clínicos
-   - NO agregar información nueva
-   - NO eliminar contenido original
+**EJEMPLO DE TRANSFORMACIÓN:**
 
-**EJEMPLO DE FORMATO CORRECTO:**
+ENTRADA INCORRECTA:
+"Hígado de tamaño y densidad normal, sin lesiones focales, . Vesícula biliar, sin litias y ni cambios inflamatorios, . Biabilar intra y extra hepática no dilatada, . Novo párrafo, bazo, páncreas, glándulas suprarrenales y celda pancrática sin alteraciones, ."
 
-HÍGADO: De tamaño normal, contornos definidos y realce homogéneo del parénquima sin lesiones focales.
+SALIDA CORRECTA:
+"HÍGADO: De tamaño y densidad normal, sin lesiones focales.
 
-VESÍCULA BILIAR: Sin alteraciones.
+VESÍCULA BILIAR: Sin litiasis ni cambios inflamatorios.
 
-VÍA BILIAR INTRAHEPÁTICA: No dilatada.
+VÍA BILIAR: Intra y extrahepática no dilatada.
 
-BAZO: Homogéneo sin alteraciones.
+BAZO, PÁNCREAS, GLÁNDULAS SUPRARRENALES Y CELDA PANCREÁTICA: Sin alteraciones."
 
 **Texto a procesar:**
 ${text}
 
-**Devuelve ÚNICAMENTE el texto corregido y formateado. Sin explicaciones.**`,
+**IMPORTANTE: Devuelve ÚNICAMENTE el texto corregido y formateado. Sin explicaciones, sin comentarios, solo el texto médico procesado.**`,
             },
           ],
         }),
