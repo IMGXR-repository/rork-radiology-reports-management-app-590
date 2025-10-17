@@ -215,7 +215,11 @@ Sé directo y conciso.`;
         prompt += `\n\nIndicaciones adicionales del usuario: ${extraInstructions.trim()}`;
       }
 
-      const generatedContent = await generateText(prompt);
+      console.log('📝 Generando informe con prompt:', prompt.substring(0, 200) + '...');
+      const generatedContent = await generateText({
+        messages: [{ role: 'user', content: prompt }]
+      });
+      console.log('✅ Contenido generado exitosamente');
       setContent(generatedContent);
     } catch (error) {
       console.error('Error generating structured report:', error);
