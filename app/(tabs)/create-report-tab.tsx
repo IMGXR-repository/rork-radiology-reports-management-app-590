@@ -246,9 +246,18 @@ Sé directo y conciso.`;
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <Stack.Screen
           options={{
-            title: 'Crear Informe',
+            title: '',
             headerStyle: { backgroundColor: theme.surface },
             headerTintColor: theme.onSurface,
+            headerTitle: () => (
+              <View style={styles.headerTitleContainer}>
+                <View style={[styles.titleBadge, { backgroundColor: theme.primary }]}>
+                  <Text style={[styles.titleText, { color: theme.onPrimary }]}>
+                    Generación de Informes RAD-IA
+                  </Text>
+                </View>
+              </View>
+            ),
           }}
         />
 
@@ -741,5 +750,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     minHeight: 80,
+  },
+  headerTitleContainer: {
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  titleBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  titleText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    textAlign: 'center' as const,
   },
 });
