@@ -8,10 +8,11 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Sparkles } from 'lucide-react-native';
+import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Sparkles, Copy, Brain } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -41,6 +42,8 @@ export default function DictaphoneScreen() {
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [correctingGrammar, setCorrectingGrammar] = useState<string | null>(null);
+  const [transcriptionMode, setTranscriptionMode] = useState<'ia' | 'natural' | null>(null);
+  const [naturalText, setNaturalText] = useState<string>('');
 
 
   useEffect(() => {
@@ -622,59 +625,169 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={[styles.recordingCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
-          {isRecording && (
-            <View style={styles.recordingIndicator}>
-              <View style={[styles.recordingDot, { backgroundColor: '#FF6B6B' }]} />
-              <Text style={[styles.recordingText, { color: '#FF6B6B' }]}>
-                Grabando
+          {transcriptionMode === null && (
+            <>
+              <Text style={[styles.modeTitle, { color: theme.onSurface }]}>
+                Selecciona el modo de transcripción
               </Text>
-            </View>
+              <View style={styles.modeButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.modeButton, { backgroundColor: theme.primary }]}
+                  onPress={() => setTranscriptionMode('ia')}
+                >
+                  <Brain size={32} color="#FFFFFF" />
+                  <Text style={styles.modeButtonText}>IA</Text>
+                  <Text style={[styles.modeButtonSubtext, { color: 'rgba(255,255,255,0.8)' }]}>
+                    Transcripción automática
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modeButton, { backgroundColor: '#10B981' }]}
+                  onPress={() => setTranscriptionMode('natural')}
+                >
+                  <Mic size={32} color="#FFFFFF" />
+                  <Text style={styles.modeButtonText}>Natural</Text>
+                  <Text style={[styles.modeButtonSubtext, { color: 'rgba(255,255,255,0.8)' }]}>
+                    Escribe con tu teclado
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
           )}
 
-          <View style={styles.durationContainer}>
-            <Text style={[styles.durationText, { color: theme.onSurface }]}>
-              {formatDuration(recordingDuration)}
-            </Text>
-          </View>
+          {transcriptionMode === 'ia' && (
+            <>
+              {isRecording && (
+                <View style={styles.recordingIndicator}>
+                  <View style={[styles.recordingDot, { backgroundColor: '#FF6B6B' }]} />
+                  <Text style={[styles.recordingText, { color: '#FF6B6B' }]}>
+                    Grabando
+                  </Text>
+                </View>
+              )}
 
-          <View style={styles.controlsContainer}>
-            {!isRecording ? (
+              <View style={styles.durationContainer}>
+                <Text style={[styles.durationText, { color: theme.onSurface }]}>
+                  {formatDuration(recordingDuration)}
+                </Text>
+              </View>
+
+              <View style={styles.controlsContainer}>
+                {!isRecording ? (
+                  <TouchableOpacity
+                    style={[styles.recordButton, { backgroundColor: theme.primary }]}
+                    onPress={startRecording}
+                  >
+                    <Mic size={32} color="#FFFFFF" />
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.controlButton, { backgroundColor: theme.outline + '40' }]}
+                      onPress={isPaused ? resumeRecording : pauseRecording}
+                    >
+                      {isPaused ? (
+                        <Play size={24} color={theme.primary} />
+                      ) : (
+                        <Pause size={24} color={theme.primary} />
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.stopButton, { backgroundColor: '#FF6B6B' }]}
+                      onPress={stopRecording}
+                    >
+                      <Square size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+
+              {isTranscribing && (
+                <View style={styles.transcribingContainer}>
+                  <ActivityIndicator size="small" color={theme.primary} />
+                  <Text style={[styles.transcribingText, { color: theme.outline }]}>
+                    Transcribiendo audio...
+                  </Text>
+                </View>
+              )}
+
               <TouchableOpacity
-                style={[styles.recordButton, { backgroundColor: theme.primary }]}
-                onPress={startRecording}
+                style={[styles.changeModeButton, { backgroundColor: theme.outline + '20' }]}
+                onPress={() => setTranscriptionMode(null)}
               >
-                <Mic size={32} color="#FFFFFF" />
+                <Text style={[styles.changeModeButtonText, { color: theme.outline }]}>
+                  Cambiar modo
+                </Text>
               </TouchableOpacity>
-            ) : (
-              <>
-                <TouchableOpacity
-                  style={[styles.controlButton, { backgroundColor: theme.outline + '40' }]}
-                  onPress={isPaused ? resumeRecording : pauseRecording}
-                >
-                  {isPaused ? (
-                    <Play size={24} color={theme.primary} />
-                  ) : (
-                    <Pause size={24} color={theme.primary} />
-                  )}
-                </TouchableOpacity>
+            </>
+          )}
 
-                <TouchableOpacity
-                  style={[styles.stopButton, { backgroundColor: '#FF6B6B' }]}
-                  onPress={stopRecording}
-                >
-                  <Square size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-
-          {isTranscribing && (
-            <View style={styles.transcribingContainer}>
-              <ActivityIndicator size="small" color={theme.primary} />
-              <Text style={[styles.transcribingText, { color: theme.outline }]}>
-                Transcribiendo audio...
+          {transcriptionMode === 'natural' && (
+            <>
+              <View style={styles.naturalModeHeader}>
+                <Brain size={24} color="#10B981" />
+                <Text style={[styles.naturalModeTitle, { color: theme.onSurface }]}>
+                  Modo Natural
+                </Text>
+              </View>
+              
+              <Text style={[styles.naturalModeSubtitle, { color: theme.outline }]}>
+                Usa el micrófono de tu teclado para dictar
               </Text>
-            </View>
+
+              <View style={[styles.naturalInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
+                <TextInput
+                  style={[styles.naturalInput, { color: theme.onSurface }]}
+                  value={naturalText}
+                  onChangeText={setNaturalText}
+                  placeholder="Escribe o usa el micrófono del teclado..."
+                  placeholderTextColor={theme.outline}
+                  multiline
+                  autoFocus
+                  numberOfLines={8}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <View style={styles.naturalButtonsRow}>
+                <TouchableOpacity
+                  style={[styles.copyButton, { backgroundColor: '#10B981' }]}
+                  onPress={() => {
+                    if (naturalText.trim()) {
+                      copyToClipboard(naturalText);
+                    }
+                  }}
+                  disabled={!naturalText.trim()}
+                >
+                  <Copy size={20} color="#FFFFFF" />
+                  <Text style={styles.copyButtonText}>Copiar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.clearNaturalButton, { backgroundColor: theme.outline + '20' }]}
+                  onPress={() => setNaturalText('')}
+                >
+                  <Eraser size={20} color={theme.outline} />
+                  <Text style={[styles.clearNaturalButtonText, { color: theme.outline }]}>
+                    Limpiar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.changeModeButton, { backgroundColor: theme.outline + '20' }]}
+                onPress={() => {
+                  setTranscriptionMode(null);
+                  setNaturalText('');
+                }}
+              >
+                <Text style={[styles.changeModeButtonText, { color: theme.outline }]}>
+                  Cambiar modo
+                </Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
@@ -951,5 +1064,103 @@ const styles = StyleSheet.create({
   correctingText: {
     fontSize: 13,
     fontWeight: '500',
+  },
+  modeTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modeButtonsContainer: {
+    flexDirection: 'row',
+    gap: 16,
+    width: '100%',
+  },
+  modeButton: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 24,
+    borderRadius: 16,
+    gap: 12,
+  },
+  modeButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modeButtonSubtext: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  changeModeButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  changeModeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  naturalModeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  naturalModeTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  naturalModeSubtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  naturalInputContainer: {
+    width: '100%',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    minHeight: 200,
+    marginBottom: 16,
+  },
+  naturalInput: {
+    fontSize: 16,
+    lineHeight: 24,
+    minHeight: 176,
+  },
+  naturalButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  copyButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  copyButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  clearNaturalButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  clearNaturalButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
