@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Switch, ScrollView, Platform, Image } from 'react-native';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Moon, Sun, Download, Upload, Heart, Info, User, LogIn, LogOut, Share2, Users, CreditCard, MapPin, Stethoscope, Edit, Monitor, QrCode } from 'lucide-react-native';
+import { Moon, Sun, Download, Upload, Heart, Info, User, LogIn, LogOut, Share2, Users, CreditCard, MapPin, Stethoscope, Edit, Monitor, QrCode, Clock } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadiaLogo } from '@/components/RadiaLogo';
@@ -12,7 +12,8 @@ import { router } from 'expo-router';
 
 export default function SettingsScreen() {
   const { settings, saveSettings, exportData } = useApp();
-  const { user, isAuthenticated, signIn, signOut, getSharedItemsReceived, getSharedItemsSent, userSyncCode } = useAuth();
+  const { user, isAuthenticated, signIn, signOut, getSharedItemsReceived, getSharedItemsSent } = useAuth();
+  const userSyncCode = user?.id || 'no-user';
   const theme = settings.theme === 'dark' ? darkTheme : lightTheme;
   const insets = useSafeAreaInsets();
   const [showSharedItems, setShowSharedItems] = useState(false);
@@ -28,6 +29,26 @@ export default function SettingsScreen() {
 
   const handleFavoritesFirstToggle = async () => {
     await saveSettings({ ...settings, showFavoritesFirst: !settings.showFavoritesFirst });
+  };
+
+  const handleAutoBackupToggle = async () => {
+    const newValue = !settings.autoBackupEnabled;
+    await saveSettings({ 
+      ...settings, 
+      autoBackupEnabled: newValue,
+      lastAutoBackupDate: newValue ? new Date().toISOString() : settings.lastAutoBackupDate
+    });
+    
+    if (Platform.OS === 'web') {
+      alert(newValue ? 'Respaldos automáticos activados. Se creará un respaldo cada 3 días.' : 'Respaldos automáticos desactivados.');
+    } else {
+      const Alert = require('react-native').Alert;
+      Alert.alert(
+        'Respaldos automáticos',
+        newValue ? 'Respaldos automáticos activados. Se creará un respaldo cada 3 días.' : 'Respaldos automáticos desactivados.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
 
@@ -333,6 +354,21 @@ export default function SettingsScreen() {
         </Text>
         
         {renderSettingItem(
+          <Clock size={20} color={theme.primary} />,
+          'Respaldos automáticos',
+          settings.autoBackupEnabled 
+            ? `Activado - Cada 3 días${settings.lastAutoBackupDate ? ' • Último: ' + new Date(settings.lastAutoBackupDate).toLocaleDateString() : ''}` 
+            : 'Crear respaldos automáticos cada 3 días',
+          handleAutoBackupToggle,
+          <Switch
+            value={settings.autoBackupEnabled}
+            onValueChange={handleAutoBackupToggle}
+            trackColor={{ false: theme.outline, true: theme.primary }}
+            thumbColor={settings.autoBackupEnabled ? theme.onPrimary : theme.onSurface}
+          />
+        )}
+        
+        {renderSettingItem(
           <QrCode size={20} color={theme.primary} />,
           'Mi Código QR',
           'Código único para sincronizar con otros dispositivos',
@@ -390,6 +426,7 @@ export default function SettingsScreen() {
       <QRSyncModal
         visible={showQRModal}
         onClose={() => setShowQRModal(false)}
+        userSyncCode={userSyncCode}
       />
     </View>
   );

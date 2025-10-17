@@ -109,6 +109,7 @@ const defaultSettings: AppSettings = {
   theme: 'light',
   autoBackup: false,
   showFavoritesFirst: true,
+  autoBackupEnabled: false,
 };
 
 const defaultStats: ProductivityStats = {
@@ -151,6 +152,67 @@ export function useDataManager() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    checkAutoBackup();
+  }, [settings, reports, phrases, reportCategories, reportFilters, phraseCategories, phraseFilters, stats]);
+
+  const checkAutoBackup = async () => {
+    if (!settings.autoBackupEnabled) return;
+    
+    const now = new Date();
+    const lastBackup = settings.lastAutoBackupDate ? new Date(settings.lastAutoBackupDate) : null;
+    
+    if (!lastBackup) {
+      await performAutoBackup();
+      return;
+    }
+    
+    const daysSinceLastBackup = Math.floor((now.getTime() - lastBackup.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceLastBackup >= 3) {
+      await performAutoBackup();
+    }
+  };
+
+  const performAutoBackup = async () => {
+    try {
+      console.log('Realizando respaldo automático...');
+      const backupData = await exportData();
+      const backupKey = `auto_backup_${new Date().toISOString()}`;
+      await storage.setItem(backupKey, backupData);
+      
+      await saveSettings({
+        ...settings,
+        lastAutoBackupDate: new Date().toISOString(),
+      });
+      
+      await cleanOldAutoBackups();
+      
+      console.log('Respaldo automático completado');
+    } catch (error) {
+      console.error('Error en respaldo automático:', error);
+    }
+  };
+
+  const cleanOldAutoBackups = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const allKeys = await AsyncStorage.getAllKeys();
+        const backupKeys = allKeys.filter((key: string) => key.startsWith('auto_backup_'));
+        
+        if (backupKeys.length > 5) {
+          const sortedKeys = backupKeys.sort().reverse();
+          const keysToDelete = sortedKeys.slice(5);
+          await AsyncStorage.multiRemove(keysToDelete);
+          console.log(`Eliminados ${keysToDelete.length} respaldos antiguos`);
+        }
+      }
+    } catch (error) {
+      console.error('Error limpiando respaldos antiguos:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -545,6 +607,30 @@ export function useDataManager() {
     await saveReports(updatedReports);
   };
 
+  const getLatestAutoBackup = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        const keys = Object.keys(localStorage).filter(key => key.startsWith('auto_backup_'));
+        if (keys.length === 0) return null;
+        
+        const latestKey = keys.sort().reverse()[0];
+        return localStorage.getItem(latestKey);
+      } else {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const allKeys = await AsyncStorage.getAllKeys();
+        const backupKeys = allKeys.filter((key: string) => key.startsWith('auto_backup_'));
+        
+        if (backupKeys.length === 0) return null;
+        
+        const latestKey = backupKeys.sort().reverse()[0];
+        return await AsyncStorage.getItem(latestKey);
+      }
+    } catch (error) {
+      console.error('Error obteniendo último respaldo:', error);
+      return null;
+    }
+  };
+
   const exportData = async () => {
     const data = {
       reports,
@@ -631,6 +717,7 @@ export function useDataManager() {
     clearNewlyCreatedFlag,
     trackReportShare,
     trackPhraseShare,
+    getLatestAutoBackup,
     // Legacy compatibility
     categories,
     filters,
