@@ -70,8 +70,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     marginHorizontal: 16,
+    marginTop: 8,
     marginBottom: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 4,
   },
   toggleButton: {
@@ -79,13 +80,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     gap: 8,
   },
   toggleText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });
