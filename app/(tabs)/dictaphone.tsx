@@ -425,6 +425,93 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
     }
   };
 
+  const enhanceTranscription = async (text: string): Promise<string> => {
+    try {
+      const response = await fetch(new URL('/agent/chat', process.env['EXPO_PUBLIC_TOOLKIT_URL'] || 'https://toolkit.rork.com').toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: `Eres un asistente especializado en procesamiento de transcripciones médicas en español. Tu tarea es mejorar el texto transcrito de la siguiente manera:
+
+1. FORMATO VISUAL:
+   - Organizar el texto en párrafos coherentes según temas o hallazgos
+   - Agregar saltos de línea apropiados para mejorar legibilidad
+   - Separar secciones anatómicas o áreas de estudio en párrafos distintos
+   - Mantener estructura profesional de informe médico
+
+2. CORRECCIONES GRAMATICALES:
+   - Corregir errores de transcripción de voz a texto
+   - Ajustar puntuación para claridad
+   - Corregir conjugación verbal y concordancia
+   - Mantener tiempo verbal consistente
+
+3. COHERENCIA MÉDICA:
+   - Corregir términos médicos mal transcritos
+   - Estandarizar abreviaciones médicas (mm, cm, AP, T, CC, etc.)
+   - Asegurar que medidas y descripciones sean coherentes
+   - Mantener terminología médica apropiada
+
+4. MANTENER:
+   - Todo el contenido original sin agregar información
+   - Todos los datos numéricos exactos
+   - Todas las observaciones clínicas
+   - El significado original del informe
+
+Texto transcrito:
+${text}
+
+Devuelve ÚNICAMENTE el texto mejorado y formateado, sin explicaciones ni comentarios adicionales.`,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en mejora: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No se pudo leer la respuesta');
+      }
+
+      const decoder = new TextDecoder();
+      let enhancedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const jsonStr = line.substring(2);
+              const data = JSON.parse(jsonStr);
+              if (data.type === 'text-delta' && data.textDelta) {
+                enhancedText += data.textDelta;
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
+            }
+          }
+        }
+      }
+
+      return enhancedText.trim();
+    } catch (error) {
+      console.error('Error enhancing transcription:', error);
+      return text;
+    }
+  };
+
   const transcribeRecording = async (uri: string) => {
     setIsTranscribing(true);
     try {
@@ -469,10 +556,20 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       
       console.log('Raw Transcription:', rawTranscription);
       console.log('AI Processed:', aiProcessedText);
-      console.log('Final Transcription:', transcription);
+      console.log('Transcription:', transcription);
       
-      if (recordingId) {
-        await correctGrammar(transcription, recordingId);
+      if (recordingId && transcriptionMode === 'ia') {
+        const enhancedText = await enhanceTranscription(transcription);
+        
+        console.log('Enhanced Transcription:', enhancedText);
+        
+        setRecordings(prev =>
+          prev.map(rec =>
+            rec.id === recordingId
+              ? { ...rec, transcription: enhancedText }
+              : rec
+          )
+        );
       }
     } catch (error) {
       console.error('Error transcribing:', error);
@@ -521,10 +618,20 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       
       console.log('Raw Transcription:', rawTranscription);
       console.log('AI Processed:', aiProcessedText);
-      console.log('Final Transcription:', transcription);
+      console.log('Transcription:', transcription);
       
-      if (recordingId) {
-        await correctGrammar(transcription, recordingId);
+      if (recordingId && transcriptionMode === 'ia') {
+        const enhancedText = await enhanceTranscription(transcription);
+        
+        console.log('Enhanced Transcription:', enhancedText);
+        
+        setRecordings(prev =>
+          prev.map(rec =>
+            rec.id === recordingId
+              ? { ...rec, transcription: enhancedText }
+              : rec
+          )
+        );
       }
     } catch (error) {
       console.error('Error transcribing:', error);
@@ -719,7 +826,7 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
                 <View style={styles.transcribingContainer}>
                   <ActivityIndicator size="small" color={theme.primary} />
                   <Text style={[styles.transcribingText, { color: theme.outline }]}>
-                    Transcribiendo audio...
+                    Procesando y mejorando transcripción...
                   </Text>
                 </View>
               )}
