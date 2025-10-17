@@ -172,7 +172,7 @@ ${systemInstructions}${redirectInstruction}`;
         
         console.log('Sending message to AI:', messagesToSend);
         
-        const response = await fetch('https://toolkit.rork.com/text/llm/', {
+        const response = await fetch(new URL("/agent/chat", process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com").toString(), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -183,11 +183,13 @@ ${systemInstructions}${redirectInstruction}`;
         });
         
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error:', response.status, errorText);
           throw new Error(`Error en generación: ${response.status}`);
         }
         
         const result = await response.json();
-        const aiResponse = result.completion;
+        const aiResponse = result.message?.content || result.completion || result.text;
         
         console.log('AI Response received:', aiResponse);
         
