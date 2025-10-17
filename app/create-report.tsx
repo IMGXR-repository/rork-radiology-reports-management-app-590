@@ -310,7 +310,7 @@ Sé directo y conciso.`;
               <TouchableOpacity
                 onPress={handleVoiceCommand}
                 style={[styles.micButton, {
-                  backgroundColor: recordingState.isRecording ? theme.error : '#22C55E',
+                  backgroundColor: recordingState.isRecording ? theme.error : '#38B2AC',
                 }]}
                 disabled={isTranscribing || isProcessingVoice}
               >
