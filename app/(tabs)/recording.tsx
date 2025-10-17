@@ -1190,7 +1190,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
     letterSpacing: 0.5,
