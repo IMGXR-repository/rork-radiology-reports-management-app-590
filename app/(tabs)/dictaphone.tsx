@@ -42,7 +42,7 @@ export default function DictaphoneScreen() {
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [correctingGrammar, setCorrectingGrammar] = useState<string | null>(null);
-  const [transcriptionMode, setTranscriptionMode] = useState<'ia' | 'natural' | null>(null);
+  const [transcriptionMode, setTranscriptionMode] = useState<'ia' | 'natural'>('ia');
   const [naturalText, setNaturalText] = useState<string>('');
 
 
@@ -621,41 +621,52 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
         <Text style={[styles.headerSubtitle, { color: theme.outline }]}>
           Graba y transcribe audio en tiempo real
         </Text>
+
+        <View style={[styles.modeSelector, { backgroundColor: theme.surfaceVariant }]}>
+          <TouchableOpacity
+            onPress={() => setTranscriptionMode('ia')}
+            style={[
+              styles.modeSelectorButton,
+              transcriptionMode === 'ia' && { backgroundColor: theme.primary },
+              transcriptionMode !== 'ia' && { backgroundColor: 'transparent' }
+            ]}
+          >
+            <Brain 
+              size={18} 
+              color={transcriptionMode === 'ia' ? theme.onPrimary : theme.onSurface} 
+            />
+            <Text style={[
+              styles.modeSelectorText,
+              { color: transcriptionMode === 'ia' ? theme.onPrimary : theme.onSurface }
+            ]}>
+              Modo IA
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            onPress={() => setTranscriptionMode('natural')}
+            style={[
+              styles.modeSelectorButton,
+              transcriptionMode === 'natural' && { backgroundColor: theme.primary },
+              transcriptionMode !== 'natural' && { backgroundColor: 'transparent' }
+            ]}
+          >
+            <Mic 
+              size={18} 
+              color={transcriptionMode === 'natural' ? theme.onPrimary : theme.onSurface} 
+            />
+            <Text style={[
+              styles.modeSelectorText,
+              { color: transcriptionMode === 'natural' ? theme.onPrimary : theme.onSurface }
+            ]}>
+              Modo Tradicional
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         <View style={[styles.recordingCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
-          {transcriptionMode === null && (
-            <>
-              <Text style={[styles.modeTitle, { color: theme.onSurface }]}>
-                Selecciona el modo de transcripción
-              </Text>
-              <View style={styles.modeButtonsContainer}>
-                <TouchableOpacity
-                  style={[styles.modeButton, { backgroundColor: theme.primary }]}
-                  onPress={() => router.push('/dictaphone-ia')}
-                >
-                  <Brain size={32} color="#FFFFFF" />
-                  <Text style={styles.modeButtonText}>IA</Text>
-                  <Text style={[styles.modeButtonSubtext, { color: 'rgba(255,255,255,0.8)' }]}>
-                    Transcripción automática
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.modeButton, { backgroundColor: '#10B981' }]}
-                  onPress={() => router.push('/dictaphone-natural')}
-                >
-                  <Mic size={32} color="#FFFFFF" />
-                  <Text style={styles.modeButtonText}>Natural</Text>
-                  <Text style={[styles.modeButtonSubtext, { color: 'rgba(255,255,255,0.8)' }]}>
-                    Escribe con tu teclado
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-
           {transcriptionMode === 'ia' && (
             <>
               {isRecording && (
@@ -712,27 +723,11 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
                   </Text>
                 </View>
               )}
-
-              <TouchableOpacity
-                style={[styles.changeModeButton, { backgroundColor: theme.outline + '20' }]}
-                onPress={() => setTranscriptionMode(null)}
-              >
-                <Text style={[styles.changeModeButtonText, { color: theme.outline }]}>
-                  Cambiar modo
-                </Text>
-              </TouchableOpacity>
             </>
           )}
 
           {transcriptionMode === 'natural' && (
             <>
-              <View style={styles.naturalModeHeader}>
-                <Brain size={24} color="#10B981" />
-                <Text style={[styles.naturalModeTitle, { color: theme.onSurface }]}>
-                  Modo Natural
-                </Text>
-              </View>
-              
               <Text style={[styles.naturalModeSubtitle, { color: theme.outline }]}>
                 Usa el micrófono de tu teclado para dictar
               </Text>
@@ -753,7 +748,7 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
 
               <View style={styles.naturalButtonsRow}>
                 <TouchableOpacity
-                  style={[styles.copyButton, { backgroundColor: '#10B981' }]}
+                  style={[styles.naturalCopyButton, { backgroundColor: '#10B981' }]}
                   onPress={() => {
                     if (naturalText.trim()) {
                       copyToClipboard(naturalText);
@@ -762,7 +757,7 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
                   disabled={!naturalText.trim()}
                 >
                   <Copy size={20} color="#FFFFFF" />
-                  <Text style={styles.copyButtonText}>Copiar</Text>
+                  <Text style={styles.naturalCopyButtonText}>Copiar</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -775,18 +770,6 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
                   </Text>
                 </TouchableOpacity>
               </View>
-
-              <TouchableOpacity
-                style={[styles.changeModeButton, { backgroundColor: theme.outline + '20' }]}
-                onPress={() => {
-                  setTranscriptionMode(null);
-                  setNaturalText('');
-                }}
-              >
-                <Text style={[styles.changeModeButtonText, { color: theme.outline }]}>
-                  Cambiar modo
-                </Text>
-              </TouchableOpacity>
             </>
           )}
         </View>
@@ -895,6 +878,27 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     marginTop: 4,
+    marginBottom: 12,
+  },
+  modeSelector: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 4,
+    marginTop: 8,
+  },
+  modeSelectorButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 6,
+  },
+  modeSelectorText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -1065,54 +1069,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
-  modeTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  modeButtonsContainer: {
-    flexDirection: 'row',
-    gap: 16,
-    width: '100%',
-  },
-  modeButton: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 24,
-    borderRadius: 16,
-    gap: 12,
-  },
-  modeButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  modeButtonSubtext: {
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  changeModeButton: {
-    marginTop: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  changeModeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  naturalModeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  naturalModeTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
   naturalModeSubtitle: {
     fontSize: 14,
     marginBottom: 16,
@@ -1136,7 +1092,7 @@ const styles = StyleSheet.create({
     gap: 12,
     width: '100%',
   },
-  copyButton: {
+  naturalCopyButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1145,7 +1101,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
   },
-  copyButtonText: {
+  naturalCopyButtonText: {
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
