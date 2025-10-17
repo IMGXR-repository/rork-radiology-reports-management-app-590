@@ -51,6 +51,20 @@ function RootLayoutNav() {
         <Stack screenOptions={{ headerBackTitle: "Atrás" }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen 
+            name="dictaphone-ia" 
+            options={{ 
+              title: 'Dictáfono IA',
+              headerShown: true 
+            }} 
+          />
+          <Stack.Screen 
+            name="dictaphone-natural" 
+            options={{ 
+              title: 'Dictáfono Natural',
+              headerShown: true 
+            }} 
+          />
         </Stack>
       ) : (
         <View style={styles.loadingContainer}>
