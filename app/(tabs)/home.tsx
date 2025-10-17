@@ -14,7 +14,7 @@ import { Report } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
 
 export default function ReportsScreen() {
-  const { reports, settings, isLoading, filters } = useApp();
+  const { reports, settings, isLoading, filters, clearNewlyCreatedFlag } = useApp();
   const theme = settings.theme === 'dark' ? darkTheme : lightTheme;
   const insets = useSafeAreaInsets();
   
@@ -52,21 +52,24 @@ export default function ReportsScreen() {
       filtered = filtered.filter(report => report.isFavorite);
     }
 
-    // Sort by favorites first if enabled
-    if (settings.showFavoritesFirst) {
-      filtered.sort((a, b) => {
+    // Sort: newly created first, then by favorites if enabled, then by date
+    filtered.sort((a, b) => {
+      if (a.isNewlyCreated && !b.isNewlyCreated) return -1;
+      if (!a.isNewlyCreated && b.isNewlyCreated) return 1;
+      
+      if (settings.showFavoritesFirst) {
         if (a.isFavorite && !b.isFavorite) return -1;
         if (!a.isFavorite && b.isFavorite) return 1;
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-      });
-    } else {
-      filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    }
+      }
+      
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
     return filtered;
   }, [reports, searchQuery, selectedFilters, showFavoritesOnly, settings.showFavoritesFirst]);
 
   const handleFilterToggle = (filterId: string, categoryId: string) => {
+    clearNewlyCreatedFlag();
     setSelectedFilters(prev => {
       // Si filterId está vacío, significa que se seleccionó "Todos" para esta categoría
       if (filterId === '') {

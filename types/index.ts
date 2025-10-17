@@ -7,6 +7,7 @@ export interface Report {
   isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
+  isNewlyCreated?: boolean;
 }
 
 // Categorías y filtros para INFORMES

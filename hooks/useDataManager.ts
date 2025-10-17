@@ -378,8 +378,9 @@ export function useDataManager() {
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      isNewlyCreated: true,
     };
-    const updatedReports = [...reports, newReport];
+    const updatedReports = [newReport, ...reports];
     await saveReports(updatedReports);
     return newReport;
   };
@@ -536,6 +537,14 @@ export function useDataManager() {
     await saveStats(updatedStats);
   };
 
+  const clearNewlyCreatedFlag = async () => {
+    const updatedReports = reports.map(report => ({
+      ...report,
+      isNewlyCreated: false,
+    }));
+    await saveReports(updatedReports);
+  };
+
   const exportData = async () => {
     const data = {
       reports,
@@ -619,6 +628,9 @@ export function useDataManager() {
     saveEconomicProfitability,
     exportData,
     importData,
+    clearNewlyCreatedFlag,
+    trackReportShare,
+    trackPhraseShare,
     // Legacy compatibility
     categories,
     filters,
