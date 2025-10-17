@@ -436,36 +436,59 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
           messages: [
             {
               role: 'user',
-              content: `Eres un asistente especializado en procesamiento de transcripciones médicas en español. Tu tarea es mejorar el texto transcrito de la siguiente manera:
+              content: `Eres un asistente médico especializado en procesar transcripciones de informes radiológicos en español. Tu tarea es transformar el texto transcrito en un informe médico profesional.
 
-1. FORMATO VISUAL:
-   - Organizar el texto en párrafos coherentes según temas o hallazgos
-   - Agregar saltos de línea apropiados para mejorar legibilidad
-   - Separar secciones anatómicas o áreas de estudio en párrafos distintos
-   - Mantener estructura profesional de informe médico
+**REGLAS ESTRICTAS DE FORMATO:**
 
-2. CORRECCIONES GRAMATICALES:
-   - Corregir errores de transcripción de voz a texto
-   - Ajustar puntuación para claridad
-   - Corregir conjugación verbal y concordancia
-   - Mantener tiempo verbal consistente
+1. ESTRUCTURA VISUAL:
+   - Cada hallazgo u órgano debe estar en una línea separada
+   - Una línea en blanco entre órganos/estructuras diferentes
+   - NO usar puntos seguidos en la misma línea si son hallazgos diferentes
+   - Formato: ÓRGANO: Descripción del hallazgo.
 
-3. COHERENCIA MÉDICA:
-   - Corregir términos médicos mal transcritos
-   - Estandarizar abreviaciones médicas (mm, cm, AP, T, CC, etc.)
-   - Asegurar que medidas y descripciones sean coherentes
-   - Mantener terminología médica apropiada
+2. PUNTUACIÓN:
+   - Eliminar TODAS las comas innecesarias antes de puntos finales
+   - NO poner coma antes de punto (.)
+   - Usar punto (.) al final de cada descripción completa
+   - NO usar punto y coma (;) en informes médicos
+   - Espaciado correcto: una coma seguida de espacio
 
-4. MANTENER:
-   - Todo el contenido original sin agregar información
-   - Todos los datos numéricos exactos
-   - Todas las observaciones clínicas
-   - El significado original del informe
+3. ORTOGRAFÍA MÉDICA:
+   - Corregir términos mal transcritos:
+     * "intraestrepática" → "intrahepática"
+     * "biabiliar" → "vía biliar"
+     * "parenchima" → "parénquima"
+     * "realce" está correcto
+   - Verificar nombres de órganos y estructuras anatómicas
+   - Corregir mayúsculas/minúsculas según contexto
 
-Texto transcrito:
+4. COHERENCIA:
+   - Eliminar espacios dobles
+   - Eliminar espacios antes de puntos
+   - Un solo espacio después de punto
+   - Remover repeticiones de puntuación
+
+5. MANTENER INTACTO:
+   - Números y medidas exactas
+   - Nombres de órganos mencionados
+   - Hallazgos clínicos
+   - NO agregar información nueva
+   - NO eliminar contenido original
+
+**EJEMPLO DE FORMATO CORRECTO:**
+
+HÍGADO: De tamaño normal, contornos definidos y realce homogéneo del parénquima sin lesiones focales.
+
+VESÍCULA BILIAR: Sin alteraciones.
+
+VÍA BILIAR INTRAHEPÁTICA: No dilatada.
+
+BAZO: Homogéneo sin alteraciones.
+
+**Texto a procesar:**
 ${text}
 
-Devuelve ÚNICAMENTE el texto mejorado y formateado, sin explicaciones ni comentarios adicionales.`,
+**Devuelve ÚNICAMENTE el texto corregido y formateado. Sin explicaciones.**`,
             },
           ],
         }),
