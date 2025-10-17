@@ -659,7 +659,7 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
               styles.modeSelectorText,
               { color: transcriptionMode === 'natural' ? theme.onPrimary : theme.onSurface }
             ]}>
-              Modo Tradicional
+              Modo Dictado
             </Text>
           </TouchableOpacity>
         </View>
