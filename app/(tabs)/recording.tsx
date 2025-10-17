@@ -972,7 +972,7 @@ DIAGNÓSTICOS DIFERENCIALES:
             <View style={styles.recordingButtonsRow}>
               {!recordingState.isRecording ? (
                 <TouchableOpacity
-                  style={[styles.wideRecordButton, { backgroundColor: '#4CAF50' }]}
+                  style={[styles.wideRecordButton, { backgroundColor: '#38B2AC' }]}
                   onPress={startRecording}
                 >
                   <Mic size={20} color="#FFFFFF" />
@@ -980,7 +980,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={[styles.wideRecordButton, { backgroundColor: '#FF5722' }]}
+                  style={[styles.wideRecordButton, { backgroundColor: '#E53E3E' }]}
                   onPress={stopRecording}
                 >
                   <Square size={20} color="#FFFFFF" />
