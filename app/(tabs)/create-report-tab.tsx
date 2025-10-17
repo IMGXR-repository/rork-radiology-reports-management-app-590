@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   titleText: {
-    fontSize: 12,
+    fontSize: 8,
     fontWeight: '600' as const,
     textAlign: 'center' as const,
   },
