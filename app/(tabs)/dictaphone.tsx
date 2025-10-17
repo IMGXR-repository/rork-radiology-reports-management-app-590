@@ -436,54 +436,62 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
           messages: [
             {
               role: 'user',
-              content: `Eres un asistente médico experto en procesar transcripciones de informes radiológicos en español. Tu tarea es corregir y formatear el texto transcrito siguiendo estas reglas estrictas:
+              content: `Eres un asistente médico experto en procesar transcripciones de informes radiológicos en español. Tu tarea es corregir y formatear el texto transcrito siguiendo estas reglas EN ORDEN EXACTO:
 
-**1. CORRECCIÓN ORTOGRÁFICA MÉDICA (CRÍTICO):**
+**PASO 1: CORRECCIÓN DE ERRORES CRÍTICOS DE RECONOCIMIENTO DE VOZ:**
+   - "bárrafo" / "barrafo" / "novo párrafo" / "nova párrafo" → ELIMINAR completamente (es comando de salto de párrafo)
+   - "uno" al inicio de frase o después de punto → ELIMINAR (es error del STT)
+   - "nova línea" / "nueva línea" → ELIMINAR completamente
+   - "novo" → ELIMINAR
+   - ", ." → "." (eliminar coma antes de punto)
+   - " ," → "," (eliminar espacio antes de coma)
+   - " ." → "." (eliminar espacio antes de punto)
+
+**PASO 2: CORRECCIÓN MÉDICA Y ORTOGRÁFICA (CRÍTICO):**
    Corregir términos médicos mal transcritos:
    - "intraestrepática" / "intrahestepatica" → "intrahepática"
    - "biabiliar" / "biabilar" / "via biliar" → "vía biliar"
    - "parenchima" → "parénquima"
    - "litias" → "litiasis"
-   - "novo" / "novo párrafo" → "nuevo" / eliminar si es comando
-   - "celda pancrática" → "celda pancreática"
+   - "celda pancrática" / "celda pancrética" → "celda pancreática"
    - "páncreda" / "pancrea" → "páncreas"
    - "vesícula viliar" → "vesícula biliar"
-   - "suprarrenales" verificar que esté bien escrito
-   - Cualquier término anatómico o médico mal escrito debe corregirse
+   - "viliar" → "biliar"
+   - "suprarrenales" → verificar ortografía
+   - "bazo" → verificar contexto
 
-**2. PUNTUACIÓN (CRÍTICO):**
+**PASO 3: LIMPIEZA DE PUNTUACIÓN:**
    - ELIMINAR todas las comas antes de puntos: ", ." → "."
    - ELIMINAR espacios antes de puntuación: " ," → "," y " ." → "."
-   - Agregar espacio después de comas: "," → ", "
-   - NO usar punto y coma (;) en informes médicos
-   - Eliminar puntos múltiples: ".." → "."
+   - Agregar espacio después de comas si no existe: "," → ", "
+   - Agregar espacio después de puntos si no existe: "." → ". "
+   - NO usar punto y coma (;)
+   - Eliminar puntos duplicados: ".." → "."
+   - Eliminar comas duplicadas: ",," → ","
 
-**3. CAPITALIZACIÓN:**
-   - Primera letra de cada oración en mayúscula
-   - Después de punto, nueva oración con mayúscula
-   - Nombres de órganos al inicio de descripción en mayúscula
+**PASO 4: CAPITALIZACIÓN:**
+   - Primera letra después de punto SIEMPRE en mayúscula
+   - Primera letra de la primera palabra del texto en mayúscula
+   - Nombres de órganos al inicio de sección en MAYÚSCULA COMPLETA
 
-**4. ESTRUCTURA Y FORMATO:**
-   - Mantener párrafos separados con líneas en blanco
-   - Cada órgano o estructura anatómica en su propia sección
-   - Formato preferido: ÓRGANO: Descripción.
-   - Si no hay formato de órgano, mantener el texto pero mejorar la estructura
+**PASO 5: ESTRUCTURA Y FORMATO (CRÍTICO):**
+   - Detectar cambios de órgano/estructura anatómica
+   - Formato: ÓRGANO: Descripción.
+   - Cada órgano en nueva línea con línea en blanco antes
+   - Ejemplos de órganos a detectar: hígado, vesícula biliar, vía biliar, bazo, páncreas, riñones, glándulas suprarrenales, celda pancreática
 
-**5. ELIMINAR COMANDOS DE VOZ:**
-   - Eliminar frases como "nuevo párrafo", "nova párrafo", "nova línea"
-   - Aplicar la acción (párrafo nuevo) pero eliminar el comando del texto final
+**PASO 6: COHERENCIA FINAL:**
+   - Eliminar todos los espacios dobles: "  " → " "
+   - Eliminar espacios al inicio de líneas
+   - Eliminar líneas vacías múltiples (máximo 1 línea en blanco entre secciones)
+   - Verificar que no haya comandos de voz residuales
 
-**6. COHERENCIA:**
-   - Eliminar espacios dobles
-   - Remover puntuación duplicada
-   - Mantener números y medidas exactas
+**EJEMPLOS DE TRANSFORMACIÓN:**
 
-**EJEMPLO DE TRANSFORMACIÓN:**
+EJEMPLO 1:
+ENTRADA: "Hígado de tamaño y densidad normal, sin lesiones focales, . Vesícula biliar, sin litias y ni cambios inflamatorios, . Biabilar intra y extra hepática no dilatada, . Novo párrafo, bazo, páncreas, glándulas suprarrenales y celda pancrática sin alteraciones, ."
 
-ENTRADA INCORRECTA:
-"Hígado de tamaño y densidad normal, sin lesiones focales, . Vesícula biliar, sin litias y ni cambios inflamatorios, . Biabilar intra y extra hepática no dilatada, . Novo párrafo, bazo, páncreas, glándulas suprarrenales y celda pancrática sin alteraciones, ."
-
-SALIDA CORRECTA:
+SALIDA:
 "HÍGADO: De tamaño y densidad normal, sin lesiones focales.
 
 VESÍCULA BILIAR: Sin litiasis ni cambios inflamatorios.
@@ -492,10 +500,20 @@ VÍA BILIAR: Intra y extrahepática no dilatada.
 
 BAZO, PÁNCREAS, GLÁNDULAS SUPRARRENALES Y CELDA PANCREÁTICA: Sin alteraciones."
 
+EJEMPLO 2:
+ENTRADA: "Hígado de tamaño y densidad normal, sin lesiones focales, . , vesícula biliar y via biliar sin alteraciones, . Uno, bárrafo, páncreas y celda pancrética sin alteraciones, ."
+
+SALIDA:
+"HÍGADO: De tamaño y densidad normal, sin lesiones focales.
+
+VESÍCULA BILIAR Y VÍA BILIAR: Sin alteraciones.
+
+PÁNCREAS Y CELDA PANCREÁTICA: Sin alteraciones."
+
 **Texto a procesar:**
 ${text}
 
-**IMPORTANTE: Devuelve ÚNICAMENTE el texto corregido y formateado. Sin explicaciones, sin comentarios, solo el texto médico procesado.**`,
+**IMPORTANTE: Devuelve ÚNICAMENTE el texto corregido y formateado. Sin explicaciones, sin comentarios adicionales, sin introducción, solo el informe médico procesado.**`,
             },
           ],
         }),
