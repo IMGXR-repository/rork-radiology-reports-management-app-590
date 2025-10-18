@@ -66,7 +66,11 @@ export default function DictaphoneScreen() {
   const startRecording = async () => {
     try {
       if (Platform.OS === 'web') {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch((error) => {
+          console.error('Error al solicitar permisos de micrófono:', error);
+          console.error('Permiso de micrófono denegado. Por favor, permite el acceso al micrófono.');
+          return null;
+        });
         if (!stream) return;
         const recorder = new MediaRecorder(stream);
         const chunks: Blob[] = [];
@@ -100,6 +104,14 @@ export default function DictaphoneScreen() {
         setIsRecording(true);
         setRecordingDuration(0);
       } else {
+        const { status } = await Audio.requestPermissionsAsync();
+        
+        if (status !== 'granted') {
+          console.error('Permisos de micrófono denegados');
+          console.error('Se requieren permisos de micrófono para grabar.');
+          return;
+        }
+
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
           playsInSilentModeIOS: true,

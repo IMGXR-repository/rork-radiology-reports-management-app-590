@@ -120,7 +120,6 @@ export default function RecordingScreen() {
     try {
       console.log('Iniciando grabación...');
       
-
       if (Platform.OS === 'web') {
         // Web implementation using MediaRecorder
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -129,8 +128,9 @@ export default function RecordingScreen() {
             noiseSuppression: true,
             autoGainControl: true
           } 
-        }).catch(() => {
-          console.log('Permiso de micrófono requerido');
+        }).catch((error) => {
+          console.error('Error al solicitar permisos de micrófono:', error);
+          console.error('Permiso de micrófono denegado. Por favor, permite el acceso al micrófono.');
           return null;
         });
         
@@ -201,7 +201,13 @@ export default function RecordingScreen() {
         
         console.log('Grabación web iniciada');
       } else {
-        // Mobile implementation
+        const { status } = await Audio.requestPermissionsAsync();
+        
+        if (status !== 'granted') {
+          console.error('Permisos de micrófono denegados');
+          console.error('Se requieren permisos de micrófono para grabar.');
+          return;
+        }
 
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,

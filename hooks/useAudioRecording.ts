@@ -113,21 +113,33 @@ export const useAudioRecording = ({
   const requestPermissions = async (): Promise<boolean> => {
     try {
       if (Platform.OS === 'web') {
-        console.log('🌐 Verificando acceso al micrófono web...');
+        console.log('🌐 Solicitando permisos de micrófono web...');
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
         if (!stream) {
           console.log('❌ No se pudo acceder al micrófono web');
+          if (onError) onError('Permiso de micrófono denegado. Por favor, permite el acceso al micrófono en la configuración del navegador.');
           return false;
         }
         stream.getTracks().forEach(track => track.stop());
-        console.log('✅ Acceso al micrófono web disponible');
+        console.log('✅ Permisos de micrófono web concedidos');
         return true;
       } else {
-        console.log('📱 Verificando acceso al micrófono móvil...');
+        console.log('📱 Solicitando permisos de micrófono móvil...');
+        const { status } = await Audio.requestPermissionsAsync();
+        console.log('📱 Estado de permisos:', status);
+        
+        if (status !== 'granted') {
+          console.log('❌ Permisos de micrófono denegados');
+          if (onError) onError('Permiso de micrófono denegado. Por favor, permite el acceso al micrófono en la configuración de tu dispositivo.');
+          return false;
+        }
+        
+        console.log('✅ Permisos de micrófono móvil concedidos');
         return true;
       }
     } catch (error) {
-      console.error('❌ Error verificando acceso al micrófono:', error);
+      console.error('❌ Error solicitando permisos de micrófono:', error);
+      if (onError) onError('Error al solicitar permisos de micrófono.');
       return false;
     }
   };
