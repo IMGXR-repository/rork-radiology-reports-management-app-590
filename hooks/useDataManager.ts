@@ -151,12 +151,14 @@ export function useDataManager() {
   const filters = reportFilters;
 
   useEffect(() => {
-    loadData();
+    loadData().catch(err => console.error('Error in loadData:', err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    checkAutoBackup();
-  }, [settings, reports, phrases, reportCategories, reportFilters, phraseCategories, phraseFilters, stats]);
+    checkAutoBackup().catch(err => console.error('Error in checkAutoBackup:', err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.autoBackupEnabled, settings.lastAutoBackupDate, settings.autoBackupFrequencyDays]);
 
   const checkAutoBackup = async () => {
     if (!settings.autoBackupEnabled) return;
@@ -218,7 +220,9 @@ export function useDataManager() {
       console.log('Starting data load...');
       setIsLoading(true);
       
-      await checkAndImportLatestBackup();
+      checkAndImportLatestBackup().catch(err => {
+        console.error('Error checking backup:', err);
+      });
       
       const [
         reportsData,
