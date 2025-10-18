@@ -60,7 +60,7 @@ export default function SettingsScreen() {
       disabled={!onPress}
     >
       <View style={styles.settingIcon}>
-        <Text>{icon}</Text>
+        {icon}
       </View>
       <View style={styles.settingContent}>
         <Text style={[styles.settingTitle, { color: theme.onSurface }]}>
@@ -74,7 +74,7 @@ export default function SettingsScreen() {
       </View>
       {rightComponent && (
         <View style={styles.settingRight}>
-          <Text>{rightComponent}</Text>
+          {rightComponent}
         </View>
       )}
     </TouchableOpacity>
