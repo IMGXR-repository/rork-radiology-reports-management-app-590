@@ -178,6 +178,12 @@ ${systemInstructions}${redirectInstruction}`;
         
         console.log('API URL:', apiUrl);
         
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+          console.log('⏰ Request timeout después de 60 segundos');
+        }, 60000);
+        
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
@@ -186,7 +192,10 @@ ${systemInstructions}${redirectInstruction}`;
           body: JSON.stringify({
             messages: messagesToSend,
           }),
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -223,7 +232,17 @@ ${systemInstructions}${redirectInstruction}`;
         
       } catch (error) {
         console.error('Error sending message:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        
+        let errorMessage = 'Error desconocido';
+        
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            errorMessage = 'La solicitud tardó demasiado tiempo. Verifica tu conexión e intenta de nuevo.';
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
         setError(`Error: ${errorMessage}`);
         
         if (Platform.OS === 'web') {
