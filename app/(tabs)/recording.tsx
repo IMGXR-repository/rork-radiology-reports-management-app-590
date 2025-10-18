@@ -129,7 +129,12 @@ export default function RecordingScreen() {
             noiseSuppression: true,
             autoGainControl: true
           } 
+        }).catch(() => {
+          console.log('Permiso de micrófono requerido');
+          return null;
         });
+        
+        if (!stream) return;
         
         // Use the most compatible format
         let mimeType = 'audio/webm';
@@ -197,12 +202,6 @@ export default function RecordingScreen() {
         console.log('Grabación web iniciada');
       } else {
         // Mobile implementation
-        const { status } = await Audio.requestPermissionsAsync();
-        
-        if (status !== 'granted') {
-          console.warn('Permisos de micrófono denegados');
-          return;
-        }
 
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,

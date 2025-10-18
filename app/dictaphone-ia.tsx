@@ -50,7 +50,6 @@ export default function DictaphoneIAScreen() {
 
   const setupAudioMode = async () => {
     try {
-      await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
@@ -63,7 +62,8 @@ export default function DictaphoneIAScreen() {
   const startRecording = async () => {
     try {
       if (Platform.OS === 'web') {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+        if (!stream) return;
         const recorder = new MediaRecorder(stream);
         const chunks: Blob[] = [];
 
