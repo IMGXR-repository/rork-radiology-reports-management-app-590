@@ -172,7 +172,12 @@ ${systemInstructions}${redirectInstruction}`;
         
         console.log('Sending message to AI:', messagesToSend);
         
-        const response = await fetch(new URL("/agent/chat", process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com").toString(), {
+        const toolkitUrl = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
+        const apiUrl = `${toolkitUrl}/agent/chat`;
+        
+        console.log('API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -185,13 +190,20 @@ ${systemInstructions}${redirectInstruction}`;
         if (!response.ok) {
           const errorText = await response.text();
           console.error('API Error:', response.status, errorText);
-          throw new Error(`Error en generación: ${response.status}`);
+          throw new Error(`Error en generación: ${response.status} - ${errorText}`);
         }
         
         const result = await response.json();
-        const aiResponse = result.message?.content || result.completion || result.text;
+        console.log('Full API Response:', result);
+        
+        const aiResponse = result.message?.content || result.completion || result.text || result.response;
         
         console.log('AI Response received:', aiResponse);
+        
+        if (!aiResponse) {
+          console.error('No response content in result:', result);
+          throw new Error('No se recibió respuesta del servidor IA');
+        }
         
         // Format and add AI response
         const formattedResponse = formatAIResponse(aiResponse);
@@ -210,12 +222,13 @@ ${systemInstructions}${redirectInstruction}`;
         
       } catch (error) {
         console.error('Error sending message:', error);
-        setError('Error al enviar el mensaje. Por favor, intenta de nuevo.');
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        setError(`Error: ${errorMessage}`);
         
         if (Platform.OS === 'web') {
-          alert('Error al enviar el mensaje. Por favor, intenta de nuevo.');
+          alert(`Error al enviar el mensaje: ${errorMessage}`);
         } else {
-          Alert.alert('Error', 'Error al enviar el mensaje. Por favor, intenta de nuevo.');
+          Alert.alert('Error', `Error al enviar el mensaje: ${errorMessage}`);
         }
       } finally {
         setIsLoading(false);
