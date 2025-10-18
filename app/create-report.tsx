@@ -621,10 +621,12 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
+    paddingTop: 16,
   },
   formSection: {
     paddingHorizontal: 16,
     paddingVertical: 6,
+    paddingBottom: 100,
   },
   titleRow: {
     flexDirection: 'row' as const,
