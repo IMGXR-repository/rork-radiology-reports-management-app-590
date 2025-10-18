@@ -197,18 +197,41 @@ export function useDataManager() {
     }
   };
 
+  const performAutoBackupOnChange = async () => {
+    try {
+      console.log('Realizando respaldo automático por cambio de datos...');
+      const backupData = await exportData();
+      const backupKey = `auto_backup_${new Date().toISOString()}`;
+      await storage.setItem(backupKey, backupData);
+      await cleanOldAutoBackups();
+      console.log('Respaldo automático por cambio completado');
+    } catch (error) {
+      console.error('Error en respaldo automático por cambio:', error);
+    }
+  };
+
   const cleanOldAutoBackups = async () => {
     try {
-      if (Platform.OS !== 'web') {
+      if (Platform.OS === 'web') {
+        const keys = Object.keys(localStorage);
+        const backupKeys = keys.filter(key => key.startsWith('auto_backup_'));
+        
+        if (backupKeys.length > 1) {
+          const sortedKeys = backupKeys.sort().reverse();
+          const keysToDelete = sortedKeys.slice(1);
+          keysToDelete.forEach(key => localStorage.removeItem(key));
+          console.log(`Eliminados ${keysToDelete.length} respaldos automáticos antiguos`);
+        }
+      } else {
         const AsyncStorage = require('@react-native-async-storage/async-storage').default;
         const allKeys = await AsyncStorage.getAllKeys();
         const backupKeys = allKeys.filter((key: string) => key.startsWith('auto_backup_'));
         
-        if (backupKeys.length > 5) {
+        if (backupKeys.length > 1) {
           const sortedKeys = backupKeys.sort().reverse();
-          const keysToDelete = sortedKeys.slice(5);
+          const keysToDelete = sortedKeys.slice(1);
           await AsyncStorage.multiRemove(keysToDelete);
-          console.log(`Eliminados ${keysToDelete.length} respaldos antiguos`);
+          console.log(`Eliminados ${keysToDelete.length} respaldos automáticos antiguos`);
         }
       }
     } catch (error) {
@@ -220,6 +243,8 @@ export function useDataManager() {
     try {
       console.log('Starting data load...');
       setIsLoading(true);
+      
+      await checkAndImportLatestBackup();
       
       const [
         reportsData,
@@ -339,6 +364,7 @@ export function useDataManager() {
       if (!Array.isArray(newReports)) return;
       await storage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(newReports));
       setReports(newReports);
+      await performAutoBackupOnChange();
     } catch (error) {
       console.error('Error saving reports:', error);
     }
@@ -393,6 +419,7 @@ export function useDataManager() {
       if (!Array.isArray(newPhrases)) return;
       await storage.setItem(STORAGE_KEYS.PHRASES, JSON.stringify(newPhrases));
       setPhrases(newPhrases);
+      await performAutoBackupOnChange();
     } catch (error) {
       console.error('Error saving phrases:', error);
     }
@@ -611,6 +638,56 @@ export function useDataManager() {
       isNewlyCreated: false,
     }));
     await saveReports(updatedReports);
+  };
+
+  const checkAndImportLatestBackup = async () => {
+    try {
+      const currentVersion = await storage.getItem('app_version');
+      const appVersion = '1.0.0';
+      
+      if (currentVersion !== appVersion) {
+        console.log('Nueva versión detectada, buscando último respaldo...');
+        
+        const latestBackup = await getLatestAutoBackup();
+        if (latestBackup) {
+          console.log('Restaurando último respaldo automáticamente...');
+          const data = JSON.parse(latestBackup);
+          
+          if (data.reports) {
+            await storage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(data.reports));
+          }
+          if (data.reportCategories) {
+            await storage.setItem(STORAGE_KEYS.REPORT_CATEGORIES, JSON.stringify(data.reportCategories));
+          }
+          if (data.reportFilters) {
+            await storage.setItem(STORAGE_KEYS.REPORT_FILTERS, JSON.stringify(data.reportFilters));
+          }
+          if (data.phraseCategories) {
+            await storage.setItem(STORAGE_KEYS.PHRASE_CATEGORIES, JSON.stringify(data.phraseCategories));
+          }
+          if (data.phraseFilters) {
+            await storage.setItem(STORAGE_KEYS.PHRASE_FILTERS, JSON.stringify(data.phraseFilters));
+          }
+          if (data.phrases) {
+            await storage.setItem(STORAGE_KEYS.PHRASES, JSON.stringify(data.phrases));
+          }
+          if (data.settings) {
+            await storage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data.settings));
+          }
+          if (data.stats) {
+            await storage.setItem(STORAGE_KEYS.STATS, JSON.stringify(data.stats));
+          }
+          
+          console.log('Respaldo restaurado correctamente');
+        } else {
+          console.log('No se encontró ningún respaldo para importar');
+        }
+        
+        await storage.setItem('app_version', appVersion);
+      }
+    } catch (error) {
+      console.error('Error al verificar e importar respaldo:', error);
+    }
   };
 
   const getLatestAutoBackup = async () => {
