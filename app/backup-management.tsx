@@ -19,9 +19,13 @@ import {
   Plus,
   Clock,
   HardDrive,
+  Download,
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 
 interface BackupItem {
   key: string;
@@ -138,11 +142,110 @@ export default function BackupManagementScreen() {
     }
   };
 
-  const handleImportBackup = () => {
-    showAlert(
-      'Importar Respaldo',
-      'En una implementación completa, esto abriría el selector de archivos para importar respaldo desde un archivo externo.'
-    );
+  const handleImportBackup = async () => {
+    try {
+      setLoading(true);
+      
+      if (Platform.OS === 'web') {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e: Event) => {
+          const target = e.target as HTMLInputElement;
+          const file = target.files?.[0];
+          if (file) {
+            const text = await file.text();
+            const success = await importData(text);
+            if (success) {
+              showAlert('Éxito', 'Respaldo importado correctamente');
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else {
+              showAlert('Error', 'No se pudo importar el respaldo');
+            }
+          }
+          setLoading(false);
+        };
+        input.click();
+      } else {
+        const result = await DocumentPicker.getDocumentAsync({
+          type: 'application/json',
+          copyToCacheDirectory: true,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const fileUri = result.assets[0].uri;
+          const fileContent = await FileSystem.readAsStringAsync(fileUri);
+          const success = await importData(fileContent);
+          
+          if (success) {
+            showAlert('Éxito', 'Respaldo importado correctamente. La aplicación se actualizará.');
+            setTimeout(() => {
+              router.replace('/');
+            }, 1500);
+          } else {
+            showAlert('Error', 'No se pudo importar el respaldo');
+          }
+        }
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error importing backup:', error);
+      showAlert('Error', 'No se pudo importar el respaldo');
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadBackup = async (backup: BackupItem) => {
+    try {
+      setLoading(true);
+
+      let backupData: string | null = null;
+
+      if (Platform.OS === 'web') {
+        backupData = localStorage.getItem(backup.key);
+      } else {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        backupData = await AsyncStorage.getItem(backup.key);
+      }
+
+      if (!backupData) {
+        showAlert('Error', 'No se pudo obtener el respaldo');
+        return;
+      }
+
+      const fileName = `RAD-IA_Respaldo_${formatDate(backup.date).replace(/[/: ]/g, '-')}.json`;
+
+      if (Platform.OS === 'web') {
+        const blob = new Blob([backupData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+        showAlert('Éxito', 'Respaldo descargado correctamente');
+      } else {
+        const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+        await FileSystem.writeAsStringAsync(fileUri, backupData);
+
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'application/json',
+            dialogTitle: 'Guardar respaldo de RAD-IA',
+          });
+        } else {
+          showAlert('Error', 'No se puede compartir archivos en este dispositivo');
+        }
+      }
+    } catch (error) {
+      console.error('Error downloading backup:', error);
+      showAlert('Error', 'No se pudo descargar el respaldo');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUseBackup = async (backup: BackupItem) => {
@@ -250,7 +353,7 @@ export default function BackupManagementScreen() {
         >
           <Upload size={20} color={theme.primary} />
           <Text style={[styles.headerButtonText, { color: theme.primary }]}>
-            SUBIR
+            IMPORTAR
           </Text>
         </TouchableOpacity>
       </View>
@@ -316,6 +419,17 @@ export default function BackupManagementScreen() {
                   <Text style={[styles.actionButtonText, { color: theme.onPrimary }]}>
                     USAR
                   </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    { backgroundColor: theme.secondary || '#4CAF50' },
+                  ]}
+                  onPress={() => handleDownloadBackup(backup)}
+                  disabled={loading}
+                >
+                  <Download size={16} color="#FFFFFF" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -459,7 +573,7 @@ const styles = StyleSheet.create({
   },
   headerButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   content: {
     flex: 1,
@@ -467,9 +581,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     marginBottom: 16,
-    textTransform: 'uppercase',
+    textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
   backupCard: {
@@ -495,7 +609,7 @@ const styles = StyleSheet.create({
   },
   backupName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   autoTag: {
     flexDirection: 'row',
@@ -507,7 +621,7 @@ const styles = StyleSheet.create({
   },
   autoTagText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   backupDate: {
     fontSize: 12,
@@ -524,10 +638,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     gap: 6,
+    minWidth: 50,
   },
   actionButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   emptyState: {
     alignItems: 'center',
@@ -536,14 +651,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '500' as const,
     marginTop: 16,
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
   emptySubtext: {
     fontSize: 14,
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
   modalOverlay: {
     flex: 1,
@@ -565,7 +680,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   modalText: {
     fontSize: 14,
@@ -584,6 +699,6 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
 });

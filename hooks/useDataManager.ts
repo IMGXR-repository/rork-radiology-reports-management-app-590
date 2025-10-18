@@ -181,15 +181,14 @@ export function useDataManager() {
     try {
       console.log('Realizando respaldo automático...');
       const backupData = await exportData();
-      const backupKey = `auto_backup_${new Date().toISOString()}`;
+      const today = new Date().toISOString().split('T')[0];
+      const backupKey = `auto_backup_${today}`;
       await storage.setItem(backupKey, backupData);
       
       await saveSettings({
         ...settings,
         lastAutoBackupDate: new Date().toISOString(),
       });
-      
-      await cleanOldAutoBackups();
       
       console.log('Respaldo automático completado');
     } catch (error) {
@@ -199,45 +198,20 @@ export function useDataManager() {
 
   const performAutoBackupOnChange = async () => {
     try {
+      if (!settings.autoBackupEnabled) return;
+      
       console.log('Realizando respaldo automático por cambio de datos...');
       const backupData = await exportData();
-      const backupKey = `auto_backup_${new Date().toISOString()}`;
+      const today = new Date().toISOString().split('T')[0];
+      const backupKey = `auto_backup_${today}`;
       await storage.setItem(backupKey, backupData);
-      await cleanOldAutoBackups();
       console.log('Respaldo automático por cambio completado');
     } catch (error) {
       console.error('Error en respaldo automático por cambio:', error);
     }
   };
 
-  const cleanOldAutoBackups = async () => {
-    try {
-      if (Platform.OS === 'web') {
-        const keys = Object.keys(localStorage);
-        const backupKeys = keys.filter(key => key.startsWith('auto_backup_'));
-        
-        if (backupKeys.length > 1) {
-          const sortedKeys = backupKeys.sort().reverse();
-          const keysToDelete = sortedKeys.slice(1);
-          keysToDelete.forEach(key => localStorage.removeItem(key));
-          console.log(`Eliminados ${keysToDelete.length} respaldos automáticos antiguos`);
-        }
-      } else {
-        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-        const allKeys = await AsyncStorage.getAllKeys();
-        const backupKeys = allKeys.filter((key: string) => key.startsWith('auto_backup_'));
-        
-        if (backupKeys.length > 1) {
-          const sortedKeys = backupKeys.sort().reverse();
-          const keysToDelete = sortedKeys.slice(1);
-          await AsyncStorage.multiRemove(keysToDelete);
-          console.log(`Eliminados ${keysToDelete.length} respaldos automáticos antiguos`);
-        }
-      }
-    } catch (error) {
-      console.error('Error limpiando respaldos antiguos:', error);
-    }
-  };
+
 
   const loadData = async () => {
     try {
