@@ -135,19 +135,20 @@ ${lengthInstructions}
             ? '\n- Mantén el contexto de la conversación previa'
             : '\n- Mantén el contexto de la conversación previa\n- Si la pregunta no está relacionada con medicina, redirige amablemente hacia temas médicos de tu especialidad';
           
-          const systemMessage = {
-            role: 'system' as const,
-            content: `Eres un asistente médico especializado en ${selectedSpecialty}. ${systemInstructions}${contextInstruction}`,
-          };
+          const systemPrompt = `Eres un asistente médico especializado en ${selectedSpecialty}. ${systemInstructions}${contextInstruction}`;
           
           const conversationHistory = chatMessages.map(msg => ({
             role: msg.role,
             content: msg.content,
           }));
           
+          const firstUserMessage = conversationHistory.length > 0 && conversationHistory[0].role === 'user'
+            ? { role: 'user' as const, content: `${systemPrompt}\n\n${conversationHistory[0].content}` }
+            : { role: 'user' as const, content: systemPrompt };
+          
           messagesToSend = [
-            systemMessage,
-            ...conversationHistory,
+            firstUserMessage,
+            ...conversationHistory.slice(1),
             {
               role: 'user' as const,
               content: userMessage,
