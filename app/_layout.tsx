@@ -65,6 +65,34 @@ function RootLayoutNav() {
               headerShown: true 
             }} 
           />
+          <Stack.Screen 
+            name="create-report" 
+            options={{ 
+              headerShown: false,
+              animation: 'none'
+            }} 
+          />
+          <Stack.Screen 
+            name="create-phrase" 
+            options={{ 
+              headerShown: false,
+              animation: 'none'
+            }} 
+          />
+          <Stack.Screen 
+            name="edit-report" 
+            options={{ 
+              headerShown: false,
+              animation: 'none'
+            }} 
+          />
+          <Stack.Screen 
+            name="edit-phrase" 
+            options={{ 
+              headerShown: false,
+              animation: 'none'
+            }} 
+          />
         </Stack>
       ) : (
         <View style={styles.loadingContainer}>
