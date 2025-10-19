@@ -14,6 +14,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { Audio } from 'expo-av';
 import { Mic, Square, FileText, Send, ChevronDown, ChevronUp, Copy, Trash2, RotateCcw } from 'lucide-react-native';
+import { generateText } from '@rork/toolkit-sdk';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
@@ -773,40 +774,24 @@ DIAGNÓSTICOS DIFERENCIALES:
 6. [Sexto diagnóstico] - [X]%`;
       }
       
-      console.log('📝 Generando informe con nuevo endpoint desde RADIA...');
-      console.log('🔍 Usando endpoint alternativo para generación de texto');
+      console.log('📝 Generando informe desde RADIA con generateText...');
       
-      const response = await fetch('https://toolkit.rork.com/text/generate/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-        }),
+      const reportContent = await generateText({
+        messages: [{ role: 'user', content: prompt }]
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Error en respuesta de generación:', response.status, errorText);
-        throw new Error(`Error en generación: ${response.status} - ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      let reportContent = data.text || data.content || '';
       
       if (!reportContent) {
         throw new Error('No se recibió contenido del servidor');
       }
 
       console.log('✅ Informe final generado exitosamente desde RADIA');
-      reportContent = reportContent.trim();
-      setFinalReport(reportContent);
+      const trimmedReport = reportContent.trim();
+      setFinalReport(trimmedReport);
       
       // Separar hallazgos, conclusiones y diferenciales
-      const findingsMatch = reportContent.match(/(?:hallazgos?|findings?)\s*:?\s*([\s\S]*?)(?=(?:conclusi[oó]n|conclusion|diagn[oó]sticos?\s+diferenciales?)|$)/i);
-      const conclusionsMatch = reportContent.match(/(?:conclusi[oó]n|conclusion)\s*:?\s*([\s\S]*?)(?=(?:diagn[oó]sticos?\s+diferenciales?)|$)/i);
-      const differentialsMatch = reportContent.match(/(?:diagn[oó]sticos?\s+diferenciales?)\s*:?\s*([\s\S]*?)$/i);
+      const findingsMatch = trimmedReport.match(/(?:hallazgos?|findings?)\s*:?\s*([\s\S]*?)(?=(?:conclusi[oó]n|conclusion|diagn[oó]sticos?\s+diferenciales?)|$)/i);
+      const conclusionsMatch = trimmedReport.match(/(?:conclusi[oó]n|conclusion)\s*:?\s*([\s\S]*?)(?=(?:diagn[oó]sticos?\s+diferenciales?)|$)/i);
+      const differentialsMatch = trimmedReport.match(/(?:diagn[oó]sticos?\s+diferenciales?)\s*:?\s*([\s\S]*?)$/i);
       
       if (findingsMatch) {
         let findings = findingsMatch[1].trim();
