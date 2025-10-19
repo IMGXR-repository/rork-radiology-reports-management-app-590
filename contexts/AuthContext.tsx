@@ -107,10 +107,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   useEffect(() => {
-    setUser(DEMO_USER);
-    setIsAuthenticated(true);
-    setIsLoading(false);
-    console.log('Usuario demo activado: demo@radia.com / PIN: 1234');
+    const initializeAuth = async () => {
+      try {
+        setUser(DEMO_USER);
+        setIsAuthenticated(true);
+        console.log('Usuario demo activado: demo@radia.com / PIN: 1234');
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const signIn = useCallback(async () => {
