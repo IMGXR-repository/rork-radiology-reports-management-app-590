@@ -773,7 +773,7 @@ DIAGNÓSTICOS DIFERENCIALES:
 6. [Sexto diagnóstico] - [X]%`;
       }
       
-      const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      const response = await fetch(new URL('/agent/chat', process.env['EXPO_PUBLIC_TOOLKIT_URL'] || 'https://toolkit.rork.com').toString(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -789,13 +789,43 @@ DIAGNÓSTICOS DIFERENCIALES:
       });
       
       if (!response.ok) {
-        throw new Error(`Error en generación: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Error en respuesta de generación:', errorText);
+        throw new Error(`Error en generación: ${response.status} - ${response.statusText}`);
       }
       
-      const result = await response.json();
-      console.log('Informe final generado');
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No se pudo leer la respuesta');
+      }
+
+      const decoder = new TextDecoder();
+      let reportContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const jsonStr = line.substring(2);
+              const data = JSON.parse(jsonStr);
+              if (data.type === 'text-delta' && data.textDelta) {
+                reportContent += data.textDelta;
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
+            }
+          }
+        }
+      }
       
-      const reportContent = result.completion;
+      console.log('Informe final generado');
+      reportContent = reportContent.trim();
       setFinalReport(reportContent);
       
       // Separar hallazgos, conclusiones y diferenciales
