@@ -773,58 +773,33 @@ DIAGNÓSTICOS DIFERENCIALES:
 6. [Sexto diagnóstico] - [X]%`;
       }
       
-      const response = await fetch(new URL('/agent/chat', process.env['EXPO_PUBLIC_TOOLKIT_URL'] || 'https://toolkit.rork.com').toString(), {
+      console.log('📝 Generando informe con nuevo endpoint desde RADIA...');
+      console.log('🔍 Usando endpoint alternativo para generación de texto');
+      
+      const response = await fetch('https://toolkit.rork.com/text/generate/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
+          prompt: prompt,
         }),
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Error en respuesta de generación:', errorText);
+        console.error('❌ Error en respuesta de generación:', response.status, errorText);
         throw new Error(`Error en generación: ${response.status} - ${response.statusText}`);
       }
+
+      const data = await response.json();
+      let reportContent = data.text || data.content || '';
       
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No se pudo leer la respuesta');
+      if (!reportContent) {
+        throw new Error('No se recibió contenido del servidor');
       }
 
-      const decoder = new TextDecoder();
-      let reportContent = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('0:')) {
-            try {
-              const jsonStr = line.substring(2);
-              const data = JSON.parse(jsonStr);
-              if (data.type === 'text-delta' && data.textDelta) {
-                reportContent += data.textDelta;
-              }
-            } catch (e) {
-              console.error('Error parsing chunk:', e);
-            }
-          }
-        }
-      }
-      
-      console.log('Informe final generado');
+      console.log('✅ Informe final generado exitosamente desde RADIA');
       reportContent = reportContent.trim();
       setFinalReport(reportContent);
       
