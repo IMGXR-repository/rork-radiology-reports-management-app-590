@@ -151,6 +151,7 @@ export function useDataManager() {
   const filters = reportFilters;
 
   useEffect(() => {
+    setIsLoading(false);
     loadData().catch(err => console.error('Error in loadData:', err));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -216,17 +217,8 @@ export function useDataManager() {
 
 
   const loadData = async () => {
-    let loadingCompleted = false;
     try {
       console.log('Starting data load...');
-      setIsLoading(true);
-      
-      setTimeout(() => {
-        if (!loadingCompleted) {
-          console.warn('Force finishing loading after timeout');
-          setIsLoading(false);
-        }
-      }, 5000);
       
       checkAndImportLatestBackup().catch(err => {
         console.error('Error checking backup:', err);
@@ -304,10 +296,6 @@ export function useDataManager() {
       console.log('Data loaded successfully');
     } catch (error) {
       console.error('Error loading data:', error);
-    } finally {
-      console.log('Setting isLoading to false');
-      loadingCompleted = true;
-      setIsLoading(false);
     }
   };
 
