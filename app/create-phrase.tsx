@@ -157,7 +157,7 @@ export default function CreatePhraseScreen() {
         />
 
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.formSection}>
+          <View style={[styles.formSection, styles.firstSection]}>
             <View style={styles.titleRow}>
               <View style={styles.textInputContainer}>
                 <Text style={[styles.label, { color: theme.onSurface }]}>
@@ -311,12 +311,14 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
-    paddingTop: 24,
   },
   formSection: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     paddingBottom: 12,
+  },
+  firstSection: {
+    paddingTop: 32,
   },
   titleRow: {
     flexDirection: 'row' as const,
