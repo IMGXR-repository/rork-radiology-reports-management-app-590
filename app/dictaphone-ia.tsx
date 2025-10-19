@@ -40,6 +40,8 @@ export default function DictaphoneIAScreen() {
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [correctingGrammar, setCorrectingGrammar] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [apiInfo, setApiInfo] = useState<string | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'web') {
@@ -435,6 +437,8 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
 
   const transcribeRecording = async (uri: string) => {
     setIsTranscribing(true);
+    setError(null);
+    setApiInfo(null);
     try {
       const formData = new FormData();
       
@@ -455,6 +459,11 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       });
       
       if (!response.ok) {
+        if (response.status === 429) {
+          const errorMsg = '⚠️ LÍMITE DE API ALCANZADO\n\nDemasiadas solicitudes en poco tiempo. La API de transcripción tiene límites de uso.\n\nPor favor, espera 30-60 segundos antes de volver a intentar.';
+          setError(errorMsg);
+          setApiInfo('ℹ️ Esta API tiene límites de tasa (rate limiting) para evitar abuso. Si necesitas transcribir múltiples audios, hazlo con pausas entre cada uno.');
+        }
         throw new Error(`Error en transcripción: ${response.status}`);
       }
       
@@ -484,7 +493,8 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       }
     } catch (error) {
       console.error('Error transcribing:', error);
-      console.error('Error al transcribir el audio.');
+      const errorMsg = error instanceof Error ? error.message : 'Error al transcribir el audio.';
+      setError(`❌ ${errorMsg}`);
     } finally {
       setIsTranscribing(false);
     }
@@ -492,6 +502,8 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
 
   const transcribeAudio = async (audioBlob: Blob) => {
     setIsTranscribing(true);
+    setError(null);
+    setApiInfo(null);
     try {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
@@ -502,6 +514,11 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       });
       
       if (!response.ok) {
+        if (response.status === 429) {
+          const errorMsg = '⚠️ LÍMITE DE API ALCANZADO\n\nDemasiadas solicitudes en poco tiempo. La API de transcripción tiene límites de uso.\n\nPor favor, espera 30-60 segundos antes de volver a intentar.';
+          setError(errorMsg);
+          setApiInfo('ℹ️ Esta API tiene límites de tasa (rate limiting) para evitar abuso. Si necesitas transcribir múltiples audios, hazlo con pausas entre cada uno.');
+        }
         throw new Error(`Error en transcripción: ${response.status}`);
       }
       
@@ -536,7 +553,8 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
       }
     } catch (error) {
       console.error('Error transcribing:', error);
-      console.error('Error al transcribir el audio.');
+      const errorMsg = error instanceof Error ? error.message : 'Error al transcribir el audio.';
+      setError(`❌ ${errorMsg}`);
     } finally {
       setIsTranscribing(false);
     }
@@ -643,6 +661,22 @@ Devuelve ÚNICAMENTE el texto corregido, sin explicaciones ni comentarios adicio
               <ActivityIndicator size="small" color={theme.primary} />
               <Text style={[styles.transcribingText, { color: theme.outline }]}>
                 Transcribiendo audio...
+              </Text>
+            </View>
+          )}
+
+          {error && (
+            <View style={[styles.errorContainer, { backgroundColor: '#FEE2E2', borderColor: '#EF4444' }]}>
+              <Text style={[styles.errorText, { color: '#991B1B' }]}>
+                {error}
+              </Text>
+            </View>
+          )}
+
+          {apiInfo && (
+            <View style={[styles.infoContainer, { backgroundColor: '#DBEAFE', borderColor: '#3B82F6' }]}>
+              <Text style={[styles.infoText, { color: '#1E40AF' }]}>
+                {apiInfo}
               </Text>
             </View>
           )}
@@ -890,5 +924,29 @@ const styles = StyleSheet.create({
   correctingText: {
     fontSize: 13,
     fontWeight: '500',
+  },
+  errorContainer: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    width: '100%',
+  },
+  errorText: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  infoContainer: {
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    width: '100%',
+  },
+  infoText: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
   },
 });

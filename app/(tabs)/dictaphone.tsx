@@ -44,6 +44,8 @@ export default function DictaphoneScreen() {
   const [correctingGrammar, setCorrectingGrammar] = useState<string | null>(null);
   const [transcriptionMode, setTranscriptionMode] = useState<'ia' | 'natural'>('ia');
   const [naturalText, setNaturalText] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
+  const [apiInfo, setApiInfo] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -574,6 +576,8 @@ ${text}
 
   const transcribeRecording = async (uri: string) => {
     setIsTranscribing(true);
+    setError(null);
+    setApiInfo(null);
     try {
       const formData = new FormData();
       
@@ -594,6 +598,20 @@ ${text}
       });
       
       if (!response.ok) {
+        if (response.status === 429) {
+          const errorMsg = '⚠️ LÍMITE DE API ALCANZADO\n\nDemasiadas solicitudes en poco tiempo. La API de transcripción tiene límites de uso.\n\nPor favor, espera 30-60 segundos antes de volver a intentar.';
+          setError(errorMsg);
+          setApiInfo('ℹ️ Esta API tiene límites de tasa (rate limiting) para evitar abuso. Si necesitas transcribir múltiples audios, hazlo con pausas entre cada uno.');
+          if (Platform.OS !== 'web') {
+            Alert.alert(
+              'Límite de API',
+              errorMsg,
+              [{ text: 'Entendido', style: 'default' }]
+            );
+          } else {
+            alert(errorMsg);
+          }
+        }
         throw new Error(`Error en transcripción: ${response.status}`);
       }
       
@@ -633,7 +651,13 @@ ${text}
       }
     } catch (error) {
       console.error('Error transcribing:', error);
-      console.error('Error al transcribir el audio.');
+      const errorMsg = error instanceof Error ? error.message : 'Error al transcribir el audio.';
+      setError(`❌ ${errorMsg}`);
+      if (Platform.OS !== 'web' && !errorMsg.includes('LÍMITE')) {
+        Alert.alert('Error de transcripción', errorMsg);
+      } else if (!errorMsg.includes('LÍMITE')) {
+        alert(`Error de transcripción: ${errorMsg}`);
+      }
     } finally {
       setIsTranscribing(false);
     }
@@ -641,6 +665,8 @@ ${text}
 
   const transcribeAudio = async (audioBlob: Blob) => {
     setIsTranscribing(true);
+    setError(null);
+    setApiInfo(null);
     try {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
@@ -651,6 +677,20 @@ ${text}
       });
       
       if (!response.ok) {
+        if (response.status === 429) {
+          const errorMsg = '⚠️ LÍMITE DE API ALCANZADO\n\nDemasiadas solicitudes en poco tiempo. La API de transcripción tiene límites de uso.\n\nPor favor, espera 30-60 segundos antes de volver a intentar.';
+          setError(errorMsg);
+          setApiInfo('ℹ️ Esta API tiene límites de tasa (rate limiting) para evitar abuso. Si necesitas transcribir múltiples audios, hazlo con pausas entre cada uno.');
+          if (Platform.OS !== 'web') {
+            Alert.alert(
+              'Límite de API',
+              errorMsg,
+              [{ text: 'Entendido', style: 'default' }]
+            );
+          } else {
+            alert(errorMsg);
+          }
+        }
         throw new Error(`Error en transcripción: ${response.status}`);
       }
       
@@ -695,7 +735,13 @@ ${text}
       }
     } catch (error) {
       console.error('Error transcribing:', error);
-      console.error('Error al transcribir el audio.');
+      const errorMsg = error instanceof Error ? error.message : 'Error al transcribir el audio.';
+      setError(`❌ ${errorMsg}`);
+      if (Platform.OS !== 'web' && !errorMsg.includes('LÍMITE')) {
+        Alert.alert('Error de transcripción', errorMsg);
+      } else if (!errorMsg.includes('LÍMITE')) {
+        alert(`Error de transcripción: ${errorMsg}`);
+      }
     } finally {
       setIsTranscribing(false);
     }
@@ -887,6 +933,22 @@ ${text}
                   <ActivityIndicator size="small" color={theme.primary} />
                   <Text style={[styles.transcribingText, { color: theme.outline }]}>
                     Procesando y mejorando transcripción...
+                  </Text>
+                </View>
+              )}
+
+              {error && (
+                <View style={[styles.errorContainer, { backgroundColor: '#FEE2E2', borderColor: '#EF4444' }]}>
+                  <Text style={[styles.errorText, { color: '#991B1B' }]}>
+                    {error}
+                  </Text>
+                </View>
+              )}
+
+              {apiInfo && (
+                <View style={[styles.infoContainer, { backgroundColor: '#DBEAFE', borderColor: '#3B82F6' }]}>
+                  <Text style={[styles.infoText, { color: '#1E40AF' }]}>
+                    {apiInfo}
                   </Text>
                 </View>
               )}
@@ -1285,5 +1347,29 @@ const styles = StyleSheet.create({
   clearNaturalButtonText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  errorContainer: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    width: '100%',
+  },
+  errorText: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  infoContainer: {
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    width: '100%',
+  },
+  infoText: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
   },
 });
