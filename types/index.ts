@@ -156,3 +156,10 @@ export interface ShareRequest {
   recipientEmail: string;
   message?: string;
 }
+
+export interface SavedTranscription {
+  id: string;
+  text: string;
+  mode: 'ia' | 'natural';
+  createdAt: string;
+}

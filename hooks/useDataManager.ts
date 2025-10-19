@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { Report, ReportCategory, ReportFilter, PhraseCategory, PhraseFilter, CommonPhrase, AppSettings, ProductivityStats, EconomicProfitabilityData } from '@/types';
+import { Report, ReportCategory, ReportFilter, PhraseCategory, PhraseFilter, CommonPhrase, AppSettings, ProductivityStats, EconomicProfitabilityData, SavedTranscription } from '@/types';
 
 // Simple storage abstraction for cross-platform compatibility
 const storage = {
@@ -31,6 +31,7 @@ const STORAGE_KEYS = {
   PHRASE_FILTERS: 'pref_phrase_filters',
   SETTINGS: 'pref_settings',
   STATS: 'pref_stats',
+  SAVED_TRANSCRIPTIONS: 'pref_saved_transcriptions',
   // Legacy keys for migration
   CATEGORIES: 'pref_categories',
   FILTERS: 'pref_filters',
@@ -144,6 +145,7 @@ export function useDataManager() {
   const [phraseFilters, setPhraseFilters] = useState<PhraseFilter[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [stats, setStats] = useState<ProductivityStats>(defaultStats);
+  const [savedTranscriptions, setSavedTranscriptions] = useState<SavedTranscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Legacy compatibility
@@ -233,6 +235,7 @@ export function useDataManager() {
         phraseFiltersData,
         settingsData,
         statsData,
+        savedTranscriptionsData,
         // Legacy data for migration
         legacyCategoriesData,
         legacyFiltersData
@@ -245,6 +248,7 @@ export function useDataManager() {
         storage.getItem(STORAGE_KEYS.PHRASE_FILTERS),
         storage.getItem(STORAGE_KEYS.SETTINGS),
         storage.getItem(STORAGE_KEYS.STATS),
+        storage.getItem(STORAGE_KEYS.SAVED_TRANSCRIPTIONS),
         storage.getItem(STORAGE_KEYS.CATEGORIES),
         storage.getItem(STORAGE_KEYS.FILTERS),
       ]);
@@ -279,6 +283,7 @@ export function useDataManager() {
       setPhraseFilters(phraseFiltersData ? JSON.parse(phraseFiltersData) : defaultPhraseFilters);
       
       setPhrases(phrasesData ? JSON.parse(phrasesData) : []);
+      setSavedTranscriptions(savedTranscriptionsData ? JSON.parse(savedTranscriptionsData) : []);
       const loadedSettings = settingsData ? JSON.parse(settingsData) : defaultSettings;
       if (loadedSettings && !loadedSettings.autoBackupFrequencyDays) {
         loadedSettings.autoBackupFrequencyDays = 3;
@@ -607,6 +612,37 @@ export function useDataManager() {
     await saveStats(updatedStats);
   };
 
+  const saveSavedTranscriptions = async (newTranscriptions: SavedTranscription[]) => {
+    try {
+      if (!Array.isArray(newTranscriptions)) return;
+      await storage.setItem(STORAGE_KEYS.SAVED_TRANSCRIPTIONS, JSON.stringify(newTranscriptions));
+      setSavedTranscriptions(newTranscriptions);
+    } catch (error) {
+      console.error('Error saving transcriptions:', error);
+    }
+  };
+
+  const addSavedTranscription = async (text: string, mode: 'ia' | 'natural') => {
+    const newTranscription: SavedTranscription = {
+      id: Date.now().toString(),
+      text,
+      mode,
+      createdAt: new Date().toISOString(),
+    };
+    const updatedTranscriptions = [newTranscription, ...savedTranscriptions];
+    await saveSavedTranscriptions(updatedTranscriptions);
+    return newTranscription;
+  };
+
+  const deleteSavedTranscription = async (id: string) => {
+    const updatedTranscriptions = savedTranscriptions.filter(t => t.id !== id);
+    await saveSavedTranscriptions(updatedTranscriptions);
+  };
+
+  const clearAllSavedTranscriptions = async () => {
+    await saveSavedTranscriptions([]);
+  };
+
   const clearNewlyCreatedFlag = async () => {
     const updatedReports = reports.map(report => ({
       ...report,
@@ -699,6 +735,7 @@ export function useDataManager() {
       phraseFilters,
       settings,
       stats,
+      savedTranscriptions,
       exportDate: new Date().toISOString(),
       version: '2.1.0',
       // Legacy compatibility
@@ -727,6 +764,7 @@ export function useDataManager() {
       if (data.filters && !data.reportFilters) await saveReportFilters(data.filters);
       
       if (data.phrases) await savePhrases(data.phrases);
+      if (data.savedTranscriptions) await saveSavedTranscriptions(data.savedTranscriptions);
       if (data.settings) await saveSettings(data.settings);
       if (data.stats) await saveStats(data.stats);
       return true;
@@ -745,6 +783,7 @@ export function useDataManager() {
     phraseFilters,
     settings,
     stats,
+    savedTranscriptions,
     isLoading,
     addReport,
     updateReport,
@@ -776,6 +815,9 @@ export function useDataManager() {
     trackReportShare,
     trackPhraseShare,
     getLatestAutoBackup,
+    addSavedTranscription,
+    deleteSavedTranscription,
+    clearAllSavedTranscriptions,
     // Legacy compatibility
     categories,
     filters,

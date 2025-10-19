@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Sparkles, Copy, Brain } from 'lucide-react-native';
+import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Sparkles, Copy, Brain, Save } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -28,7 +28,7 @@ interface Recording {
 }
 
 export default function DictaphoneScreen() {
-  const { settings } = useApp();
+  const { settings, savedTranscriptions, addSavedTranscription, deleteSavedTranscription, clearAllSavedTranscriptions } = useApp();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const theme = settings?.theme === 'dark' ? darkTheme : lightTheme;
@@ -648,6 +648,10 @@ ${text}
               : rec
           )
         );
+        
+        if (enhancedText) {
+          await addSavedTranscription(enhancedText, 'ia');
+        }
       }
     } catch (error) {
       console.error('Error transcribing:', error);
@@ -732,6 +736,10 @@ ${text}
               : rec
           )
         );
+        
+        if (enhancedText) {
+          await addSavedTranscription(enhancedText, 'ia');
+        }
       }
     } catch (error) {
       console.error('Error transcribing:', error);
@@ -977,24 +985,25 @@ ${text}
 
               <View style={styles.naturalButtonsRow}>
                 <TouchableOpacity
-                  style={[styles.naturalCopyButton, { backgroundColor: '#10B981' }]}
-                  onPress={() => {
+                  style={[styles.naturalActionButton, { backgroundColor: '#10B981' }]}
+                  onPress={async () => {
                     if (naturalText.trim()) {
+                      await addSavedTranscription(naturalText, 'natural');
                       copyToClipboard(naturalText);
                     }
                   }}
                   disabled={!naturalText.trim()}
                 >
-                  <Copy size={20} color="#FFFFFF" />
-                  <Text style={styles.naturalCopyButtonText}>Copiar</Text>
+                  <Save size={20} color="#FFFFFF" />
+                  <Text style={styles.naturalActionButtonText}>Guardar</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.clearNaturalButton, { backgroundColor: theme.outline + '20' }]}
+                  style={[styles.naturalActionButton, { backgroundColor: theme.outline + '20' }]}
                   onPress={() => setNaturalText('')}
                 >
                   <Eraser size={20} color={theme.outline} />
-                  <Text style={[styles.clearNaturalButtonText, { color: theme.outline }]}>
+                  <Text style={[styles.naturalActionButtonText, { color: theme.outline }]}>
                     Limpiar
                   </Text>
                 </TouchableOpacity>
@@ -1003,14 +1012,29 @@ ${text}
           )}
         </View>
 
-        {recordings.length > 0 && (
+        {savedTranscriptions.length > 0 && (
           <View style={styles.recordingsSection}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
                 Grabaciones
               </Text>
               <TouchableOpacity
-                onPress={clearAllRecordings}
+                onPress={() => {
+                  if (Platform.OS === 'web') {
+                    if (confirm('¿Estás seguro de que deseas eliminar todas las grabaciones?')) {
+                      clearAllSavedTranscriptions();
+                    }
+                  } else {
+                    Alert.alert(
+                      'Limpiar grabaciones',
+                      '¿Estás seguro de que deseas eliminar todas las grabaciones?',
+                      [
+                        { text: 'Cancelar', style: 'cancel' },
+                        { text: 'Limpiar', style: 'destructive', onPress: () => clearAllSavedTranscriptions() },
+                      ]
+                    );
+                  }
+                }}
                 style={[styles.clearButton, { backgroundColor: theme.outline + '20' }]}
               >
                 <Eraser size={18} color="#FF6B6B" />
@@ -1020,62 +1044,50 @@ ${text}
               </TouchableOpacity>
             </View>
 
-            {recordings.map((rec) => (
+            {savedTranscriptions.map((saved) => (
               <View
-                key={rec.id}
+                key={saved.id}
                 style={[styles.recordingItem, { backgroundColor: theme.surface, borderColor: theme.outline }]}
               >
                 <View style={styles.recordingHeader}>
                   <FileText size={20} color={theme.primary} />
                   <View style={styles.recordingInfo}>
                     <Text style={[styles.recordingDate, { color: theme.onSurface }]}>
-                      {rec.date.toLocaleString('es-ES')}
+                      {new Date(saved.createdAt).toLocaleString('es-ES')}
                     </Text>
                     <Text style={[styles.recordingDuration, { color: theme.outline }]}>
-                      {formatDuration(rec.duration)}
+                      {saved.mode === 'ia' ? 'Modo IA' : 'Modo Directo'}
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => deleteRecording(rec.id)}
+                    onPress={() => deleteSavedTranscription(saved.id)}
                     style={styles.deleteButton}
                   >
                     <Trash2 size={20} color="#FF6B6B" />
                   </TouchableOpacity>
                 </View>
 
-                {rec.transcription && (
-                  <View style={styles.transcriptionWrapper}>
-                    {correctingGrammar === rec.id && (
-                      <View style={styles.correctingContainer}>
-                        <ActivityIndicator size="small" color={theme.primary} />
-                        <Sparkles size={16} color={theme.primary} />
-                        <Text style={[styles.correctingText, { color: theme.primary }]}>
-                          Corrigiendo gramática...
-                        </Text>
-                      </View>
-                    )}
-                    
-                    <TouchableOpacity
-                      onPress={() => copyToClipboard(rec.transcription!)}
-                      activeOpacity={0.7}
-                      style={[styles.transcriptionContainer, { backgroundColor: theme.background }]}
-                    >
-                      <Text style={[styles.transcriptionText, { color: theme.onSurface }]}>
-                        {rec.transcription}
-                      </Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      onPress={() => sendToAI(rec.transcription!)}
-                      style={[styles.sendToAIButton, { backgroundColor: '#10B981' }]}
-                    >
-                      <Send size={18} color="#FFFFFF" />
-                      <Text style={styles.sendToAIButtonText}>
-                        Enviar a IA
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                <View style={styles.transcriptionWrapper}>
+                  <TouchableOpacity
+                    onPress={() => copyToClipboard(saved.text)}
+                    activeOpacity={0.7}
+                    style={[styles.transcriptionContainer, { backgroundColor: theme.background }]}
+                  >
+                    <Text style={[styles.transcriptionText, { color: theme.onSurface }]}>
+                      {saved.text}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    onPress={() => sendToAI(saved.text)}
+                    style={[styles.sendToAIButton, { backgroundColor: '#10B981' }]}
+                  >
+                    <Send size={18} color="#FFFFFF" />
+                    <Text style={styles.sendToAIButtonText}>
+                      Enviar a IA
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
           </View>
@@ -1321,7 +1333,7 @@ const styles = StyleSheet.create({
     gap: 12,
     width: '100%',
   },
-  naturalCopyButton: {
+  naturalActionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1330,23 +1342,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
   },
-  naturalCopyButtonText: {
+  naturalActionButtonText: {
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
-  },
-  clearNaturalButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  clearNaturalButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   errorContainer: {
     marginTop: 16,
