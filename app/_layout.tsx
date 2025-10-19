@@ -68,29 +68,33 @@ function RootLayoutNav() {
           <Stack.Screen 
             name="create-report" 
             options={{ 
-              headerShown: false,
-              animation: 'none'
+              headerShown: true,
+              animation: 'slide_from_bottom',
+              presentation: 'modal'
             }} 
           />
           <Stack.Screen 
             name="create-phrase" 
             options={{ 
-              headerShown: false,
-              animation: 'none'
+              headerShown: true,
+              animation: 'slide_from_bottom',
+              presentation: 'modal'
             }} 
           />
           <Stack.Screen 
             name="edit-report" 
             options={{ 
-              headerShown: false,
-              animation: 'none'
+              headerShown: true,
+              animation: 'slide_from_bottom',
+              presentation: 'modal'
             }} 
           />
           <Stack.Screen 
             name="edit-phrase" 
             options={{ 
-              headerShown: false,
-              animation: 'none'
+              headerShown: true,
+              animation: 'slide_from_bottom',
+              presentation: 'modal'
             }} 
           />
         </Stack>

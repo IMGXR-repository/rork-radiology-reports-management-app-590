@@ -124,31 +124,21 @@ export default function EditPhraseScreen() {
 
   if (!phrase) {
     return (
-      <View style={[styles.safeContainer, { backgroundColor: theme.background }]}>
-        <View style={[styles.topSafeArea, { height: insets.top, backgroundColor: theme.surface }]} />
-        <View style={[styles.container, styles.centered, { backgroundColor: theme.background }]}>
-          <Text style={[styles.loadingText, { color: theme.onSurface }]}>
-            Cargando frase...
-          </Text>
-        </View>
+      <View style={[styles.container, styles.centered, { backgroundColor: theme.background }]}>
+        <Text style={[styles.loadingText, { color: theme.onSurface }]}>
+          Cargando frase...
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.safeContainer, { backgroundColor: theme.background }]}>
-      <View style={[styles.topSafeArea, { height: insets.top, backgroundColor: theme.surface }]} />
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
         <Stack.Screen
           options={{
             title: 'Editar Frase',
             headerStyle: { backgroundColor: theme.surface },
             headerTintColor: theme.onSurface,
-            headerLeft: () => (
-              <TouchableOpacity onPress={handleCancel} style={styles.headerButton}>
-                <X size={20} color={theme.onSurface} />
-              </TouchableOpacity>
-            ),
             headerRight: () => (
               <TouchableOpacity 
                 onPress={handleSave} 
@@ -248,7 +238,7 @@ export default function EditPhraseScreen() {
           )}
         </ScrollView>
 
-        <View style={[styles.bottomActions, { backgroundColor: theme.surface, borderTopColor: theme.outline }]}>
+        <View style={[styles.bottomActions, { backgroundColor: theme.surface, borderTopColor: theme.outline, paddingBottom: insets.bottom }]}>
           <TouchableOpacity
             onPress={handleCancel}
             style={[styles.actionButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
@@ -275,18 +265,11 @@ export default function EditPhraseScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-  },
-  topSafeArea: {
-    width: '100%',
-  },
   container: {
     flex: 1,
   },

@@ -304,11 +304,6 @@ Sé directo y conciso.`;
             title: 'Crear Informe',
             headerStyle: { backgroundColor: theme.surface },
             headerTintColor: theme.onSurface,
-            headerLeft: () => (
-              <TouchableOpacity onPress={handleCancel} style={styles.headerButton}>
-                <X size={20} color={theme.onSurface} />
-              </TouchableOpacity>
-            ),
             headerRight: () => (
               <TouchableOpacity 
                 onPress={handleSave} 
@@ -580,7 +575,7 @@ Sé directo y conciso.`;
           )}
         </ScrollView>
 
-        <View style={[styles.bottomActions, { backgroundColor: theme.surface, borderTopColor: theme.outline }]}>
+        <View style={[styles.bottomActions, { backgroundColor: theme.surface, borderTopColor: theme.outline, paddingBottom: insets.bottom }]}>
           <TouchableOpacity
             onPress={handleCancel}
             style={[styles.actionButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
