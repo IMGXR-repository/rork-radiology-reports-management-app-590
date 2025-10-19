@@ -114,52 +114,79 @@ export const useAudioRecording = ({
     try {
       if (Platform.OS === 'web') {
         console.log('🌐 Solicitando permisos de micrófono web...');
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
-        if (!stream) {
-          console.log('❌ No se pudo acceder al micrófono web');
-          if (onError) onError('Permiso de micrófono denegado. Por favor, permite el acceso al micrófono en la configuración del navegador.');
+        
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.error('❌ API de MediaDevices no disponible');
+          if (onError) onError('Tu navegador no soporta grabación de audio. Por favor, usa un navegador moderno (Chrome, Firefox, Safari).');
           return false;
         }
-        stream.getTracks().forEach(track => track.stop());
-        console.log('✅ Permisos de micrófono web concedidos');
-        return true;
+        
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+          console.log('✅ Permisos de micrófono web concedidos');
+          return true;
+        } catch (mediaError: any) {
+          console.error('❌ Error de permisos web:', mediaError);
+          
+          if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
+            if (onError) onError('Permiso de micrófono denegado. Por favor, permite el acceso al micrófono en la configuración del navegador y recarga la página.');
+          } else if (mediaError.name === 'NotFoundError') {
+            if (onError) onError('No se detectó ningún micrófono. Por favor, conecta un micrófono y recarga la página.');
+          } else if (mediaError.name === 'NotReadableError') {
+            if (onError) onError('El micrófono está siendo usado por otra aplicación. Por favor, cierra otras aplicaciones que usen el micrófono.');
+          } else {
+            if (onError) onError(`Error al acceder al micrófono: ${mediaError.message || 'Error desconocido'}`);
+          }
+          return false;
+        }
       } else {
         console.log('📱 Solicitando permisos de micrófono móvil...');
-        const { status } = await Audio.requestPermissionsAsync();
-        console.log('📱 Estado de permisos:', status);
         
-        if (status !== 'granted') {
-          console.log('❌ Permisos de micrófono denegados');
-          if (onError) onError('Permiso de micrófono denegado. Por favor, permite el acceso al micrófono en la configuración de tu dispositivo.');
+        try {
+          const { status } = await Audio.requestPermissionsAsync();
+          console.log('📱 Estado de permisos:', status);
+          
+          if (status !== 'granted') {
+            console.log('❌ Permisos de micrófono denegados');
+            if (onError) onError('Permiso de micrófono denegado. Por favor, ve a Configuración > Permisos > Micrófono y permite el acceso a esta aplicación.');
+            return false;
+          }
+          
+          console.log('✅ Permisos de micrófono móvil concedidos');
+          return true;
+        } catch (audioError) {
+          console.error('❌ Error al solicitar permisos móvil:', audioError);
+          if (onError) onError('Error al solicitar permisos de micrófono. Por favor, reinicia la aplicación e intenta de nuevo.');
           return false;
         }
-        
-        console.log('✅ Permisos de micrófono móvil concedidos');
-        return true;
       }
     } catch (error) {
-      console.error('❌ Error solicitando permisos de micrófono:', error);
-      if (onError) onError('Error al solicitar permisos de micrófono.');
+      console.error('❌ Error inesperado solicitando permisos:', error);
+      if (onError) onError('Error inesperado al solicitar permisos de micrófono. Por favor, reinicia la aplicación.');
       return false;
     }
   };
 
-  const transcribeAudioFromBlob = async (audioBlob: Blob): Promise<void> => {
+  const transcribeAudioFromBlob = async (audioBlob: Blob, retryCount = 0): Promise<void> => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2000;
+    
     setIsTranscribing(true);
     
     try {
-      console.log('🎤 Transcribiendo audio web:', {
+      console.log(`🎤 Transcribiendo audio web (intento ${retryCount + 1}/${MAX_RETRIES + 1}):`, {
         size: audioBlob.size,
         type: audioBlob.type
       });
       
       if (audioBlob.size === 0) {
-        throw new Error('Audio vacío - no se grabó contenido');
+        throw new Error('El audio está vacío. No se grabó ningún contenido. Intenta grabar de nuevo.');
       }
       
       if (audioBlob.size < 1000) {
         console.warn('Audio muy pequeño:', audioBlob.size, 'bytes');
-        console.warn('El audio es muy corto');
+        if (onError) onError('El audio grabado es muy corto (menos de 1 segundo). Por favor, graba un audio más largo.');
         return;
       }
       
@@ -179,35 +206,72 @@ export const useAudioRecording = ({
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-        console.log('⏰ Timeout de transcripción');
-      }, 30000);
+        console.log('⏰ Timeout de transcripción (60 segundos)');
+      }, 60000);
       
-      const response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
+      let response;
+      try {
+        response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+        });
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          throw new Error('La transcripción está tomando demasiado tiempo (más de 60 segundos). Tu audio puede ser muy largo o hay problemas de conexión.');
+        }
+        
+        if (!navigator.onLine) {
+          throw new Error('Sin conexión a internet. Por favor, verifica tu conexión e intenta de nuevo.');
+        }
+        
+        throw new Error('Error de red al conectar con el servidor. Verifica tu conexión a internet.');
+      }
       
       clearTimeout(timeoutId);
       
       console.log('📥 Respuesta transcripción:', response.status, response.statusText);
       
       if (!response.ok) {
-        const errorText = await response.text();
+        let errorText = '';
+        try {
+          errorText = await response.text();
+        } catch (e) {
+          errorText = 'No se pudo leer el error del servidor';
+        }
+        
         console.error('❌ Error respuesta:', response.status, errorText);
         
         if (response.status === 413) {
-          throw new Error('El archivo de audio es demasiado grande');
+          throw new Error('El archivo de audio es demasiado grande. La grabación no debe superar los 10 MB.');
         } else if (response.status === 415) {
-          throw new Error('Formato de audio no soportado');
-        } else if (response.status >= 500) {
-          throw new Error('Error del servidor. Intenta de nuevo en unos momentos');
+          throw new Error('Formato de audio no soportado por el servidor. Por favor, intenta de nuevo.');
+        } else if (response.status === 429) {
+          throw new Error('Demasiadas solicitudes. Por favor, espera unos segundos e intenta de nuevo.');
+        } else if (response.status >= 500 && response.status < 600) {
+          if (retryCount < MAX_RETRIES) {
+            console.log(`🔄 Reintentando después de error ${response.status}... (${retryCount + 1}/${MAX_RETRIES})`);
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+            return await transcribeAudioFromBlob(audioBlob, retryCount + 1);
+          }
+          throw new Error('El servidor de transcripción está experimentando problemas. Por favor, intenta de nuevo en unos minutos.');
+        } else if (response.status === 400) {
+          throw new Error('Audio inválido. El servidor no pudo procesar tu grabación. Intenta grabar de nuevo.');
         } else {
-          throw new Error(`Error ${response.status}: ${errorText || 'Error desconocido'}`);
+          throw new Error(`Error del servidor (${response.status}): ${errorText || 'Error desconocido'}. Por favor, intenta de nuevo.`);
         }
       }
       
-      const result: TranscriptionResult = await response.json();
+      let result: TranscriptionResult;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('❌ Error al parsear respuesta JSON:', jsonError);
+        throw new Error('Error al procesar la respuesta del servidor. El formato de respuesta es inválido.');
+      }
+      
       console.log('✅ Transcripción completada:', {
         text: result.text?.substring(0, 100) + '...',
         language: result.language,
@@ -216,7 +280,7 @@ export const useAudioRecording = ({
       
       if (!result.text || result.text.trim() === '') {
         console.warn('⚠️ Transcripción vacía');
-        console.warn('No se detectó texto claro en el audio');
+        if (onError) onError('No se detectó voz clara en el audio. Habla más cerca del micrófono o en un ambiente más silencioso.');
         return;
       }
       
@@ -234,9 +298,11 @@ export const useAudioRecording = ({
     } catch (error) {
       console.error('❌ Error transcripción:', error);
       
-      const errorMessage = error instanceof Error && error.name === 'AbortError'
-        ? 'La transcripción está tomando demasiado tiempo. Verifica tu conexión e intenta de nuevo.'
-        : error instanceof Error ? error.message : 'Error desconocido al transcribir el audio';
+      let errorMessage = 'Error desconocido al transcribir el audio';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       
       if (onError) {
         onError(errorMessage);
@@ -248,14 +314,17 @@ export const useAudioRecording = ({
     }
   };
 
-  const transcribeAudioFromUri = async (uri: string): Promise<void> => {
+  const transcribeAudioFromUri = async (uri: string, retryCount = 0): Promise<void> => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2000;
+    
     setIsTranscribing(true);
     
     try {
-      console.log('📱 Transcribiendo desde móvil:', uri);
+      console.log(`📱 Transcribiendo desde móvil (intento ${retryCount + 1}/${MAX_RETRIES + 1}):`, uri);
       
       if (!uri) {
-        throw new Error('URI de audio no válida');
+        throw new Error('URI de audio no válida. No se pudo acceder al archivo de grabación.');
       }
       
       const formData = new FormData();
@@ -275,35 +344,68 @@ export const useAudioRecording = ({
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-        console.log('⏰ Timeout de transcripción móvil');
-      }, 30000);
+        console.log('⏰ Timeout de transcripción móvil (60 segundos)');
+      }, 60000);
       
-      const response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
+      let response;
+      try {
+        response = await fetch('https://toolkit.rork.com/stt/transcribe/', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+        });
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          throw new Error('La transcripción está tomando demasiado tiempo (más de 60 segundos). Tu audio puede ser muy largo o hay problemas de conexión.');
+        }
+        
+        throw new Error('Error de red al conectar con el servidor. Verifica tu conexión a internet.');
+      }
       
       clearTimeout(timeoutId);
       
       console.log('📥 Respuesta móvil:', response.status, response.statusText);
       
       if (!response.ok) {
-        const errorText = await response.text();
+        let errorText = '';
+        try {
+          errorText = await response.text();
+        } catch (e) {
+          errorText = 'No se pudo leer el error del servidor';
+        }
+        
         console.error('❌ Error respuesta móvil:', response.status, errorText);
         
         if (response.status === 413) {
-          throw new Error('El archivo de audio es demasiado grande');
+          throw new Error('El archivo de audio es demasiado grande. La grabación no debe superar los 10 MB.');
         } else if (response.status === 415) {
-          throw new Error('Formato de audio no soportado');
-        } else if (response.status >= 500) {
-          throw new Error('Error del servidor. Intenta de nuevo en unos momentos');
+          throw new Error('Formato de audio no soportado por el servidor. Por favor, intenta de nuevo.');
+        } else if (response.status === 429) {
+          throw new Error('Demasiadas solicitudes. Por favor, espera unos segundos e intenta de nuevo.');
+        } else if (response.status >= 500 && response.status < 600) {
+          if (retryCount < MAX_RETRIES) {
+            console.log(`🔄 Reintentando después de error ${response.status}... (${retryCount + 1}/${MAX_RETRIES})`);
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+            return await transcribeAudioFromUri(uri, retryCount + 1);
+          }
+          throw new Error('El servidor de transcripción está experimentando problemas. Por favor, intenta de nuevo en unos minutos.');
+        } else if (response.status === 400) {
+          throw new Error('Audio inválido. El servidor no pudo procesar tu grabación. Intenta grabar de nuevo.');
         } else {
-          throw new Error(`Error ${response.status}: ${errorText || 'Error desconocido'}`);
+          throw new Error(`Error del servidor (${response.status}): ${errorText || 'Error desconocido'}. Por favor, intenta de nuevo.`);
         }
       }
       
-      const result: TranscriptionResult = await response.json();
+      let result: TranscriptionResult;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('❌ Error al parsear respuesta JSON:', jsonError);
+        throw new Error('Error al procesar la respuesta del servidor. El formato de respuesta es inválido.');
+      }
+      
       console.log('✅ Transcripción móvil completada:', {
         text: result.text?.substring(0, 100) + '...',
         language: result.language,
@@ -312,7 +414,7 @@ export const useAudioRecording = ({
       
       if (!result.text || result.text.trim() === '') {
         console.warn('⚠️ Transcripción móvil vacía');
-        console.warn('No se detectó texto claro en el audio');
+        if (onError) onError('No se detectó voz clara en el audio. Habla más cerca del micrófono o en un ambiente más silencioso.');
         return;
       }
       
@@ -330,9 +432,11 @@ export const useAudioRecording = ({
     } catch (error) {
       console.error('❌ Error transcripción móvil:', error);
       
-      const errorMessage = error instanceof Error && error.name === 'AbortError'
-        ? 'La transcripción está tomando demasiado tiempo. Verifica tu conexión e intenta de nuevo.'
-        : error instanceof Error ? error.message : 'Error desconocido al transcribir el audio';
+      let errorMessage = 'Error desconocido al transcribir el audio';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       
       if (onError) {
         onError(errorMessage);
@@ -511,7 +615,23 @@ export const useAudioRecording = ({
       }
     } catch (error) {
       console.error('Error al iniciar grabación:', error);
-      const errorMsg = `No se pudo iniciar la grabación: ${error instanceof Error ? error.message : 'Error desconocido'}`;
+      
+      let errorMsg = 'No se pudo iniciar la grabación: ';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('NotAllowedError') || error.message.includes('Permission')) {
+          errorMsg += 'Permisos de micrófono denegados. Por favor, permite el acceso al micrófono.';
+        } else if (error.message.includes('NotFoundError')) {
+          errorMsg += 'No se encontró ningún micrófono disponible.';
+        } else if (error.message.includes('NotReadableError')) {
+          errorMsg += 'El micrófono está siendo usado por otra aplicación.';
+        } else {
+          errorMsg += error.message;
+        }
+      } else {
+        errorMsg += 'Error desconocido. Por favor, reinicia la aplicación e intenta de nuevo.';
+      }
+      
       console.error(errorMsg);
       if (onError) onError(errorMsg);
       return false;
@@ -568,7 +688,14 @@ export const useAudioRecording = ({
       console.error('Error al detener grabación:', error);
       setRecording(null);
       setIsRecordingUnloaded(true);
-      const errorMsg = 'Error al detener la grabación.';
+      
+      let errorMsg = 'Error al detener la grabación: ';
+      if (error instanceof Error) {
+        errorMsg += error.message;
+      } else {
+        errorMsg += 'Error desconocido. El audio puede no haberse guardado correctamente.';
+      }
+      
       console.error(errorMsg);
       if (onError) onError(errorMsg);
     }
