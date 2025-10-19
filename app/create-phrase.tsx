@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   firstSection: {
-    paddingTop: 32,
+    paddingTop: 16,
   },
   titleRow: {
     flexDirection: 'row' as const,
