@@ -226,11 +226,11 @@ Sé directo y conciso.`;
         prompt += `\n\nIndicaciones adicionales del usuario: ${extraInstructions.trim()}`;
       }
 
-      console.log('📝 Generando informe con prompt:', prompt.substring(0, 200) + '...');
+      console.log('📝 Generando informe RADIA con generateText...');
       const generatedContent = await generateText({
         messages: [{ role: 'user', content: prompt }]
       });
-      console.log('✅ Contenido generado exitosamente');
+      console.log('✅ Informe RADIA generado exitosamente');
       setContent(generatedContent);
     } catch (error) {
       console.error('Error generating structured report:', error);
