@@ -203,20 +203,12 @@ export default function ReportsScreen() {
               <Layers size={16} color={theme.primary} />
             </TouchableOpacity>
           </View>
-          <View style={styles.addButtonGroup}>
-            <TouchableOpacity
-              onPress={handleCreateReport}
-              style={[styles.addButton, { backgroundColor: theme.primary }]}
-            >
-              <Plus size={20} color={theme.onPrimary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/create-report-2')}
-              style={[styles.addButton2, { backgroundColor: theme.secondary || '#10B981' }]}
-            >
-              <Text style={[styles.addButton2Text, { color: theme.onPrimary }]}>2</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={handleCreateReport}
+            style={[styles.addButton, { backgroundColor: theme.primary }]}
+          >
+            <Plus size={20} color={theme.onPrimary} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.searchContainer}>
@@ -373,10 +365,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
   },
-  addButtonGroup: {
-    flexDirection: 'row',
-    gap: 8,
-  },
   addButton: {
     width: 44,
     height: 44,
@@ -388,21 +376,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  addButton2: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: 'rgba(0, 0, 0, 0.08)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  addButton2Text: {
-    fontSize: 20,
-    fontWeight: '700' as const,
   },
 });
