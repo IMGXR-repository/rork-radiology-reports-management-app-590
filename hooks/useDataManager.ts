@@ -144,7 +144,7 @@ export function useDataManager() {
   const [phraseFilters, setPhraseFilters] = useState<PhraseFilter[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [stats, setStats] = useState<ProductivityStats>(defaultStats);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Legacy compatibility
   const categories = reportCategories;
@@ -216,9 +216,17 @@ export function useDataManager() {
 
 
   const loadData = async () => {
+    let loadingCompleted = false;
     try {
       console.log('Starting data load...');
       setIsLoading(true);
+      
+      setTimeout(() => {
+        if (!loadingCompleted) {
+          console.warn('Force finishing loading after timeout');
+          setIsLoading(false);
+        }
+      }, 5000);
       
       checkAndImportLatestBackup().catch(err => {
         console.error('Error checking backup:', err);
@@ -298,6 +306,7 @@ export function useDataManager() {
       console.error('Error loading data:', error);
     } finally {
       console.log('Setting isLoading to false');
+      loadingCompleted = true;
       setIsLoading(false);
     }
   };
