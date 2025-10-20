@@ -105,9 +105,12 @@ export default function RecordingScreen() {
     if (reportId && reports.length > 0) {
       const preselectedReport = reports.find(report => report.id === reportId);
       if (preselectedReport) {
+        console.log('🎯 Preseleccionando informe desde URL:', preselectedReport.title, 'ID:', reportId);
         setSelectedReport(preselectedReport);
         setIsReportSelectorExpanded(false);
-        console.log('✅ Informe preseleccionado:', preselectedReport.title);
+        console.log('✅ Informe preseleccionado exitosamente');
+      } else {
+        console.warn('⚠️ No se encontró informe con ID:', reportId);
       }
     }
   }, [reportId, reports]);

@@ -68,6 +68,7 @@ export function ReportCard({ report, onEdit }: ReportCardProps) {
   };
 
   const handleAIAssist = () => {
+    console.log('📤 ReportCard: Navegando a RAD-IA con reportId:', report.id, 'Title:', report.title);
     router.push(`/(tabs)/recording?reportId=${report.id}`);
   };
 
