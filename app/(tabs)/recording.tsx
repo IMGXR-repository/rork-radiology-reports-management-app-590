@@ -1154,7 +1154,7 @@ DIAGNÓSTICOS DIFERENCIALES:
             style={[styles.bigNewReportButton, { backgroundColor: theme.primary }]}
             onPress={resetAll}
           >
-            <RotateCcw size={24} color={theme.onPrimary} />
+            <RotateCcw size={18} color={theme.onPrimary} />
             <Text style={[styles.bigNewReportButtonText, { color: theme.onPrimary }]}>Nuevo Informe</Text>
           </TouchableOpacity>
         </View>
@@ -1486,15 +1486,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     marginTop: 16,
     marginBottom: 16,
   },
   bigNewReportButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginLeft: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
