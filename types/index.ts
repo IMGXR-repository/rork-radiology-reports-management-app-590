@@ -63,6 +63,7 @@ export interface Filter extends ReportFilter {}
 
 export interface AppSettings {
   theme: 'light' | 'dark';
+  language: 'es' | 'en' | 'de' | 'fr' | 'pt' | 'it';
   defaultCategory?: string;
   autoBackup: boolean;
   showFavoritesFirst: boolean;

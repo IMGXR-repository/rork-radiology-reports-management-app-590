@@ -2,21 +2,25 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Switch, ScrollView, Platform, Image } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Moon, Sun, HardDrive, Heart, Info, User, LogIn, LogOut, Share2, Users, CreditCard, MapPin, Stethoscope, Edit, QrCode } from 'lucide-react-native';
+import { Moon, Sun, HardDrive, Heart, Info, User, LogIn, LogOut, Share2, Users, CreditCard, MapPin, Stethoscope, Edit, QrCode, Languages } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadiaLogo } from '@/components/RadiaLogo';
 import { QRSyncModal } from '@/components/QRSyncModal';
 import { lightTheme, darkTheme } from '@/constants/theme';
+import { useTranslation } from '@/hooks/useTranslation';
+import { languageNames, Language } from '@/constants/translations';
 
 export default function SettingsScreen() {
   const { settings, saveSettings } = useApp();
   const { user, isAuthenticated, signIn, signOut, getSharedItemsReceived, getSharedItemsSent } = useAuth();
   const userSyncCode = user?.id || 'no-user';
   const theme = settings.theme === 'dark' ? darkTheme : lightTheme;
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [showSharedItems, setShowSharedItems] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
 
   const sharedItemsReceived = getSharedItemsReceived();
   const sharedItemsSent = getSharedItemsSent();
@@ -30,20 +34,30 @@ export default function SettingsScreen() {
     await saveSettings({ ...settings, showFavoritesFirst: !settings.showFavoritesFirst });
   };
 
+  const handleLanguageChange = async (language: Language) => {
+    await saveSettings({ ...settings, language });
+    setShowLanguageSelector(false);
+  };
+
 
 
 
 
   const handleAbout = () => {
+    const aboutTitle = t.settings.about;
+    const aboutMessage = 'RAD-IA v1.0.0\n\n' + (settings.language === 'es' ? 
+      'Aplicación de radiología inteligente para gestión de informes radiológicos.\n\nDesarrollado para profesionales médicos.' : 
+      settings.language === 'en' ? 'Intelligent radiology application for medical report management.\n\nDeveloped for medical professionals.' :
+      settings.language === 'de' ? 'Intelligente Radiologieanwendung für die Verwaltung medizinischer Berichte.\n\nEntwickelt für medizinisches Fachpersonal.' :
+      settings.language === 'fr' ? 'Application de radiologie intelligente pour la gestion des rapports médicaux.\n\nDéveloppée pour les professionnels de santé.' :
+      settings.language === 'pt' ? 'Aplicação de radiologia inteligente para gestão de relatórios médicos.\n\nDesenvolvido para profissionais médicos.' :
+      'Applicazione di radiologia intelligente per la gestione dei rapporti medici.\n\nSviluppato per professionisti medici.');
+    
     if (Platform.OS === 'web') {
-      alert('RAD-IA v1.0.0\n\nAplicación de radiología inteligente para gestión de informes radiológicos.\n\nDesarrollado para profesionales médicos.');
+      alert(aboutMessage);
     } else {
       const Alert = require('react-native').Alert;
-      Alert.alert(
-        'Acerca de RAD-IA',
-        'RAD-IA v1.0.0\n\nAplicación de radiología inteligente para gestión de informes radiológicos.\n\nDesarrollado para profesionales médicos.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert(aboutTitle, aboutMessage, [{ text: t.common.ok }]);
     }
   };
 
@@ -88,7 +102,7 @@ export default function SettingsScreen() {
       <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <Stack.Screen
         options={{
-          title: 'Configuración',
+          title: t.settings.title,
           headerStyle: { backgroundColor: theme.surface },
           headerTintColor: theme.onSurface,
         }}
@@ -97,7 +111,7 @@ export default function SettingsScreen() {
       {/* Sección de Usuario */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
-          Usuario
+          {t.settings.user}
         </Text>
         
         {isAuthenticated ? (
@@ -144,19 +158,19 @@ export default function SettingsScreen() {
                 
                 {renderSettingItem(
                   <CreditCard size={20} color={theme.primary} />,
-                  'DNI',
+                  t.settings.dni,
                   user.dni
                 )}
                 
                 {renderSettingItem(
                   <MapPin size={20} color={theme.primary} />,
-                  'Ubicación',
+                  t.settings.location,
                   `${user.city}, ${user.country}`
                 )}
                 
                 {renderSettingItem(
                   <Stethoscope size={20} color={theme.primary} />,
-                  'Especialidad',
+                  t.settings.specialty,
                   `${user.medicalSpecialty} - Colegiado: ${user.medicalLicense}`
                 )}
               </View>
@@ -164,15 +178,15 @@ export default function SettingsScreen() {
             
             {renderSettingItem(
               <Share2 size={20} color={theme.primary} />,
-              'Elementos compartidos',
-              `${sharedItemsReceived.length} recibidos, ${sharedItemsSent.length} enviados`,
+              t.settings.sharedItems,
+              `${sharedItemsReceived.length} ${t.settings.sharedItemsDescription}`,
               () => setShowSharedItems(!showSharedItems)
             )}
             
             {renderSettingItem(
               <LogOut size={20} color={theme.error || '#FF6B6B'} />,
-              'Cerrar sesión',
-              'Salir de tu cuenta',
+              t.settings.signOut,
+              t.settings.signOutDescription,
               signOut
             )}
           </>
@@ -180,15 +194,15 @@ export default function SettingsScreen() {
           <>
             {renderSettingItem(
               <LogIn size={20} color={theme.primary} />,
-              'Iniciar sesión',
-              'Accede con una cuenta existente',
+              t.settings.signIn,
+              t.settings.signInDescription,
               signIn
             )}
             
             {renderSettingItem(
               <Edit size={20} color={theme.primary} />,
-              'Crear cuenta nueva',
-              'Registro completo con información profesional',
+              t.settings.createAccount,
+              t.settings.createAccountDescription,
               signIn
             )}
           </>
@@ -197,7 +211,7 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
-          Apariencia
+          {t.settings.appearance}
         </Text>
         
         {renderSettingItem(
@@ -206,8 +220,8 @@ export default function SettingsScreen() {
           ) : (
             <Sun size={20} color={theme.primary} />
           ),
-          'Tema',
-          settings.theme === 'dark' ? 'Modo oscuro' : 'Modo claro',
+          t.settings.theme,
+          settings.theme === 'dark' ? t.settings.darkMode : t.settings.lightMode,
           handleThemeToggle,
           <Switch
             value={settings.theme === 'dark'}
@@ -216,17 +230,54 @@ export default function SettingsScreen() {
             thumbColor={settings.theme === 'dark' ? theme.onPrimary : theme.onSurface}
           />
         )}
+        
+        {renderSettingItem(
+          <Languages size={20} color={theme.primary} />,
+          t.settings.language,
+          languageNames[settings.language || 'es'],
+          () => setShowLanguageSelector(!showLanguageSelector)
+        )}
+        
+        {showLanguageSelector && (
+          <View style={[styles.languageSelector, { backgroundColor: theme.surfaceVariant }]}>
+            {(Object.keys(languageNames) as Language[]).map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[
+                  styles.languageOption,
+                  {
+                    backgroundColor: settings.language === lang ? theme.primary : 'transparent',
+                    borderColor: theme.outline,
+                  },
+                ]}
+                onPress={() => handleLanguageChange(lang)}
+              >
+                <Text
+                  style={[
+                    styles.languageOptionText,
+                    {
+                      color: settings.language === lang ? theme.onPrimary : theme.onSurface,
+                      fontWeight: settings.language === lang ? '600' : '400',
+                    },
+                  ]}
+                >
+                  {languageNames[lang]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
-          Comportamiento
+          {t.settings.behavior}
         </Text>
         
         {renderSettingItem(
           <Heart size={20} color={theme.primary} />,
-          'Favoritos primero',
-          'Mostrar informes favoritos al inicio de la lista',
+          t.settings.favoritesFirst,
+          t.settings.favoritesFirstDescription,
           handleFavoritesFirstToggle,
           <Switch
             value={settings.showFavoritesFirst}
@@ -294,20 +345,20 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
-          Sincronización y Respaldo
+          {t.settings.syncAndBackup}
         </Text>
         
         {renderSettingItem(
           <HardDrive size={20} color={theme.primary} />,
-          'Gestión de Respaldos',
-          'Crear, restaurar y administrar respaldos de datos',
+          t.settings.backupManagement,
+          t.settings.backupManagementDescription,
           () => router.push('/backup-management')
         )}
         
         {renderSettingItem(
           <QrCode size={20} color={theme.primary} />,
-          'Mi Código QR',
-          'Código único para sincronizar con otros dispositivos',
+          t.settings.myQRCode,
+          t.settings.myQRCodeDescription,
           () => setShowQRModal(true)
         )}
 
@@ -315,13 +366,13 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
-          Información
+          {t.settings.information}
         </Text>
         
         {renderSettingItem(
           <Info size={20} color={theme.primary} />,
-          'Acerca de RAD-IA',
-          'Versión e información de la aplicación',
+          t.settings.about,
+          t.settings.aboutDescription,
           handleAbout
         )}
       </View>
@@ -331,10 +382,15 @@ export default function SettingsScreen() {
           <RadiaLogo size="small" showText={true} color={theme.primary} textColor={theme.onSurface} />
         </View>
         <Text style={[styles.footerText, { color: theme.outline }]}>
-          RAD-IA - Radiología Inteligente
+          RAD-IA - {settings.language === 'es' ? 'Radiología Inteligente' : 
+            settings.language === 'en' ? 'Intelligent Radiology' :
+            settings.language === 'de' ? 'Intelligente Radiologie' :
+            settings.language === 'fr' ? 'Radiologie Intelligente' :
+            settings.language === 'pt' ? 'Radiologia Inteligente' :
+            'Radiologia Intelligente'}
         </Text>
         <Text style={[styles.footerText, { color: theme.outline }]}>
-          Versión 1.0.0
+          {t.settings.version} 1.0.0
         </Text>
       </View>
       </ScrollView>
@@ -490,5 +546,21 @@ const styles = StyleSheet.create({
   emptySharedText: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  languageSelector: {
+    marginTop: 8,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    padding: 8,
+    gap: 6,
+  },
+  languageOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  languageOptionText: {
+    fontSize: 16,
   },
 });

@@ -108,6 +108,7 @@ const defaultPhraseFilters: PhraseFilter[] = [
 
 const defaultSettings: AppSettings = {
   theme: 'light',
+  language: 'es',
   autoBackup: false,
   showFavoritesFirst: true,
   autoBackupEnabled: false,
