@@ -963,42 +963,41 @@ DIAGNÓSTICOS DIFERENCIALES:
 
           {/* Sección de Grabación */}
           <View style={[styles.section, { backgroundColor: theme.surface }]}>
-            {/* Botón Nuevo Informe */}
-            <TouchableOpacity
-              style={[styles.newReportButton, { backgroundColor: theme.outline }]}
-              onPress={resetAll}
-            >
-              <RotateCcw size={18} color={theme.onSurface} />
-              <Text style={[styles.newReportButtonText, { color: theme.onSurface }]}>Nuevo Informe</Text>
-            </TouchableOpacity>
+            {/* Botones superiores en una línea: Nuevo Informe, Grabar y Limpiar */}
+            <View style={styles.topButtonsRow}>
+              <TouchableOpacity
+                style={[styles.topUniformButton, { backgroundColor: theme.outline }]}
+                onPress={resetAll}
+              >
+                <RotateCcw size={18} color={theme.onSurface} />
+                <Text style={[styles.topUniformButtonText, { color: theme.onSurface }]}>Nuevo Informe</Text>
+              </TouchableOpacity>
 
-            {/* Botones de Grabación y Limpiar */}
-            <View style={styles.recordingButtonsRow}>
               {!recordingState.isRecording ? (
                 <TouchableOpacity
-                  style={[styles.wideRecordButton, { backgroundColor: '#38B2AC' }]}
+                  style={[styles.topUniformButton, { backgroundColor: '#38B2AC' }]}
                   onPress={startRecording}
                 >
-                  <Mic size={20} color="#FFFFFF" />
-                  <Text style={[styles.wideButtonText, { color: '#FFFFFF' }]}>GRABAR</Text>
+                  <Mic size={18} color="#FFFFFF" />
+                  <Text style={[styles.topUniformButtonText, { color: '#FFFFFF' }]}>Grabar</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={[styles.wideRecordButton, { backgroundColor: '#E53E3E' }]}
+                  style={[styles.topUniformButton, { backgroundColor: '#E53E3E' }]}
                   onPress={stopRecording}
                 >
-                  <Square size={20} color="#FFFFFF" />
-                  <Text style={[styles.wideButtonText, { color: '#FFFFFF' }]}>DETENER</Text>
+                  <Square size={18} color="#FFFFFF" />
+                  <Text style={[styles.topUniformButtonText, { color: '#FFFFFF' }]}>Detener</Text>
                 </TouchableOpacity>
               )}
               
               <TouchableOpacity
-                style={[styles.clearButton, { backgroundColor: theme.surfaceVariant }]}
+                style={[styles.topUniformButton, { backgroundColor: theme.surfaceVariant, opacity: transcribedText.trim() ? 1 : 0.5 }]}
                 onPress={clearTranscriptionBox}
                 disabled={!transcribedText.trim()}
               >
                 <RotateCcw size={18} color={theme.onSurface} />
-                <Text style={[styles.clearButtonText, { color: theme.onSurface }]}>LIMPIAR</Text>
+                <Text style={[styles.topUniformButtonText, { color: theme.onSurface }]}>Limpiar</Text>
               </TouchableOpacity>
             </View>
             
@@ -1364,26 +1363,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  newReportButton: {
+  topButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'stretch',
+    marginBottom: 16,
+    gap: 8,
+  },
+  topUniformButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
     paddingVertical: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
-    marginBottom: 16,
   },
-  newReportButtonText: {
-    fontSize: 16,
+  topUniformButtonText: {
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: 8,
-  },
-  recordingButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 12,
+    marginLeft: 6,
   },
   textControlButtonsRow: {
     flexDirection: 'row',
