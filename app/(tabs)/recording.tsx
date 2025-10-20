@@ -106,13 +106,8 @@ export default function RecordingScreen() {
       const preselectedReport = reports.find(report => report.id === reportId);
       if (preselectedReport) {
         setSelectedReport(preselectedReport);
-        setIsReportSelectorExpanded(true);
+        setIsReportSelectorExpanded(false);
         console.log('✅ Informe preseleccionado:', preselectedReport.title);
-        
-        // Cerrar el selector después de un pequeño delay para que el usuario vea la selección
-        setTimeout(() => {
-          setIsReportSelectorExpanded(false);
-        }, 1500);
       }
     }
   }, [reportId, reports]);
