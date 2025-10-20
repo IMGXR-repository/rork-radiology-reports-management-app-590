@@ -208,9 +208,8 @@ export default function BackupManagementScreen() {
           const success = await importData(fileContent);
           
           if (success) {
-            setTimeout(() => {
-              router.replace('/');
-            }, 500);
+            await loadBackups();
+            router.back();
           } else {
             showAlert('Error', 'No se pudo importar el respaldo');
           }
@@ -295,13 +294,12 @@ export default function BackupManagementScreen() {
 
       const success = await importData(backupData);
       if (success) {
-        setTimeout(() => {
-          if (Platform.OS === 'web') {
-            window.location.reload();
-          } else {
-            router.replace('/');
-          }
-        }, 500);
+        await loadBackups();
+        if (Platform.OS === 'web') {
+          window.location.reload();
+        } else {
+          router.back();
+        }
       } else {
         showAlert('Error', 'No se pudo restaurar el respaldo');
       }
