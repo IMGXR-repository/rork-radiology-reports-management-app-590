@@ -33,17 +33,18 @@ interface ChatMessage {
 }
 
 export default function AIChatScreen() {
-  const { settings, trackAIChatQuery } = useApp();
+  const { settings, trackAIChatQuery, reports } = useApp();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const theme = settings?.theme === 'dark' ? darkTheme : lightTheme;
-  const params = useLocalSearchParams<{ initialText?: string }>();
+  const params = useLocalSearchParams<{ initialText?: string; reportId?: string }>();
   const [newMessage, setNewMessage] = useState<string>('');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('Radiología');
   const [isExtendedResponse, setIsExtendedResponse] = useState<boolean>(false);
   const [isLinkedQuestions, setIsLinkedQuestions] = useState<boolean>(false);
   const [isAbsoluteMode, setIsAbsoluteMode] = useState<boolean>(false);
   const [isConfigExpanded, setIsConfigExpanded] = useState<boolean>(false);
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +55,14 @@ export default function AIChatScreen() {
     if (params.initialText) {
       setNewMessage(params.initialText);
     }
-  }, [params.initialText]);
+    if (params.reportId) {
+      setSelectedReport(params.reportId);
+      const report = reports.find(r => r.id === params.reportId);
+      if (report) {
+        setNewMessage(`Por favor analiza el siguiente informe médico y proporciona tus observaciones:\n\n"${report.title}"\n\n${report.content}`);
+      }
+    }
+  }, [params.initialText, params.reportId, reports]);
 
   useEffect(() => {
     if (chatMessages.length > 0) {

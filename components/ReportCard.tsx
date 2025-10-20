@@ -68,7 +68,7 @@ export function ReportCard({ report, onEdit }: ReportCardProps) {
   };
 
   const handleAIAssist = () => {
-    router.push(`/recording?reportId=${report.id}`);
+    router.push(`/(tabs)/ai-chat?reportId=${report.id}`);
   };
 
   return (
