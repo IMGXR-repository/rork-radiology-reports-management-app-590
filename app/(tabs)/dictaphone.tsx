@@ -636,22 +636,26 @@ ${text}
       console.log('AI Processed:', aiProcessedText);
       console.log('Transcription:', transcription);
       
-      if (recordingId && transcriptionMode === 'ia') {
+      if (transcriptionMode === 'ia') {
         const enhancedText = await enhanceTranscription(transcription);
         
         console.log('Enhanced Transcription:', enhancedText);
         
-        setRecordings(prev =>
-          prev.map(rec =>
-            rec.id === recordingId
-              ? { ...rec, transcription: enhancedText }
-              : rec
-          )
-        );
+        if (recordingId) {
+          setRecordings(prev =>
+            prev.map(rec =>
+              rec.id === recordingId
+                ? { ...rec, transcription: enhancedText }
+                : rec
+            )
+          );
+        }
         
         if (enhancedText) {
           await addSavedTranscription(enhancedText, 'ia');
         }
+      } else if (transcriptionMode === 'natural' && transcription) {
+        await addSavedTranscription(transcription, 'natural');
       }
     } catch (error) {
       console.error('Error transcribing:', error);
@@ -724,22 +728,26 @@ ${text}
       console.log('AI Processed:', aiProcessedText);
       console.log('Transcription:', transcription);
       
-      if (recordingId && transcriptionMode === 'ia') {
+      if (transcriptionMode === 'ia') {
         const enhancedText = await enhanceTranscription(transcription);
         
         console.log('Enhanced Transcription:', enhancedText);
         
-        setRecordings(prev =>
-          prev.map(rec =>
-            rec.id === recordingId
-              ? { ...rec, transcription: enhancedText }
-              : rec
-          )
-        );
+        if (recordingId) {
+          setRecordings(prev =>
+            prev.map(rec =>
+              rec.id === recordingId
+                ? { ...rec, transcription: enhancedText }
+                : rec
+            )
+          );
+        }
         
         if (enhancedText) {
           await addSavedTranscription(enhancedText, 'ia');
         }
+      } else if (transcriptionMode === 'natural' && transcription) {
+        await addSavedTranscription(transcription, 'natural');
       }
     } catch (error) {
       console.error('Error transcribing:', error);
