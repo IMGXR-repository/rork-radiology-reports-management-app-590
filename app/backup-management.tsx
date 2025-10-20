@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
   },
   autoBackupSection: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 8,
     paddingBottom: 8,
   },
   autoBackupCard: {
