@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Platform,
   Alert as RNAlert,
   Modal,
+  Animated,
+  Switch,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +22,7 @@ import {
   Clock,
   HardDrive,
   Download,
+  Info,
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -36,13 +39,15 @@ interface BackupItem {
 }
 
 export default function BackupManagementScreen() {
-  const { settings, exportData, importData } = useApp();
+  const { settings, saveSettings, exportData, importData } = useApp();
   const theme = settings.theme === 'dark' ? darkTheme : lightTheme;
   const insets = useSafeAreaInsets();
   const [backups, setBackups] = useState<BackupItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
   const [showConfirmUse, setShowConfirmUse] = useState<BackupItem | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const notificationOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadBackups();
@@ -344,6 +349,30 @@ export default function BackupManagementScreen() {
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
+  const handleAutoBackupToggle = async () => {
+    const newValue = !settings.autoBackupEnabled;
+    await saveSettings({ ...settings, autoBackupEnabled: newValue });
+    
+    if (newValue) {
+      setShowNotification(true);
+      Animated.sequence([
+        Animated.timing(notificationOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(10000),
+        Animated.timing(notificationOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setShowNotification(false);
+      });
+    }
+  };
+
   return (
     <View style={[styles.safeContainer, { backgroundColor: theme.background }]}>
       <View style={[styles.topSafeArea, { height: insets.top, backgroundColor: theme.surface }]} />
@@ -355,6 +384,44 @@ export default function BackupManagementScreen() {
           headerTintColor: theme.onSurface,
         }}
       />
+
+      <View style={styles.autoBackupSection}>
+        <View style={[styles.autoBackupCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+          <View style={styles.autoBackupHeader}>
+            <View style={styles.autoBackupInfo}>
+              <Text style={[styles.autoBackupTitle, { color: theme.onSurface }]}>
+                Respaldo Automático
+              </Text>
+              <Text style={[styles.autoBackupSubtitle, { color: theme.outline }]}>
+                Crea respaldos al guardar o eliminar informes y frases
+              </Text>
+            </View>
+            <Switch
+              value={settings.autoBackupEnabled}
+              onValueChange={handleAutoBackupToggle}
+              trackColor={{ false: theme.outline, true: theme.primary }}
+              thumbColor={settings.autoBackupEnabled ? theme.onPrimary : theme.onSurface}
+            />
+          </View>
+        </View>
+      </View>
+
+      {showNotification && (
+        <Animated.View
+          style={[
+            styles.notification,
+            {
+              backgroundColor: theme.primary,
+              opacity: notificationOpacity,
+            },
+          ]}
+        >
+          <Info size={20} color={theme.onPrimary} />
+          <Text style={[styles.notificationText, { color: theme.onPrimary }]}>
+            Los respaldos automáticos se crean al guardar o eliminar informes y frases. Se mantienen los últimos 20 respaldos.
+          </Text>
+        </Animated.View>
+      )}
 
       <View style={styles.header}>
         <TouchableOpacity
@@ -381,20 +448,6 @@ export default function BackupManagementScreen() {
             IMPORTAR
           </Text>
         </TouchableOpacity>
-      </View>
-
-      <View style={styles.infoContainer}>
-        <View style={[styles.infoCard, { backgroundColor: theme.surfaceVariant }]}>
-          <Text style={[styles.infoText, { color: theme.onSurface }]}>
-            • Los respaldos automáticos se crean al guardar o eliminar informes y frases
-          </Text>
-          <Text style={[styles.infoText, { color: theme.onSurface }]}>
-            • Se mantienen los últimos 20 respaldos (más recientes primero)
-          </Text>
-          <Text style={[styles.infoText, { color: theme.onSurface }]}>
-            • Los respaldos antiguos se eliminan automáticamente
-          </Text>
-        </View>
       </View>
 
       <ScrollView style={styles.content}>
@@ -595,25 +648,54 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
+  autoBackupSection: {
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
-    gap: 12,
   },
-  infoContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  infoCard: {
+  autoBackupCard: {
     borderRadius: 12,
+    borderWidth: 1,
     padding: 16,
   },
-  infoText: {
-    fontSize: 13,
-    lineHeight: 20,
+  autoBackupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  autoBackupInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  autoBackupTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
     marginBottom: 4,
+  },
+  autoBackupSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  notification: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 12,
+    gap: 12,
+  },
+  notificationText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  header: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    gap: 12,
   },
   headerButton: {
     flex: 1,

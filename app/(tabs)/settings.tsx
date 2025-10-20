@@ -299,23 +299,6 @@ export default function SettingsScreen() {
         
         {renderSettingItem(
           <HardDrive size={20} color={theme.primary} />,
-          'Respaldo automático',
-          'Crear respaldos diarios automáticamente cuando se creen o editen informes y frases',
-          async () => {
-            await saveSettings({ ...settings, autoBackupEnabled: !settings.autoBackupEnabled });
-          },
-          <Switch
-            value={settings.autoBackupEnabled}
-            onValueChange={async () => {
-              await saveSettings({ ...settings, autoBackupEnabled: !settings.autoBackupEnabled });
-            }}
-            trackColor={{ false: theme.outline, true: theme.primary }}
-            thumbColor={settings.autoBackupEnabled ? theme.onPrimary : theme.onSurface}
-          />
-        )}
-        
-        {renderSettingItem(
-          <HardDrive size={20} color={theme.primary} />,
           'Gestión de Respaldos',
           'Crear, restaurar y administrar respaldos de datos',
           () => router.push('/backup-management')
@@ -327,7 +310,6 @@ export default function SettingsScreen() {
           'Código único para sincronizar con otros dispositivos',
           () => setShowQRModal(true)
         )}
-        
 
       </View>
 
