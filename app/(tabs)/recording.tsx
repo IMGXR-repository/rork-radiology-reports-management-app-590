@@ -800,9 +800,16 @@ DIAGNÓSTICOS DIFERENCIALES:
         findings = findings.replace(/¿Te gustaría.*?$/gi, '');
         findings = findings.replace(/Si necesitas.*?$/gi, '');
         findings = findings.replace(/¿.*?$/gi, '');
-        findings = findings.replace(/###.*$/gi, '');
-        findings = findings.replace(/---.*$/gi, '');
-        findings = findings.replace(/\*\*.*?\*\*/gi, '');
+        findings = findings.replace(/###.*$/gim, '');
+        findings = findings.replace(/---+/g, '');
+        findings = findings.replace(/\*\*\*/g, '');
+        findings = findings.replace(/\*\*/g, '');
+        findings = findings.replace(/^---+$/gm, '');
+        findings = findings.replace(/^\*\*\*+$/gm, '');
+        findings = findings.replace(/---+$/gm, '');
+        findings = findings.replace(/\*\*\*+$/gm, '');
+        findings = findings.replace(/^---+/gm, '');
+        findings = findings.replace(/^\*\*\*+/gm, '');
         // Preservar saltos de línea y estructura de párrafos
         findings = findings.replace(/\n\s*\n/g, '\n\n'); // Normalizar dobles saltos de línea
         findings = findings.trim();
@@ -816,9 +823,16 @@ DIAGNÓSTICOS DIFERENCIALES:
         conclusion = conclusion.replace(/¿Te gustaría.*?$/gi, '');
         conclusion = conclusion.replace(/Si necesitas.*?$/gi, '');
         conclusion = conclusion.replace(/¿.*?$/gi, '');
-        conclusion = conclusion.replace(/###.*$/gi, '');
-        conclusion = conclusion.replace(/---.*$/gi, '');
-        conclusion = conclusion.replace(/\*\*.*?\*\*/gi, '');
+        conclusion = conclusion.replace(/###.*$/gim, '');
+        conclusion = conclusion.replace(/---+/g, '');
+        conclusion = conclusion.replace(/\*\*\*/g, '');
+        conclusion = conclusion.replace(/\*\*/g, '');
+        conclusion = conclusion.replace(/^---+$/gm, '');
+        conclusion = conclusion.replace(/^\*\*\*+$/gm, '');
+        conclusion = conclusion.replace(/---+$/gm, '');
+        conclusion = conclusion.replace(/\*\*\*+$/gm, '');
+        conclusion = conclusion.replace(/^---+/gm, '');
+        conclusion = conclusion.replace(/^\*\*\*+/gm, '');
         conclusion = conclusion.trim();
         setConclusions(conclusion);
       }
@@ -830,9 +844,16 @@ DIAGNÓSTICOS DIFERENCIALES:
         differentials = differentials.replace(/¿Te gustaría.*?$/gi, '');
         differentials = differentials.replace(/Si necesitas.*?$/gi, '');
         differentials = differentials.replace(/¿.*?$/gi, '');
-        differentials = differentials.replace(/###.*$/gi, '');
-        differentials = differentials.replace(/---.*$/gi, '');
-        differentials = differentials.replace(/\*\*.*?\*\*/gi, '');
+        differentials = differentials.replace(/###.*$/gim, '');
+        differentials = differentials.replace(/---+/g, '');
+        differentials = differentials.replace(/\*\*\*/g, '');
+        differentials = differentials.replace(/\*\*/g, '');
+        differentials = differentials.replace(/^---+$/gm, '');
+        differentials = differentials.replace(/^\*\*\*+$/gm, '');
+        differentials = differentials.replace(/---+$/gm, '');
+        differentials = differentials.replace(/\*\*\*+$/gm, '');
+        differentials = differentials.replace(/^---+/gm, '');
+        differentials = differentials.replace(/^\*\*\*+/gm, '');
         differentials = differentials.trim();
         setDifferentials(differentials);
       }
