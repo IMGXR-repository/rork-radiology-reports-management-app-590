@@ -209,7 +209,7 @@ export default function BackupManagementScreen() {
           
           if (success) {
             await loadBackups();
-            router.replace('/(tabs)/home');
+            router.back();
           } else {
             showAlert('Error', 'No se pudo importar el respaldo');
           }
@@ -298,7 +298,7 @@ export default function BackupManagementScreen() {
         if (Platform.OS === 'web') {
           window.location.reload();
         } else {
-          router.replace('/(tabs)/home');
+          router.back();
         }
       } else {
         showAlert('Error', 'No se pudo restaurar el respaldo');

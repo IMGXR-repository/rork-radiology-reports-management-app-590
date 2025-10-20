@@ -114,6 +114,8 @@ export default function RecordingScreen() {
       } else {
         console.warn('⚠️ No se encontró informe con ID:', reportId, 'en', reports.length, 'informes disponibles');
         console.warn('📝 IDs disponibles:', reports.map(r => r.id).join(', '));
+        console.warn('🔎 Buscando ID exacto:', reportId, 'Tipo:', typeof reportId);
+        console.warn('🔎 Primer ID disponible:', reports[0]?.id, 'Tipo:', typeof reports[0]?.id);
       }
     } else if (reportId && reports.length === 0) {
       console.warn('⏳ reportId presente pero reports aún no cargados');
