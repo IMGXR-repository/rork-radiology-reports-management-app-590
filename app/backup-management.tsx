@@ -103,6 +103,8 @@ export default function BackupManagementScreen() {
 
       backupItems.sort((a, b) => b.date.getTime() - a.date.getTime());
       setBackups(backupItems);
+      
+      await cleanOldBackups(backupItems);
     } catch (error) {
       console.error('Error loading backups:', error);
       showAlert('Error', 'No se pudieron cargar los respaldos');
@@ -116,6 +118,29 @@ export default function BackupManagementScreen() {
       alert(`${title}\n\n${message}`);
     } else {
       RNAlert.alert(title, message);
+    }
+  };
+
+  const cleanOldBackups = async (currentBackups: BackupItem[]) => {
+    try {
+      const MAX_BACKUPS = 20;
+      
+      if (currentBackups.length > MAX_BACKUPS) {
+        const backupsToDelete = currentBackups.slice(MAX_BACKUPS);
+        console.log(`Eliminando ${backupsToDelete.length} respaldos antiguos...`);
+
+        if (Platform.OS === 'web') {
+          backupsToDelete.forEach((backup) => localStorage.removeItem(backup.key));
+        } else {
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          const keysToDelete = backupsToDelete.map(b => b.key);
+          await AsyncStorage.multiRemove(keysToDelete);
+        }
+        
+        console.log('Respaldos antiguos eliminados correctamente');
+      }
+    } catch (error) {
+      console.error('Error limpiando respaldos antiguos:', error);
     }
   };
 
@@ -339,7 +364,7 @@ export default function BackupManagementScreen() {
         >
           <Plus size={20} color={theme.onPrimary} />
           <Text style={[styles.headerButtonText, { color: theme.onPrimary }]}>
-            CREAR
+            CREAR RESPALDO
           </Text>
         </TouchableOpacity>
 
@@ -356,6 +381,20 @@ export default function BackupManagementScreen() {
             IMPORTAR
           </Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.infoContainer}>
+        <View style={[styles.infoCard, { backgroundColor: theme.surfaceVariant }]}>
+          <Text style={[styles.infoText, { color: theme.onSurface }]}>
+            • Los respaldos automáticos se crean al guardar o eliminar informes y frases
+          </Text>
+          <Text style={[styles.infoText, { color: theme.onSurface }]}>
+            • Se mantienen los últimos 20 respaldos (más recientes primero)
+          </Text>
+          <Text style={[styles.infoText, { color: theme.onSurface }]}>
+            • Los respaldos antiguos se eliminan automáticamente
+          </Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content}>
@@ -559,8 +598,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
     gap: 12,
+  },
+  infoContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  infoCard: {
+    borderRadius: 12,
+    padding: 16,
+  },
+  infoText: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 4,
   },
   headerButton: {
     flex: 1,

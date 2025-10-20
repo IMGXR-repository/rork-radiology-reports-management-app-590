@@ -203,16 +203,59 @@ export function useDataManager() {
 
   const performAutoBackupOnChange = async () => {
     try {
-      if (!settings.autoBackupEnabled) return;
-      
       console.log('Realizando respaldo automático por cambio de datos...');
       const backupData = await exportData();
-      const today = new Date().toISOString().split('T')[0];
-      const backupKey = `auto_backup_${today}`;
+      const timestamp = new Date().toISOString();
+      const backupKey = `auto_backup_${timestamp}`;
       await storage.setItem(backupKey, backupData);
+      
+      await cleanOldBackups();
+      
       console.log('Respaldo automático por cambio completado');
     } catch (error) {
       console.error('Error en respaldo automático por cambio:', error);
+    }
+  };
+
+  const cleanOldBackups = async () => {
+    try {
+      const MAX_BACKUPS = 20;
+      let backupKeys: string[] = [];
+
+      if (Platform.OS === 'web') {
+        const allKeys = Object.keys(localStorage);
+        backupKeys = allKeys.filter(
+          (key) => key.startsWith('auto_backup_') || key.startsWith('manual_backup_')
+        );
+      } else {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const allKeys = await AsyncStorage.getAllKeys();
+        backupKeys = allKeys.filter(
+          (key: string) => key.startsWith('auto_backup_') || key.startsWith('manual_backup_')
+        );
+      }
+
+      backupKeys.sort((a, b) => {
+        const dateA = a.replace('auto_backup_', '').replace('manual_backup_', '');
+        const dateB = b.replace('auto_backup_', '').replace('manual_backup_', '');
+        return dateB.localeCompare(dateA);
+      });
+
+      if (backupKeys.length > MAX_BACKUPS) {
+        const keysToDelete = backupKeys.slice(MAX_BACKUPS);
+        console.log(`Eliminando ${keysToDelete.length} respaldos antiguos...`);
+
+        if (Platform.OS === 'web') {
+          keysToDelete.forEach((key) => localStorage.removeItem(key));
+        } else {
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          await AsyncStorage.multiRemove(keysToDelete);
+        }
+        
+        console.log('Respaldos antiguos eliminados');
+      }
+    } catch (error) {
+      console.error('Error limpiando respaldos antiguos:', error);
     }
   };
 
