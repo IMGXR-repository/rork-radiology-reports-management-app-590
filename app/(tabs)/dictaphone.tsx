@@ -787,7 +787,6 @@ ${text}
   const copyToClipboard = async (text: string) => {
     try {
       await Clipboard.setStringAsync(text);
-      console.log('Texto copiado al portapapeles');
     } catch (error) {
       console.error('Error al copiar al portapapeles:', error);
     }

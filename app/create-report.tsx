@@ -110,13 +110,6 @@ export default function CreateReportScreen() {
       };
 
       await addReport(newReport);
-      
-      if (Platform.OS === 'web') {
-        alert('Informe creado exitosamente');
-      } else {
-        Alert.alert('Éxito', 'Informe creado exitosamente');
-      }
-      
       router.back();
     } catch (error) {
       console.error('Error creating report:', error);

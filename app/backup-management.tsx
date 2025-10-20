@@ -142,7 +142,7 @@ export default function BackupManagementScreen() {
           await AsyncStorage.multiRemove(keysToDelete);
         }
         
-        console.log('Respaldos antiguos eliminados correctamente');
+
       }
     } catch (error) {
       console.error('Error limpiando respaldos antiguos:', error);
@@ -162,7 +162,6 @@ export default function BackupManagementScreen() {
         await AsyncStorage.setItem(backupKey, backupData);
       }
 
-      showAlert('Éxito', 'Respaldo manual creado correctamente');
       await loadBackups();
     } catch (error) {
       console.error('Error creating backup:', error);
@@ -187,10 +186,9 @@ export default function BackupManagementScreen() {
             const text = await file.text();
             const success = await importData(text);
             if (success) {
-              showAlert('Éxito', 'Respaldo importado correctamente');
               setTimeout(() => {
                 window.location.reload();
-              }, 1500);
+              }, 500);
             } else {
               showAlert('Error', 'No se pudo importar el respaldo');
             }
@@ -210,10 +208,9 @@ export default function BackupManagementScreen() {
           const success = await importData(fileContent);
           
           if (success) {
-            showAlert('Éxito', 'Respaldo importado correctamente. La aplicación se actualizará.');
             setTimeout(() => {
               router.replace('/');
-            }, 1500);
+            }, 500);
           } else {
             showAlert('Error', 'No se pudo importar el respaldo');
           }
@@ -255,7 +252,6 @@ export default function BackupManagementScreen() {
         a.download = fileName;
         a.click();
         URL.revokeObjectURL(url);
-        showAlert('Éxito', 'Respaldo descargado correctamente');
       } else {
         const fileUri = `${FileSystem.documentDirectory}${fileName}`;
         await FileSystem.writeAsStringAsync(fileUri, backupData);
@@ -299,14 +295,13 @@ export default function BackupManagementScreen() {
 
       const success = await importData(backupData);
       if (success) {
-        showAlert('Éxito', 'Respaldo restaurado correctamente. La aplicación se actualizará.');
         setTimeout(() => {
           if (Platform.OS === 'web') {
             window.location.reload();
           } else {
             router.replace('/');
           }
-        }, 1500);
+        }, 500);
       } else {
         showAlert('Error', 'No se pudo restaurar el respaldo');
       }
@@ -330,7 +325,6 @@ export default function BackupManagementScreen() {
         await AsyncStorage.removeItem(backupKey);
       }
 
-      showAlert('Éxito', 'Respaldo eliminado correctamente');
       await loadBackups();
     } catch (error) {
       console.error('Error deleting backup:', error);
