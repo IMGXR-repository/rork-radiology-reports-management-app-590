@@ -106,6 +106,7 @@ export default function RecordingScreen() {
       const preselectedReport = reports.find(report => report.id === reportId);
       if (preselectedReport) {
         setSelectedReport(preselectedReport);
+        console.log('✅ Informe preseleccionado:', preselectedReport.title);
       }
     }
   }, [reportId, reports]);
@@ -919,14 +920,26 @@ DIAGNÓSTICOS DIFERENCIALES:
           </View>
           
           {/* Selector de Informe Compacto */}
-          <View style={[styles.compactSection, { backgroundColor: theme.surface }]}>
+          <View style={[styles.compactSection, { 
+            backgroundColor: theme.surface,
+            borderWidth: selectedReport ? 2 : 1,
+            borderColor: selectedReport ? theme.primary : theme.outline
+          }]}>
             <TouchableOpacity 
               style={styles.selectorHeader}
               onPress={() => setIsReportSelectorExpanded(!isReportSelectorExpanded)}
             >
-              <Text style={[styles.compactSectionTitle, { color: theme.onSurface }]}>
-                Informe Base: {selectedReport ? selectedReport.title : 'Seleccionar'}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.compactSectionLabel, { color: theme.outline }]}>
+                  Informe Base
+                </Text>
+                <Text style={[styles.compactSectionTitle, { 
+                  color: selectedReport ? theme.primary : theme.onSurface,
+                  fontWeight: selectedReport ? '700' : '600'
+                }]}>
+                  {selectedReport ? selectedReport.title : 'Ninguno seleccionado'}
+                </Text>
+              </View>
               {isReportSelectorExpanded ? (
                 <ChevronUp size={20} color={theme.onSurface} />
               ) : (
@@ -1230,6 +1243,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  compactSectionLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
   },
   compactSectionTitle: {
     fontSize: 16,
