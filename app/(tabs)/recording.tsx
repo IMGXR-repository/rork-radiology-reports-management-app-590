@@ -18,6 +18,7 @@ import { generateText } from '@rork/toolkit-sdk';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
+import { useTranslation } from '@/hooks/useTranslation';
 
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { SearchBar } from '@/components/SearchBar';
@@ -44,6 +45,7 @@ interface TranscriptionResult {
 export default function RecordingScreen() {
   const { reportId, initialText } = useLocalSearchParams<{ reportId?: string; initialText?: string }>();
   const { settings, reports } = useApp();
+  const { t } = useTranslation();
 
   const theme = settings && settings.theme === 'dark' ? darkTheme : lightTheme;
   const insets = useSafeAreaInsets();
@@ -916,7 +918,7 @@ DIAGNÓSTICOS DIFERENCIALES:
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <View style={[styles.titleContainer, { backgroundColor: '#2196F3' }]}>
-            <Text style={[styles.title, { color: '#FFFFFF' }]}>Generación de Informes RAD-IA</Text>
+            <Text style={[styles.title, { color: '#FFFFFF' }]}>{t.recording.title}</Text>
           </View>
           
           {/* Selector de Informe Compacto */}
@@ -931,13 +933,13 @@ DIAGNÓSTICOS DIFERENCIALES:
             >
               <View style={{ flex: 1 }}>
                 <Text style={[styles.compactSectionLabel, { color: theme.outline }]}>
-                  Informe Base
+                  {t.recording.selectBaseReport}
                 </Text>
                 <Text style={[styles.compactSectionTitle, { 
                   color: selectedReport ? theme.primary : theme.onSurface,
                   fontWeight: selectedReport ? '700' : '600'
                 }]}>
-                  {selectedReport ? selectedReport.title : 'Ninguno seleccionado'}
+                  {selectedReport ? selectedReport.title : t.recording.noneSelected}
                 </Text>
               </View>
               {isReportSelectorExpanded ? (
@@ -953,7 +955,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                   <SearchBar
                     value={reportSearchQuery}
                     onChangeText={setReportSearchQuery}
-                    placeholder="Buscar informe..."
+                    placeholder={t.recording.searchReport}
                   />
                 </View>
                 
@@ -1005,7 +1007,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                   onPress={startRecording}
                 >
                   <Mic size={18} color="#FFFFFF" />
-                  <Text style={[styles.topUniformButtonText, { color: '#FFFFFF' }]}>Grabar</Text>
+                  <Text style={[styles.topUniformButtonText, { color: '#FFFFFF' }]}>{t.recording.record}</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
@@ -1013,7 +1015,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                   onPress={stopRecording}
                 >
                   <Square size={18} color="#FFFFFF" />
-                  <Text style={[styles.topUniformButtonText, { color: '#FFFFFF' }]}>Detener</Text>
+                  <Text style={[styles.topUniformButtonText, { color: '#FFFFFF' }]}>{t.recording.stop}</Text>
                 </TouchableOpacity>
               )}
 
@@ -1022,7 +1024,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 onPress={resetAll}
               >
                 <RotateCcw size={18} color={theme.onSurface} />
-                <Text style={[styles.topUniformButtonText, { color: theme.onSurface }]}>Nuevo Informe</Text>
+                <Text style={[styles.topUniformButtonText, { color: theme.onSurface }]}>{t.recording.newReport}</Text>
               </TouchableOpacity>
             </View>
             
@@ -1031,12 +1033,12 @@ DIAGNÓSTICOS DIFERENCIALES:
               <View style={[styles.transcriptionStatus, { backgroundColor: theme.surfaceVariant }]}>
                 <ActivityIndicator size="small" color={theme.primary} />
                 <Text style={[styles.transcriptionStatusText, { color: theme.onSurface }]}>
-                  Transcribiendo automáticamente...
+                  {t.recording.transcribing}
                 </Text>
               </View>
             )}
             
-            <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>TEXTO LIBRE / GRABACIÓN</Text>
+            <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.freeText}</Text>
             
             {/* Caja de Transcripción Automática */}
             <View style={[styles.textInputContainer, { 
@@ -1048,7 +1050,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 style={[styles.textInput, { color: theme.onBackground }]}
                 value={transcribedText}
                 onChangeText={setTranscribedText}
-                placeholder={isTranscribing ? "Transcribiendo audio..." : "El texto transcrito aparecerá aquí automáticamente..."}
+                placeholder={isTranscribing ? t.recording.transcribing : t.recording.freeText}
                 placeholderTextColor={theme.outline}
                 multiline
                 textAlignVertical="top"
@@ -1069,7 +1071,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                   <Send size={16} color={theme.onSecondary} />
                 )}
                 <Text style={[styles.uniformControlButtonText, { color: theme.onSecondary }]}>
-                  {isGenerating ? 'Generando...' : 'Crear Informe'}
+                  {isGenerating ? t.recording.generating : t.recording.createReport}
                 </Text>
               </TouchableOpacity>
               
@@ -1079,7 +1081,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 disabled={!lastTranscription}
               >
                 <Trash2 size={16} color="#FFFFFF" />
-                <Text style={[styles.uniformControlButtonText, { color: '#FFFFFF' }]}>Borrar Último</Text>
+                <Text style={[styles.uniformControlButtonText, { color: '#FFFFFF' }]}>{t.recording.deleteLastText}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -1088,7 +1090,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 disabled={!transcribedText.trim()}
               >
                 <Trash2 size={16} color={theme.onError} />
-                <Text style={[styles.uniformControlButtonText, { color: theme.onError }]}>Borrar Todo</Text>
+                <Text style={[styles.uniformControlButtonText, { color: theme.onError }]}>{t.recording.deleteAllText}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1096,7 +1098,7 @@ DIAGNÓSTICOS DIFERENCIALES:
           {/* Hallazgos */}
           <View style={[styles.section, { backgroundColor: theme.surface }]}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Hallazgos</Text>
+              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.findings}</Text>
               <TouchableOpacity
                 style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
                 onPress={async () => {
@@ -1107,7 +1109,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 disabled={!findings.trim()}
               >
                 <Copy size={16} color={theme.onPrimary} />
-                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>COPIAR</Text>
+                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>{t.common.copy.toUpperCase()}</Text>
               </TouchableOpacity>
             </View>
             <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
@@ -1115,7 +1117,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 style={[styles.textInput, { color: theme.onBackground }]}
                 value={findings}
                 onChangeText={setFindings}
-                placeholder="Los hallazgos aparecerán aquí..."
+                placeholder={t.recording.findingsPlaceholder}
                 placeholderTextColor={theme.outline}
                 multiline
                 textAlignVertical="top"
@@ -1126,7 +1128,7 @@ DIAGNÓSTICOS DIFERENCIALES:
           {/* Conclusiones */}
           <View style={[styles.section, { backgroundColor: theme.surface }]}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Conclusión</Text>
+              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.conclusion}</Text>
               <TouchableOpacity
                 style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
                 onPress={async () => {
@@ -1137,7 +1139,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 disabled={!conclusions.trim()}
               >
                 <Copy size={16} color={theme.onPrimary} />
-                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>COPIAR</Text>
+                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>{t.common.copy.toUpperCase()}</Text>
               </TouchableOpacity>
             </View>
             <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
@@ -1145,7 +1147,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 style={[styles.textInput, { color: theme.onBackground }]}
                 value={conclusions}
                 onChangeText={setConclusions}
-                placeholder="Las conclusiones aparecerán aquí..."
+                placeholder={t.recording.conclusionPlaceholder}
                 placeholderTextColor={theme.outline}
                 multiline
                 textAlignVertical="top"
@@ -1156,7 +1158,7 @@ DIAGNÓSTICOS DIFERENCIALES:
           {/* Diagnósticos Diferenciales */}
           <View style={[styles.section, { backgroundColor: theme.surface }]}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Diferenciales</Text>
+              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.differentials}</Text>
               <TouchableOpacity
                 style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
                 onPress={async () => {
@@ -1167,7 +1169,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 disabled={!differentials.trim()}
               >
                 <Copy size={16} color={theme.onPrimary} />
-                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>COPIAR</Text>
+                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>{t.common.copy.toUpperCase()}</Text>
               </TouchableOpacity>
             </View>
             <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
@@ -1175,7 +1177,7 @@ DIAGNÓSTICOS DIFERENCIALES:
                 style={[styles.textInput, { color: theme.onBackground }]}
                 value={differentials}
                 onChangeText={setDifferentials}
-                placeholder="Los diagnósticos diferenciales aparecerán aquí..."
+                placeholder={t.recording.differentialsPlaceholder}
                 placeholderTextColor={theme.outline}
                 multiline
                 textAlignVertical="top"
@@ -1189,7 +1191,7 @@ DIAGNÓSTICOS DIFERENCIALES:
             onPress={resetAll}
           >
             <RotateCcw size={18} color={theme.onPrimary} />
-            <Text style={[styles.bigNewReportButtonText, { color: theme.onPrimary }]}>Nuevo Informe</Text>
+            <Text style={[styles.bigNewReportButtonText, { color: theme.onPrimary }]}>{t.recording.newReport}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

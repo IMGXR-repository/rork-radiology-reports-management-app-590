@@ -9,6 +9,7 @@ import { FilterChips } from '@/components/FilterChips';
 import { SectionToggle } from '@/components/SectionToggle';
 
 import { useApp } from '@/contexts/AppContext';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useSampleData } from '@/hooks/useSampleData';
 import { Report } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -16,6 +17,7 @@ import { lightTheme, darkTheme } from '@/constants/theme';
 export default function ReportsScreen() {
   const { reports, settings, isLoading, filters, clearNewlyCreatedFlag } = useApp();
   const theme = settings.theme === 'dark' ? darkTheme : lightTheme;
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   
   // Load sample data on first run
@@ -115,13 +117,13 @@ export default function ReportsScreen() {
     <View style={styles.emptyState}>
       <Text style={[styles.emptyTitle, { color: theme.onSurface }]}>
         {searchQuery || selectedFilters.length > 0 || showFavoritesOnly
-          ? 'No se encontraron informes'
-          : 'No hay informes guardados'}
+          ? t.reports.noReportsFound
+          : t.reports.noReports}
       </Text>
       <Text style={[styles.emptySubtitle, { color: theme.outline }]}>
         {searchQuery || selectedFilters.length > 0 || showFavoritesOnly
-          ? 'Intenta ajustar los filtros de búsqueda'
-          : 'Crea tu primer informe médico'}
+          ? t.reports.noReportsFoundDescription
+          : t.reports.noReportsDescription}
       </Text>
       {!searchQuery && selectedFilters.length === 0 && !showFavoritesOnly && (
         <TouchableOpacity
@@ -130,7 +132,7 @@ export default function ReportsScreen() {
         >
           <Plus size={20} color={theme.onPrimary} />
           <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>
-            Crear Informe
+            {t.reports.createReport}
           </Text>
         </TouchableOpacity>
       )}
@@ -143,7 +145,7 @@ export default function ReportsScreen() {
         <View style={[styles.topSafeArea, { height: insets.top, backgroundColor: theme.surface }]} />
         <View style={[styles.container, styles.centered, { backgroundColor: theme.background }]}>
           <Text style={[styles.loadingText, { color: theme.onSurface }]}>
-            Cargando informes...
+            {t.common.loading}
           </Text>
         </View>
       </View>
@@ -156,7 +158,7 @@ export default function ReportsScreen() {
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <Stack.Screen
           options={{
-            title: 'PREF - Informes',
+            title: t.reports.title,
             headerStyle: { backgroundColor: theme.surface },
             headerTintColor: theme.onSurface,
             headerRight: () => (
@@ -194,7 +196,7 @@ export default function ReportsScreen() {
               style={[styles.filterButton, { backgroundColor: theme.surfaceVariant, borderColor: theme.outline }]}
             >
               <Filter size={16} color={theme.primary} />
-              <Text style={[styles.filterButtonText, { color: theme.primary }]}>Filtros</Text>
+              <Text style={[styles.filterButtonText, { color: theme.primary }]}>{t.reports.filters}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleCategories}
@@ -215,7 +217,7 @@ export default function ReportsScreen() {
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Buscar informes..."
+            placeholder={t.reports.searchPlaceholder}
           />
         </View>
 
@@ -227,11 +229,11 @@ export default function ReportsScreen() {
         {selectedFilters.length > 0 && (
           <View style={styles.activeFiltersInfo}>
             <Text style={[styles.activeFiltersText, { color: theme.onSurface }]}>
-              {selectedFilters.length} filtro{selectedFilters.length !== 1 ? 's' : ''} activo{selectedFilters.length !== 1 ? 's' : ''}
+              {selectedFilters.length} {t.reports.activeFilters}
             </Text>
             <TouchableOpacity onPress={() => setSelectedFilters([])}>
               <Text style={[styles.clearFiltersText, { color: theme.primary }]}>
-                Limpiar
+                {t.common.clear}
               </Text>
             </TouchableOpacity>
           </View>

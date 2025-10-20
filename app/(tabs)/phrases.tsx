@@ -9,6 +9,7 @@ import { PhraseFilterChips } from '@/components/PhraseFilterChips';
 import { SectionToggle } from '@/components/SectionToggle';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/hooks/useTranslation';
 import { ShareModal } from '@/components/ShareModal';
 import { CommonPhrase } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -17,6 +18,7 @@ export default function PhrasesScreen() {
   const { phrases, settings, isLoading, togglePhraseFavorite, phraseFilters } = useApp();
   const { isAuthenticated } = useAuth();
   const theme = settings.theme === 'dark' ? darkTheme : lightTheme;
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -178,16 +180,16 @@ export default function PhrasesScreen() {
           {item.text}
         </Text>
         <Text style={[styles.copyHint, { color: theme.outline }]}>
-          Toca en cualquier lugar para copiar la frase completa
+          {t.common.copy}
         </Text>
       </TouchableOpacity>
 
       <View style={styles.bottomActions}>
         <TouchableOpacity onPress={() => handleEditPhrase(item)} style={styles.editButton}>
-          <Text style={styles.editButtonText}>Editar</Text>
+          <Text style={styles.editButtonText}>{t.common.edit}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDeletePhrase()} style={styles.deleteButton}>
-          <Text style={styles.deleteButtonText}>Eliminar</Text>
+          <Text style={styles.deleteButtonText}>{t.common.delete}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -197,13 +199,13 @@ export default function PhrasesScreen() {
     <View style={styles.emptyState}>
       <Text style={[styles.emptyTitle, { color: theme.onSurface }]}>
         {searchQuery || selectedFilters.length > 0 || showFrequentOnly
-          ? 'No se encontraron frases'
-          : 'No hay frases guardadas'}
+          ? t.phrases.noPhrases
+          : t.phrases.noPhrases}
       </Text>
       <Text style={[styles.emptySubtitle, { color: theme.outline }]}>
         {searchQuery || selectedFilters.length > 0 || showFrequentOnly
-          ? 'Intenta ajustar los filtros de búsqueda'
-          : 'Crea tu primera frase común'}
+          ? t.phrases.noPhrasesDescription
+          : t.phrases.noPhrasesDescription}
       </Text>
       {!searchQuery && selectedFilters.length === 0 && !showFrequentOnly && (
         <TouchableOpacity
@@ -212,7 +214,7 @@ export default function PhrasesScreen() {
         >
           <Plus size={20} color={theme.onPrimary} />
           <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>
-            Crear Frase
+            {t.phrases.createPhrase}
           </Text>
         </TouchableOpacity>
       )}
@@ -225,7 +227,7 @@ export default function PhrasesScreen() {
         <View style={[styles.topSafeArea, { height: insets.top, backgroundColor: theme.surface }]} />
         <View style={[styles.container, styles.centered, { backgroundColor: theme.background }]}>
           <Text style={[styles.loadingText, { color: theme.onSurface }]}>
-            Cargando frases...
+            {t.common.loading}
           </Text>
         </View>
       </View>
@@ -238,7 +240,7 @@ export default function PhrasesScreen() {
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <Stack.Screen
           options={{
-            title: 'Frases Comunes',
+            title: t.phrases.title,
             headerStyle: { backgroundColor: theme.surface },
             headerTintColor: theme.onSurface,
             headerRight: () => (
@@ -272,7 +274,7 @@ export default function PhrasesScreen() {
               style={[styles.filterButton, { backgroundColor: theme.surfaceVariant, borderColor: theme.outline }]}
             >
               <Filter size={16} color={theme.primary} />
-              <Text style={[styles.filterButtonText, { color: theme.primary }]}>Filtros</Text>
+              <Text style={[styles.filterButtonText, { color: theme.primary }]}>{t.phrases.filters}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleCategories}
@@ -293,7 +295,7 @@ export default function PhrasesScreen() {
           <SearchBar
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Buscar frases..."
+            placeholder={t.phrases.searchPlaceholder}
           />
         </View>
 
@@ -305,11 +307,11 @@ export default function PhrasesScreen() {
         {selectedFilters.length > 0 && (
           <View style={styles.activeFiltersInfo}>
             <Text style={[styles.activeFiltersText, { color: theme.onSurface }]}>
-              {selectedFilters.length} filtro{selectedFilters.length !== 1 ? 's' : ''} activo{selectedFilters.length !== 1 ? 's' : ''}
+              {selectedFilters.length} {t.phrases.filters}
             </Text>
             <TouchableOpacity onPress={() => setSelectedFilters([])}>
               <Text style={[styles.clearFiltersText, { color: theme.primary }]}>
-                Limpiar
+                {t.common.clear}
               </Text>
             </TouchableOpacity>
           </View>
