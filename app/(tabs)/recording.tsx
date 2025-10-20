@@ -963,16 +963,8 @@ DIAGNÓSTICOS DIFERENCIALES:
 
           {/* Sección de Grabación */}
           <View style={[styles.section, { backgroundColor: theme.surface }]}>
-            {/* Botones superiores en una línea: Nuevo Informe, Grabar y Limpiar */}
+            {/* Botones superiores en una línea: Grabar y Nuevo Informe */}
             <View style={styles.topButtonsRow}>
-              <TouchableOpacity
-                style={[styles.topUniformButton, { backgroundColor: theme.outline }]}
-                onPress={resetAll}
-              >
-                <RotateCcw size={18} color={theme.onSurface} />
-                <Text style={[styles.topUniformButtonText, { color: theme.onSurface }]}>Nuevo Informe</Text>
-              </TouchableOpacity>
-
               {!recordingState.isRecording ? (
                 <TouchableOpacity
                   style={[styles.topUniformButton, { backgroundColor: '#38B2AC' }]}
@@ -990,14 +982,13 @@ DIAGNÓSTICOS DIFERENCIALES:
                   <Text style={[styles.topUniformButtonText, { color: '#FFFFFF' }]}>Detener</Text>
                 </TouchableOpacity>
               )}
-              
+
               <TouchableOpacity
-                style={[styles.topUniformButton, { backgroundColor: theme.surfaceVariant, opacity: transcribedText.trim() ? 1 : 0.5 }]}
-                onPress={clearTranscriptionBox}
-                disabled={!transcribedText.trim()}
+                style={[styles.topUniformButton, { backgroundColor: theme.outline }]}
+                onPress={resetAll}
               >
                 <RotateCcw size={18} color={theme.onSurface} />
-                <Text style={[styles.topUniformButtonText, { color: theme.onSurface }]}>Limpiar</Text>
+                <Text style={[styles.topUniformButtonText, { color: theme.onSurface }]}>Nuevo Informe</Text>
               </TouchableOpacity>
             </View>
             
@@ -1158,7 +1149,14 @@ DIAGNÓSTICOS DIFERENCIALES:
             </View>
           </View>
 
-
+          {/* Botón grande Nuevo Informe al final */}
+          <TouchableOpacity
+            style={[styles.bigNewReportButton, { backgroundColor: theme.primary }]}
+            onPress={resetAll}
+          >
+            <RotateCcw size={24} color={theme.onPrimary} />
+            <Text style={[styles.bigNewReportButtonText, { color: theme.onPrimary }]}>Nuevo Informe</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -1483,5 +1481,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  bigNewReportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  bigNewReportButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 12,
   },
 });
