@@ -227,10 +227,10 @@ Sé directo y conciso.`;
       }
 
       console.log('📝 Generando informe RADIA con generateText...');
-      const generatedContent = await generateText({
-        messages: [{ role: 'user', content: prompt }]
-      });
+      console.log('Prompt enviado:', prompt);
+      const generatedContent = await generateText({ messages: [{ role: 'user', content: prompt }] });
       console.log('✅ Informe RADIA generado exitosamente');
+      console.log('Contenido generado:', generatedContent);
       setContent(generatedContent);
     } catch (error) {
       console.error('Error generating structured report:', error);
