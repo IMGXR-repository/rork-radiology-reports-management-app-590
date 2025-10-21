@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/hooks/useTranslation';
+import { languageNames, Language } from '@/constants/translations';
 
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { SearchBar } from '@/components/SearchBar';
@@ -75,6 +76,8 @@ export default function RecordingScreen() {
   const [reportSearchQuery, setReportSearchQuery] = useState<string>('');
   const [isRecordingUnloaded, setIsRecordingUnloaded] = useState<boolean>(false);
   const [isReportSelectorExpanded, setIsReportSelectorExpanded] = useState<boolean>(false);
+  const [outputLanguage, setOutputLanguage] = useState<Language>('es');
+  const [isLanguageSelectorExpanded, setIsLanguageSelectorExpanded] = useState<boolean>(false);
   
   const filteredReports = reports ? reports.filter(report =>
     report && report.title && report.content &&
@@ -633,7 +636,11 @@ export default function RecordingScreen() {
       let prompt = '';
       
       if (selectedReport) {
-        prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico final coherente y profesional.
+        const languageInstruction = `IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage].toUpperCase()}.`;
+      
+      prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico final coherente y profesional.
+
+${languageInstruction}
 
 INFORME BASE ESTRUCTURADO:
 ${selectedReport.content}
@@ -709,7 +716,11 @@ DIAGNÓSTICOS DIFERENCIALES:
 5. [Quinto diagnóstico] - [X]%
 6. [Sexto diagnóstico] - [X]%`;
       } else {
+        const languageInstruction = `IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage].toUpperCase()}.`;
+        
         prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico profesional a partir de las siguientes observaciones clínicas.
+
+${languageInstruction}
 
 OBSERVACIONES CLÍNICAS:
 ${transcribedText}
@@ -1038,7 +1049,52 @@ DIAGNÓSTICOS DIFERENCIALES:
               </View>
             )}
             
-            <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.freeText}</Text>
+            <View style={styles.freeTextHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.freeText}</Text>
+              
+              {/* Selector de idioma de salida */}
+              <TouchableOpacity
+                style={[styles.languageSelector, { 
+                  backgroundColor: theme.surfaceVariant,
+                  borderColor: theme.outline 
+                }]}
+                onPress={() => setIsLanguageSelectorExpanded(!isLanguageSelectorExpanded)}
+              >
+                <Text style={[styles.languageSelectorText, { color: theme.onSurface }]}>
+                  {languageNames[outputLanguage]}
+                </Text>
+                {isLanguageSelectorExpanded ? (
+                  <ChevronUp size={16} color={theme.onSurface} />
+                ) : (
+                  <ChevronDown size={16} color={theme.onSurface} />
+                )}
+              </TouchableOpacity>
+            </View>
+            
+            {/* Lista expandible de idiomas */}
+            {isLanguageSelectorExpanded && (
+              <View style={[styles.languageDropdown, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+                {(Object.keys(languageNames) as Language[]).map((lang) => (
+                  <TouchableOpacity
+                    key={lang}
+                    style={[styles.languageOption, { 
+                      backgroundColor: outputLanguage === lang ? theme.surfaceVariant : theme.surface
+                    }]}
+                    onPress={() => {
+                      setOutputLanguage(lang);
+                      setIsLanguageSelectorExpanded(false);
+                    }}
+                  >
+                    <Text style={[styles.languageOptionText, { 
+                      color: outputLanguage === lang ? theme.primary : theme.onSurface,
+                      fontWeight: outputLanguage === lang ? '600' : '400'
+                    }]}>
+                      {languageNames[lang]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
             
             {/* Caja de Transcripción Automática */}
             <View style={[styles.textInputContainer, { 
@@ -1537,5 +1593,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  freeTextHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  languageSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+  },
+  languageSelectorText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  languageDropdown: {
+    marginTop: 8,
+    marginBottom: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  languageOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  languageOptionText: {
+    fontSize: 14,
   },
 });

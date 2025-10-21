@@ -104,6 +104,7 @@ export interface Translations {
     newReport: string;
     transcribing: string;
     freeText: string;
+    outputLanguage: string;
     createReport: string;
     deleteLastText: string;
     deleteAllText: string;
@@ -292,6 +293,7 @@ export const translations: Record<Language, Translations> = {
       newReport: 'Nuevo Informe',
       transcribing: 'Transcribiendo automáticamente...',
       freeText: 'TEXTO LIBRE / GRABACIÓN',
+      outputLanguage: 'Idioma de Salida',
       createReport: 'Crear Informe',
       deleteLastText: 'Borrar Último',
       deleteAllText: 'Borrar Todo',
@@ -478,6 +480,7 @@ export const translations: Record<Language, Translations> = {
       newReport: 'New Report',
       transcribing: 'Transcribing automatically...',
       freeText: 'FREE TEXT / RECORDING',
+      outputLanguage: 'Output Language',
       createReport: 'Create Report',
       deleteLastText: 'Delete Last',
       deleteAllText: 'Delete All',
@@ -664,6 +667,7 @@ export const translations: Record<Language, Translations> = {
       newReport: 'Neuer Bericht',
       transcribing: 'Automatische Transkription...',
       freeText: 'FREITEXT / AUFNAHME',
+      outputLanguage: 'Ausgabesprache',
       createReport: 'Bericht erstellen',
       deleteLastText: 'Letzten löschen',
       deleteAllText: 'Alles löschen',
@@ -850,6 +854,7 @@ export const translations: Record<Language, Translations> = {
       newReport: 'Nouveau Rapport',
       transcribing: 'Transcription automatique...',
       freeText: 'TEXTE LIBRE / ENREGISTREMENT',
+      outputLanguage: 'Langue de Sortie',
       createReport: 'Créer un Rapport',
       deleteLastText: 'Supprimer le Dernier',
       deleteAllText: 'Tout Supprimer',
@@ -1036,6 +1041,7 @@ export const translations: Record<Language, Translations> = {
       newReport: 'Novo Relatório',
       transcribing: 'Transcrevendo automaticamente...',
       freeText: 'TEXTO LIVRE / GRAVAÇÃO',
+      outputLanguage: 'Idioma de Saída',
       createReport: 'Criar Relatório',
       deleteLastText: 'Excluir Último',
       deleteAllText: 'Excluir Tudo',
@@ -1222,6 +1228,7 @@ export const translations: Record<Language, Translations> = {
       newReport: 'Nuovo Rapporto',
       transcribing: 'Trascrizione automatica...',
       freeText: 'TESTO LIBERO / REGISTRAZIONE',
+      outputLanguage: 'Lingua di Uscita',
       createReport: 'Crea Rapporto',
       deleteLastText: 'Elimina Ultimo',
       deleteAllText: 'Elimina Tutto',
