@@ -807,8 +807,15 @@ DIAGNÓSTICOS DIFERENCIALES:
       try {
         console.log('📝 [RECORDING] Generando informe con prompt de', prompt.length, 'caracteres');
         
-        const apiUrl = new URL("/agent/chat", process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com");
-        console.log('🌐 [RECORDING] API URL:', apiUrl.toString());
+        const toolkitUrl = process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com";
+        console.log('🔍 [RECORDING] toolkitUrl RAW:', `[${toolkitUrl}]`);
+        console.log('🔍 [RECORDING] toolkitUrl type:', typeof toolkitUrl);
+        console.log('🔍 [RECORDING] toolkitUrl length:', toolkitUrl?.length);
+        console.log('🔍 [RECORDING] toolkitUrl is undefined:', toolkitUrl === undefined);
+        console.log('🔍 [RECORDING] toolkitUrl starts with https:', toolkitUrl?.startsWith('https://'));
+        
+        const apiUrl = new URL("/agent/chat", toolkitUrl);
+        console.log('🌐 [RECORDING] API URL completa:', `[${apiUrl.toString()}]`);
         
         const requestBody = {
           messages: [
@@ -829,11 +836,13 @@ DIAGNÓSTICOS DIFERENCIALES:
           body: JSON.stringify(requestBody),
         });
         
-        console.log('📥 [RECORDING] Response Status:', response.status, response.statusText);
-        console.log('📥 [RECORDING] Response Content-Type:', response.headers.get('Content-Type'));
+        console.log('📥 [RECORDING] Response Status:', `[${response.status}]`);
+        console.log('📥 [RECORDING] Response Status Text:', `[${response.statusText}]`);
+        const contentTypeHeader = response.headers.get('Content-Type');
+        console.log('📥 [RECORDING] Response Content-Type:', `[${contentTypeHeader}]`);
         
         const responseText = await response.text();
-        console.log('📥 [RECORDING] Response Body (primeros 200 chars):', responseText.substring(0, 200));
+        console.log('📥 [RECORDING] Response Body (primeros 200 chars):', `[${responseText.substring(0, 200)}]`);
         console.log('📥 [RECORDING] Response Body Length:', responseText.length);
         
         if (!response.ok) {

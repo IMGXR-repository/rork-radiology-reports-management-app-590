@@ -248,8 +248,15 @@ Sé directo y conciso.`;
         console.log('📤 Enviando solicitud a API...');
         console.log('📤 Longitud del prompt:', prompt.length, 'caracteres');
         
-        const apiUrl = new URL("/agent/chat", process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com");
-        console.log('🌐 API URL:', apiUrl.toString());
+        const toolkitUrl = process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com";
+        console.log('🔍 [CREATE-REPORT] toolkitUrl RAW:', `[${toolkitUrl}]`);
+        console.log('🔍 [CREATE-REPORT] toolkitUrl type:', typeof toolkitUrl);
+        console.log('🔍 [CREATE-REPORT] toolkitUrl length:', toolkitUrl?.length);
+        console.log('🔍 [CREATE-REPORT] toolkitUrl is undefined:', toolkitUrl === undefined);
+        console.log('🔍 [CREATE-REPORT] toolkitUrl starts with https:', toolkitUrl?.startsWith('https://'));
+        
+        const apiUrl = new URL("/agent/chat", toolkitUrl);
+        console.log('🌐 [CREATE-REPORT] API URL completa:', `[${apiUrl.toString()}]`);
         
         const requestBody = {
           messages: [
@@ -270,12 +277,14 @@ Sé directo y conciso.`;
           body: JSON.stringify(requestBody),
         });
         
-        console.log('📥 Response Status:', response.status, response.statusText);
-        console.log('📥 Response Content-Type:', response.headers.get('Content-Type'));
+        console.log('📥 [CREATE-REPORT] Response Status:', `[${response.status}]`);
+        console.log('📥 [CREATE-REPORT] Response Status Text:', `[${response.statusText}]`);
+        const contentTypeHeader = response.headers.get('Content-Type');
+        console.log('📥 [CREATE-REPORT] Response Content-Type:', `[${contentTypeHeader}]`);
         
         const responseText = await response.text();
-        console.log('📥 Response Body (primeros 200 chars):', responseText.substring(0, 200));
-        console.log('📥 Response Body Length:', responseText.length);
+        console.log('📥 [CREATE-REPORT] Response Body (primeros 200 chars):', `[${responseText.substring(0, 200)}]`);
+        console.log('📥 [CREATE-REPORT] Response Body Length:', responseText.length);
         
         if (!response.ok) {
           console.error('❌ Response not OK:', response.status);
