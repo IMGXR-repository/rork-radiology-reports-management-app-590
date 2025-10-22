@@ -235,7 +235,7 @@ Sé directo y conciso.`;
         prompt += `\n\nIndicaciones adicionales del usuario: ${extraInstructions.trim()}`;
       }
 
-      console.log('📝 Generando informe RADIA con generateText...');
+      console.log('📝 Generando informe RADIA...');
       console.log('Prompt enviado:', prompt.substring(0, 200) + '...');
       
       let generatedContent: string;
@@ -245,99 +245,20 @@ Sé directo y conciso.`;
         console.log('🌐 Idioma objetivo:', languageNames[outputLanguage]);
         console.log('📊 Nivel de estructuración:', structureLevel);
         
-        const toolkitUrl = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
-        const apiUrl = `${toolkitUrl}/agent/chat`;
+        const { generateText } = await import('@rork/toolkit-sdk');
         
-        console.log('🔗 URL de API:', apiUrl);
+        console.log('📤 Enviando solicitud a API con generateText...');
         
-        const requestBody = {
+        generatedContent = await generateText({
           messages: [
             {
               role: 'user',
               content: prompt,
             },
           ],
-        };
+        });
         
-        console.log('📤 Enviando solicitud a API...');
-        
-        let response: Response;
-        let responseText: string = '';
-        
-        try {
-          response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-          });
-          
-          console.log('📥 Respuesta recibida - Status:', response.status);
-          console.log('📥 Content-Type:', response.headers.get('content-type'));
-          
-          responseText = await response.text();
-          console.log('📄 Longitud de respuesta:', responseText.length, 'caracteres');
-          console.log('📄 Primeros 200 caracteres:', responseText.substring(0, 200));
-          
-        } catch (fetchError) {
-          console.error('❌ Error en fetch:', fetchError);
-          throw new Error(
-            'No se pudo conectar al servidor de IA. Verifica:\n' +
-            '• Tu conexión a internet\n' +
-            '• El servidor puede estar temporalmente fuera de servicio\n' +
-            'Error: ' + (fetchError instanceof Error ? fetchError.message : String(fetchError))
-          );
-        }
-        
-        if (!response.ok) {
-          console.error('❌ Error del servidor - Status:', response.status);
-          console.error('❌ Respuesta:', responseText.substring(0, 500));
-          
-          throw new Error(
-            `El servidor de IA respondió con error (${response.status}).\n` +
-            'Esto puede deberse a:\n' +
-            '• El servidor está sobrecargado\n' +
-            '• Problemas temporales de conectividad\n' +
-            '• Mantenimiento del servidor\n\n' +
-            'Por favor, intenta de nuevo en unos minutos.'
-          );
-        }
-        
-        let result: any;
-        try {
-          result = JSON.parse(responseText);
-          console.log('✅ JSON parseado correctamente');
-          console.log('📦 Estructura del resultado:', Object.keys(result).join(', '));
-        } catch (jsonError) {
-          console.error('❌ Error al parsear JSON:', jsonError);
-          console.error('❌ Respuesta que causó el error:', responseText.substring(0, 1000));
-          
-          throw new Error(
-            'El servidor devolvió una respuesta inválida.\n' +
-            'Esto puede ocurrir cuando:\n' +
-            '• El servidor está experimentando problemas\n' +
-            '• La solicitud es demasiado grande o compleja\n' +
-            '• Hay problemas de formato en la comunicación\n\n' +
-            'Por favor, intenta:\n' +
-            '1. Simplificar el título o las instrucciones\n' +
-            '2. Reducir el nivel de estructuración\n' +
-            '3. Esperar unos minutos e intentar nuevamente'
-          );
-        }
-        
-        generatedContent = 
-          result.message?.content || 
-          result.completion || 
-          result.text || 
-          result.response || 
-          result.content || 
-          result.output?.content ||
-          result.choices?.[0]?.message?.content ||
-          result.choices?.[0]?.text ||
-          '';
-        
-        console.log('✅ Contenido extraído:', typeof generatedContent);
+        console.log('✅ Contenido generado:', typeof generatedContent);
         console.log('✅ Longitud del contenido:', generatedContent?.length || 0);
         
         if (generatedContent && generatedContent.length > 0) {
@@ -349,18 +270,27 @@ Sé directo y conciso.`;
         console.error('🔍 Tipo de error:', genError instanceof Error ? genError.constructor.name : typeof genError);
         console.error('🔍 Mensaje:', genError instanceof Error ? genError.message : String(genError));
         
-        if (genError instanceof Error && genError.message.includes('servidor')) {
-          throw genError;
+        let errorMessage = 'Error al generar el informe.\n';
+        
+        if (genError instanceof Error) {
+          if (genError.message.includes('Failed to fetch') || genError.message.includes('NetworkError')) {
+            errorMessage += 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
+          } else if (genError.message.includes('timeout')) {
+            errorMessage += 'La solicitud tardó demasiado. El servidor puede estar sobrecargado. Intenta de nuevo.';
+          } else if (genError.message.includes('401') || genError.message.includes('403')) {
+            errorMessage += 'Error de autenticación. El servidor rechazó la solicitud.';
+          } else if (genError.message.includes('429')) {
+            errorMessage += 'Demasiadas solicitudes. Espera unos minutos e intenta de nuevo.';
+          } else if (genError.message.includes('500') || genError.message.includes('502') || genError.message.includes('503')) {
+            errorMessage += 'El servidor está experimentando problemas técnicos. Intenta de nuevo en unos minutos.';
+          } else {
+            errorMessage += genError.message;
+          }
+        } else {
+          errorMessage += 'Error desconocido. Por favor, intenta de nuevo.';
         }
         
-        throw new Error(
-          'Error inesperado al generar el informe.\n' +
-          'Por favor, intenta:\n' +
-          '• Verificar tu conexión a internet\n' +
-          '• Reiniciar la aplicación\n' +
-          '• Contactar soporte si el problema persiste\n\n' +
-          'Detalles técnicos: ' + (genError instanceof Error ? genError.message : String(genError))
-        );
+        throw new Error(errorMessage);
       }
       
       if (!generatedContent || typeof generatedContent !== 'string') {
