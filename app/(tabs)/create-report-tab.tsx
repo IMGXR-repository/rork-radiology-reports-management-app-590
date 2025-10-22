@@ -237,7 +237,14 @@ Sé directo y conciso.`;
 
       console.log('📝 Generando informe RADIA con generateText...');
       console.log('Prompt enviado:', prompt);
-      const generatedContent = await generateText(prompt);
+      
+      let generatedContent: string;
+      try {
+        generatedContent = await generateText(prompt);
+      } catch (genError) {
+        console.error('❌ Error al generar informe:', genError);
+        throw new Error('Error al generar informe: ' + (genError instanceof Error ? genError.message : String(genError)));
+      }
       
       if (!generatedContent || typeof generatedContent !== 'string') {
         console.error('❌ Respuesta inválida del servidor:', generatedContent);
@@ -249,10 +256,11 @@ Sé directo y conciso.`;
       setContent(generatedContent);
     } catch (error) {
       console.error('Error generating structured report:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       if (Platform.OS === 'web') {
-        alert('Error al generar el informe estructurado');
+        alert('Error al generar el informe estructurado: ' + errorMessage);
       } else {
-        Alert.alert('Error', 'Error al generar el informe estructurado');
+        Alert.alert('Error', 'Error al generar el informe estructurado: ' + errorMessage);
       }
     } finally {
       setIsGenerating(false);
