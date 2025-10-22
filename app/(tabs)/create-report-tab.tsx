@@ -6,7 +6,7 @@ import { Sparkles, Tag, Mic, Square, ChevronDown, ChevronUp } from 'lucide-react
 import { useApp } from '@/contexts/AppContext';
 import { Report } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
-import { generateText } from '@rork/toolkit-sdk';
+
 import CustomSlider from '@/components/CustomSlider';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
 import { languageNames, Language } from '@/constants/translations';
@@ -236,12 +236,41 @@ Sé directo y conciso.`;
       }
 
       console.log('📝 Generando informe RADIA con generateText...');
-      console.log('Prompt enviado:', prompt);
+      console.log('Prompt enviado:', prompt.substring(0, 200) + '...');
       
       let generatedContent: string;
       try {
         console.log('🔄 Llamando a generateText...');
-        generatedContent = await generateText(prompt);
+        
+        const toolkitUrl = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
+        const apiUrl = `${toolkitUrl}/agent/chat`;
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API Error:', response.status, errorText);
+          throw new Error(`Error del servidor (${response.status}): ${errorText.substring(0, 200)}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Response recibido:', typeof result);
+        
+        generatedContent = result.message?.content || result.completion || result.text || result.response || result.content || '';
+        
         console.log('✅ generateText completado:', typeof generatedContent, generatedContent?.substring(0, 100));
       } catch (genError) {
         console.error('❌ Error al generar informe:', genError);
