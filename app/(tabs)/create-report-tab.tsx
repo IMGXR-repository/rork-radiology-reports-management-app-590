@@ -237,9 +237,15 @@ Sé directo y conciso.`;
 
       console.log('📝 Generando informe RADIA con generateText...');
       console.log('Prompt enviado:', prompt);
-      const generatedContent = await generateText({ messages: [{ role: 'user', content: prompt }] });
+      const generatedContent = await generateText(prompt);
+      
+      if (!generatedContent || typeof generatedContent !== 'string') {
+        console.error('❌ Respuesta inválida del servidor:', generatedContent);
+        throw new Error('No se recibió contenido válido del servidor');
+      }
+      
       console.log('✅ Informe RADIA generado exitosamente');
-      console.log('Contenido generado:', generatedContent);
+      console.log('Contenido generado (primeros 200 chars):', generatedContent.substring(0, 200));
       setContent(generatedContent);
     } catch (error) {
       console.error('Error generating structured report:', error);
