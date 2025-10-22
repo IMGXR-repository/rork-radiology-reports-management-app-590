@@ -240,15 +240,30 @@ Sé directo y conciso.`;
       
       let generatedContent: string;
       try {
+        console.log('🔄 Llamando a generateText...');
         generatedContent = await generateText(prompt);
+        console.log('✅ generateText completado:', typeof generatedContent, generatedContent?.substring(0, 100));
       } catch (genError) {
         console.error('❌ Error al generar informe:', genError);
-        throw new Error('Error al generar informe: ' + (genError instanceof Error ? genError.message : String(genError)));
+        console.error('Tipo de error:', genError instanceof Error ? genError.constructor.name : typeof genError);
+        console.error('Mensaje completo:', genError instanceof Error ? genError.message : String(genError));
+        console.error('Stack:', genError instanceof Error ? genError.stack : 'N/A');
+        
+        const errorMessage = genError instanceof Error ? genError.message : String(genError);
+        if (errorMessage.includes('not valid JSON') || errorMessage.includes('Unexpected token')) {
+          throw new Error('El servidor está experimentando problemas técnicos. Por favor, intenta nuevamente en unos momentos.');
+        }
+        throw new Error('Error al generar informe: ' + errorMessage);
       }
       
       if (!generatedContent || typeof generatedContent !== 'string') {
         console.error('❌ Respuesta inválida del servidor:', generatedContent);
-        throw new Error('No se recibió contenido válido del servidor');
+        throw new Error('No se recibió contenido válido del servidor. Por favor, intenta nuevamente.');
+      }
+      
+      if (generatedContent.trim().length === 0) {
+        console.error('❌ Contenido vacío recibido');
+        throw new Error('El servidor no generó ningún contenido. Por favor, intenta con instrucciones diferentes.');
       }
       
       console.log('✅ Informe RADIA generado exitosamente');
