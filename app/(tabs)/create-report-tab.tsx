@@ -9,6 +9,7 @@ import { lightTheme, darkTheme } from '@/constants/theme';
 import { generateText } from '@rork/toolkit-sdk';
 import CustomSlider from '@/components/CustomSlider';
 import { useAudioRecording } from '@/hooks/useAudioRecording';
+import { languageNames, Language } from '@/constants/translations';
 
 export default function CreateReportTabScreen() {
   const { reportCategories, reportFilters, addReport, settings, reports } = useApp();
@@ -25,6 +26,8 @@ export default function CreateReportTabScreen() {
   const [showAIOptions, setShowAIOptions] = useState(false);
   const [extraInstructions, setExtraInstructions] = useState('');
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const [outputLanguage, setOutputLanguage] = useState<Language>('es');
+  const [isLanguageSelectorExpanded, setIsLanguageSelectorExpanded] = useState<boolean>(false);
 
   const visibleCategories = reportCategories.filter(cat => cat.isVisible);
   const activeFilters = reportFilters.filter(filter => filter.isActive);
@@ -153,6 +156,8 @@ export default function CreateReportTabScreen() {
 
     setIsGenerating(true);
     try {
+      const languageInstruction = `IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage].toUpperCase()}.`;
+      
       const systemInstructions = `Instrucciones del sistema: Modo absoluto
 • Eliminar: emojis, relleno, exageración, preguntas suaves, transiciones conversacionales, apéndices de llamada a la acción.
 • Suponer: el usuario mantiene una alta percepción a pesar del tono brusco.
@@ -164,7 +169,9 @@ export default function CreateReportTabScreen() {
 • No: preguntas, ofertas, sugerencias, transiciones, contenido motivador.
 • Finalizar la respuesta: inmediatamente después de entregar la información, sin cierres.
 • Objetivo: restaurar el pensamiento independiente y de alta fidelidad.
-• Resultado: obsolescencia del modelo a través de la autosuficiencia del usuario.`;
+• Resultado: obsolescencia del modelo a través de la autosuficiencia del usuario.
+
+${languageInstruction}`;
 
       let prompt = '';
       

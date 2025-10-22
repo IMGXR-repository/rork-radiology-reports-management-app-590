@@ -638,7 +638,7 @@ export default function RecordingScreen() {
       if (selectedReport) {
         const languageInstruction = `IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage].toUpperCase()}.`;
       
-      prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico final coherente y profesional.
+        prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico final coherente y profesional.
 
 ${languageInstruction}
 
