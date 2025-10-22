@@ -107,12 +107,27 @@ export default function RecordingScreen() {
 
   // Preseleccionar el informe si se pasa reportId
   useEffect(() => {
+    console.log('📋 [RECORDING DEBUG] Effect triggered:', { reportId, reportsCount: reports.length });
+    
     if (reportId && reports.length > 0) {
-      const preselectedReport = reports.find(report => String(report.id) === String(reportId));
+      console.log('📋 [RECORDING DEBUG] Buscando informe con ID:', reportId);
+      console.log('📋 [RECORDING DEBUG] IDs disponibles:', reports.map(r => r.id));
+      
+      const preselectedReport = reports.find(report => {
+        const match = String(report.id) === String(reportId);
+        console.log(`📋 [RECORDING DEBUG] Comparando: ${report.id} === ${reportId} = ${match}`);
+        return match;
+      });
+      
       if (preselectedReport) {
+        console.log('✅ [RECORDING DEBUG] Informe encontrado y seleccionado:', preselectedReport.title);
         setSelectedReport(preselectedReport);
         setIsReportSelectorExpanded(false);
+      } else {
+        console.warn('⚠️ [RECORDING DEBUG] No se encontró el informe con ID:', reportId);
       }
+    } else if (reportId && reports.length === 0) {
+      console.warn('⚠️ [RECORDING DEBUG] reportId presente pero reports está vacío. Esperando carga de datos...');
     }
   }, [reportId, reports]);
 
