@@ -799,17 +799,18 @@ DIAGNÓSTICOS DIFERENCIALES:
 6. [Sexto diagnóstico] - [X]%`;
       }
       
-      console.log('📝 Generando informe desde RADIA con generateText...');
+      console.log('📝 [RECORDING] Generando informe con generateText...');
+      console.log('📝 [RECORDING] Idioma de salida:', outputLanguage, languageNames[outputLanguage]);
+      console.log('📝 [RECORDING] Longitud del prompt:', prompt.length);
       
-      const reportContent = await generateText({
-        messages: [{ role: 'user', content: prompt }]
-      });
+      const reportContent = await generateText(prompt);
       
-      if (!reportContent) {
-        throw new Error('No se recibió contenido del servidor');
+      if (!reportContent || typeof reportContent !== 'string') {
+        console.error('❌ [RECORDING] Respuesta inválida:', reportContent);
+        throw new Error('No se recibió contenido válido del servidor');
       }
 
-      console.log('✅ Informe final generado exitosamente desde RADIA');
+      console.log('✅ [RECORDING] Informe generado. Longitud:', reportContent.length);
       const trimmedReport = reportContent.trim();
       setFinalReport(trimmedReport);
       
