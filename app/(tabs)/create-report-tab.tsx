@@ -250,9 +250,18 @@ Sé directo y conciso.`;
         console.error('Stack:', genError instanceof Error ? genError.stack : 'N/A');
         
         const errorMessage = genError instanceof Error ? genError.message : String(genError);
-        if (errorMessage.includes('not valid JSON') || errorMessage.includes('Unexpected token')) {
-          throw new Error('El servidor está experimentando problemas técnicos. Por favor, intenta nuevamente en unos momentos.');
+        
+        if (errorMessage.includes('not valid JSON') || 
+            errorMessage.includes('Unexpected token') || 
+            errorMessage.includes('Internal Server Error') ||
+            errorMessage.includes('SyntaxError')) {
+          throw new Error('El servidor de IA está temporalmente fuera de servicio. Por favor:\n• Intenta de nuevo en unos minutos\n• Verifica tu conexión a internet\n• Si el problema persiste, contacta soporte técnico');
         }
+        
+        if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+          throw new Error('La solicitud tardó demasiado tiempo. El servidor puede estar sobrecargado. Intenta nuevamente en unos minutos.');
+        }
+        
         throw new Error('Error al generar informe: ' + errorMessage);
       }
       
