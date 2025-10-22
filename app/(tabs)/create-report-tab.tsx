@@ -248,14 +248,14 @@ Sé directo y conciso.`;
         console.log('📤 Enviando solicitud a API...');
         console.log('📤 Longitud del prompt:', prompt.length, 'caracteres');
         
-        const toolkitUrl = process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com";
+        const toolkitUrl = (process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com").trim();
         console.log('🔍 [CREATE-REPORT] toolkitUrl RAW:', `[${toolkitUrl}]`);
         console.log('🔍 [CREATE-REPORT] toolkitUrl type:', typeof toolkitUrl);
         console.log('🔍 [CREATE-REPORT] toolkitUrl length:', toolkitUrl?.length);
         console.log('🔍 [CREATE-REPORT] toolkitUrl is undefined:', toolkitUrl === undefined);
         console.log('🔍 [CREATE-REPORT] toolkitUrl starts with https:', toolkitUrl?.startsWith('https://'));
         
-        const apiUrl = new URL("/agent/chat", toolkitUrl);
+        const apiUrl = `${toolkitUrl}/agent/chat`;
         console.log('🌐 [CREATE-REPORT] API URL completa:', `[${apiUrl.toString()}]`);
         
         const requestBody = {
@@ -269,7 +269,7 @@ Sé directo y conciso.`;
         
         console.log('📦 Request body:', JSON.stringify(requestBody).substring(0, 200));
         
-        const response = await fetch(apiUrl.toString(), {
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

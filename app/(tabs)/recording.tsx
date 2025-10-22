@@ -807,14 +807,14 @@ DIAGNÓSTICOS DIFERENCIALES:
       try {
         console.log('📝 [RECORDING] Generando informe con prompt de', prompt.length, 'caracteres');
         
-        const toolkitUrl = process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com";
+        const toolkitUrl = (process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com").trim();
         console.log('🔍 [RECORDING] toolkitUrl RAW:', `[${toolkitUrl}]`);
         console.log('🔍 [RECORDING] toolkitUrl type:', typeof toolkitUrl);
         console.log('🔍 [RECORDING] toolkitUrl length:', toolkitUrl?.length);
         console.log('🔍 [RECORDING] toolkitUrl is undefined:', toolkitUrl === undefined);
         console.log('🔍 [RECORDING] toolkitUrl starts with https:', toolkitUrl?.startsWith('https://'));
         
-        const apiUrl = new URL("/agent/chat", toolkitUrl);
+        const apiUrl = `${toolkitUrl}/agent/chat`;
         console.log('🌐 [RECORDING] API URL completa:', `[${apiUrl.toString()}]`);
         
         const requestBody = {
@@ -828,7 +828,7 @@ DIAGNÓSTICOS DIFERENCIALES:
         
         console.log('📦 [RECORDING] Request body:', JSON.stringify(requestBody).substring(0, 200));
         
-        const response = await fetch(apiUrl.toString(), {
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
