@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, ActivityIndicator, Switch } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Save, X, Tag, Sparkles, Mic, Square } from 'lucide-react-native';
+import { Save, X, Tag, Sparkles, Mic, Square, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { Report } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -320,9 +320,27 @@ Sé directo y conciso.`;
           <View style={[styles.formSection, styles.firstSection]}>
             <View style={styles.titleRow}>
               <View style={styles.titleInputContainer}>
-                <Text style={[styles.label, { color: theme.onSurface }]}>
-                  Título del Informe *
-                </Text>
+                <View style={styles.labelRow}>
+                  <Text style={[styles.label, { color: theme.onSurface }]}>
+                    Título del Informe *
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.languageSelector, { 
+                      backgroundColor: theme.surfaceVariant,
+                      borderColor: theme.outline 
+                    }]}
+                    onPress={() => setIsLanguageSelectorExpanded(!isLanguageSelectorExpanded)}
+                  >
+                    <Text style={[styles.languageSelectorText, { color: theme.onSurface }]}>
+                      {languageNames[outputLanguage]}
+                    </Text>
+                    {isLanguageSelectorExpanded ? (
+                      <ChevronUp size={14} color={theme.onSurface} />
+                    ) : (
+                      <ChevronDown size={14} color={theme.onSurface} />
+                    )}
+                  </TouchableOpacity>
+                </View>
                 <TextInput
                   style={[styles.titleInput, { 
                     color: theme.onSurface, 
@@ -353,6 +371,29 @@ Sé directo y conciso.`;
                 )}
               </TouchableOpacity>
             </View>
+            {isLanguageSelectorExpanded && (
+              <View style={[styles.languageDropdown, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+                {(Object.keys(languageNames) as Language[]).map((lang) => (
+                  <TouchableOpacity
+                    key={lang}
+                    style={[styles.languageOption, { 
+                      backgroundColor: outputLanguage === lang ? theme.surfaceVariant : theme.surface
+                    }]}
+                    onPress={() => {
+                      setOutputLanguage(lang);
+                      setIsLanguageSelectorExpanded(false);
+                    }}
+                  >
+                    <Text style={[styles.languageOptionText, { 
+                      color: outputLanguage === lang ? theme.primary : theme.onSurface,
+                      fontWeight: outputLanguage === lang ? '600' : '400'
+                    }]}>
+                      {languageNames[lang]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
             {recordingState.isRecording && (
               <View style={[styles.recordingIndicatorSmall, { backgroundColor: theme.surfaceVariant }]}>
                 <View style={[styles.recordingDot, { backgroundColor: theme.error }]} />
@@ -854,5 +895,39 @@ const styles = StyleSheet.create({
   organButtonText: {
     fontSize: 14,
     fontWeight: '600' as const,
+  },
+  labelRow: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+  },
+  languageSelector: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    gap: 4,
+  },
+  languageSelectorText: {
+    fontSize: 11,
+    fontWeight: '500' as const,
+  },
+  languageDropdown: {
+    marginTop: 8,
+    marginBottom: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    overflow: 'hidden' as const,
+  },
+  languageOption: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  languageOptionText: {
+    fontSize: 13,
   },
 });
