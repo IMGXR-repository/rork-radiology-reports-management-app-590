@@ -260,58 +260,127 @@ Sé directo y conciso.`;
       
       let generatedContent: string;
       try {
-        console.log('🔄 Llamando a API...');
+        console.log('🔄 Iniciando generación de informe...');
+        console.log('📝 Título:', title.trim());
+        console.log('🌐 Idioma objetivo:', languageNames[outputLanguage]);
+        console.log('📊 Nivel de estructuración:', structureLevel);
         
         const toolkitUrl = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
         const apiUrl = `${toolkitUrl}/agent/chat`;
         
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messages: [
-              {
-                role: 'user',
-                content: prompt,
-              },
-            ],
-          }),
-        });
+        console.log('🔗 URL de API:', apiUrl);
+        
+        const requestBody = {
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        };
+        
+        console.log('📤 Enviando solicitud a API...');
+        
+        let response: Response;
+        let responseText: string = '';
+        
+        try {
+          response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
+          
+          console.log('📥 Respuesta recibida - Status:', response.status);
+          console.log('📥 Content-Type:', response.headers.get('content-type'));
+          
+          responseText = await response.text();
+          console.log('📄 Longitud de respuesta:', responseText.length, 'caracteres');
+          console.log('📄 Primeros 200 caracteres:', responseText.substring(0, 200));
+          
+        } catch (fetchError) {
+          console.error('❌ Error en fetch:', fetchError);
+          throw new Error(
+            'No se pudo conectar al servidor de IA. Verifica:\n' +
+            '• Tu conexión a internet\n' +
+            '• El servidor puede estar temporalmente fuera de servicio\n' +
+            'Error: ' + (fetchError instanceof Error ? fetchError.message : String(fetchError))
+          );
+        }
         
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ API Error:', response.status, errorText);
-          throw new Error(`Error del servidor (${response.status}): ${errorText.substring(0, 200)}`);
+          console.error('❌ Error del servidor - Status:', response.status);
+          console.error('❌ Respuesta:', responseText.substring(0, 500));
+          
+          throw new Error(
+            `El servidor de IA respondió con error (${response.status}).\n` +
+            'Esto puede deberse a:\n' +
+            '• El servidor está sobrecargado\n' +
+            '• Problemas temporales de conectividad\n' +
+            '• Mantenimiento del servidor\n\n' +
+            'Por favor, intenta de nuevo en unos minutos.'
+          );
         }
         
-        const result = await response.json();
-        console.log('✅ Response recibido:', typeof result);
+        let result: any;
+        try {
+          result = JSON.parse(responseText);
+          console.log('✅ JSON parseado correctamente');
+          console.log('📦 Estructura del resultado:', Object.keys(result).join(', '));
+        } catch (jsonError) {
+          console.error('❌ Error al parsear JSON:', jsonError);
+          console.error('❌ Respuesta que causó el error:', responseText.substring(0, 1000));
+          
+          throw new Error(
+            'El servidor devolvió una respuesta inválida.\n' +
+            'Esto puede ocurrir cuando:\n' +
+            '• El servidor está experimentando problemas\n' +
+            '• La solicitud es demasiado grande o compleja\n' +
+            '• Hay problemas de formato en la comunicación\n\n' +
+            'Por favor, intenta:\n' +
+            '1. Simplificar el título o las instrucciones\n' +
+            '2. Reducir el nivel de estructuración\n' +
+            '3. Esperar unos minutos e intentar nuevamente'
+          );
+        }
         
-        generatedContent = result.message?.content || result.completion || result.text || result.response || result.content || '';
+        generatedContent = 
+          result.message?.content || 
+          result.completion || 
+          result.text || 
+          result.response || 
+          result.content || 
+          result.output?.content ||
+          result.choices?.[0]?.message?.content ||
+          result.choices?.[0]?.text ||
+          '';
         
-        console.log('✅ generateText completado:', typeof generatedContent, generatedContent?.substring(0, 100));
+        console.log('✅ Contenido extraído:', typeof generatedContent);
+        console.log('✅ Longitud del contenido:', generatedContent?.length || 0);
+        
+        if (generatedContent && generatedContent.length > 0) {
+          console.log('✅ Primeros 200 caracteres del contenido:', generatedContent.substring(0, 200));
+        }
+        
       } catch (genError) {
-        console.error('❌ Error al generar informe:', genError);
-        console.error('Tipo de error:', genError instanceof Error ? genError.constructor.name : typeof genError);
-        console.error('Mensaje completo:', genError instanceof Error ? genError.message : String(genError));
-        console.error('Stack:', genError instanceof Error ? genError.stack : 'N/A');
+        console.error('❌ Error general en generación:', genError);
+        console.error('🔍 Tipo de error:', genError instanceof Error ? genError.constructor.name : typeof genError);
+        console.error('🔍 Mensaje:', genError instanceof Error ? genError.message : String(genError));
         
-        const errorMessage = genError instanceof Error ? genError.message : String(genError);
-        
-        if (errorMessage.includes('not valid JSON') || 
-            errorMessage.includes('Unexpected token') || 
-            errorMessage.includes('Internal Server Error') ||
-            errorMessage.includes('SyntaxError')) {
-          throw new Error('El servidor de IA está temporalmente fuera de servicio. Por favor:\n• Intenta de nuevo en unos minutos\n• Verifica tu conexión a internet\n• Si el problema persiste, contacta soporte técnico');
+        if (genError instanceof Error && genError.message.includes('servidor')) {
+          throw genError;
         }
         
-        if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
-          throw new Error('La solicitud tardó demasiado tiempo. El servidor puede estar sobrecargado. Intenta nuevamente en unos minutos.');
-        }
-        
-        throw new Error('Error al generar informe: ' + errorMessage);
+        throw new Error(
+          'Error inesperado al generar el informe.\n' +
+          'Por favor, intenta:\n' +
+          '• Verificar tu conexión a internet\n' +
+          '• Reiniciar la aplicación\n' +
+          '• Contactar soporte si el problema persiste\n\n' +
+          'Detalles técnicos: ' + (genError instanceof Error ? genError.message : String(genError))
+        );
       }
       
       if (!generatedContent || typeof generatedContent !== 'string') {
