@@ -651,11 +651,9 @@ export default function RecordingScreen() {
       let prompt = '';
       
       if (selectedReport) {
-        const languageInstruction = `El informe completo debe estar escrito en ${languageNames[outputLanguage]}.`;
-      
         prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico final coherente y profesional.
 
-${languageInstruction}
+IMPORTANTE: El informe completo debe estar escrito en ${languageNames[outputLanguage]}.
 
 INFORME BASE ESTRUCTURADO:
 ${selectedReport.content}
@@ -731,11 +729,9 @@ DIAGNÓSTICOS DIFERENCIALES:
 5. [Quinto diagnóstico] - [X]%
 6. [Sexto diagnóstico] - [X]%`;
       } else {
-        const languageInstruction = `El informe completo debe estar escrito en ${languageNames[outputLanguage]}.`;
-        
         prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico profesional a partir de las siguientes observaciones clínicas.
 
-${languageInstruction}
+IMPORTANTE: El informe completo debe estar escrito en ${languageNames[outputLanguage]}.
 
 OBSERVACIONES CLÍNICAS:
 ${transcribedText}

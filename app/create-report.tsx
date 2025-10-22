@@ -149,13 +149,14 @@ export default function CreateReportScreen() {
 • No: preguntas, ofertas, sugerencias, transiciones, contenido motivador.
 • Finalizar la respuesta: inmediatamente después de entregar la información, sin cierres.
 • Objetivo: restaurar el pensamiento independiente y de alta fidelidad.
-• Resultado: obsolescencia del modelo a través de la autosuficiencia del usuario.
-• IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage]}.`;
+• Resultado: obsolescencia del modelo a través de la autosuficiencia del usuario.`;
 
       let prompt = '';
       
       if (structureLevel === 0) {
         prompt = `${systemInstructions}
+
+IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage]}.
 
 Genera un informe médico basado en el siguiente título: "${title.trim()}"
 
@@ -167,6 +168,8 @@ Describe únicamente lo observado sin interpretaciones diagnósticas.`;
       } else if (structureLevel === 100) {
         if (organStructure) {
           prompt = `${systemInstructions}
+
+IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage]}.
 
 Genera un informe médico altamente estructurado basado en el siguiente título: "${title.trim()}"
 
@@ -184,6 +187,8 @@ Escribe directamente los hallazgos organizados por órganos, usando formato:
 Sé directo, breve y preciso. Usa terminología médica exacta.`;
         } else {
           prompt = `${systemInstructions}
+
+IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage]}.
 
 Genera un informe médico altamente estructurado basado en el siguiente título: "${title.trim()}"
 
@@ -206,6 +211,8 @@ Sé directo, breve y preciso. Usa terminología médica exacta.`;
         if (organStructure) {
           prompt = `${systemInstructions}
 
+IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage]}.
+
 Genera un informe médico con nivel de estructuración ${structureLevel}% basado en el siguiente título: "${title.trim()}"
 
 Genera ÚNICAMENTE los hallazgos médicos organizados por ÓRGANOS ANATÓMICOS.
@@ -218,6 +225,8 @@ Escribe directamente los hallazgos organizados por órganos según el nivel de e
 Sé directo y conciso.`;
         } else {
           prompt = `${systemInstructions}
+
+IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage]}.
 
 Genera un informe médico con nivel de estructuración ${structureLevel}% basado en el siguiente título: "${title.trim()}"
 
