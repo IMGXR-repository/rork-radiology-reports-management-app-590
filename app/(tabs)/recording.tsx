@@ -14,7 +14,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { Audio } from 'expo-av';
 import { Mic, Square, FileText, Send, ChevronDown, ChevronUp, Copy, Trash2, RotateCcw } from 'lucide-react-native';
-import { generateText } from '@rork/toolkit-sdk';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
@@ -805,21 +805,69 @@ DIAGNÓSTICOS DIFERENCIALES:
       
       let reportContent: string;
       try {
-        console.log('📝 [RECORDING] Llamando a generateText con prompt de', prompt.length, 'caracteres');
+        console.log('📝 [RECORDING] Generando informe con prompt de', prompt.length, 'caracteres');
         
-        reportContent = await generateText({
+        const apiUrl = new URL("/agent/chat", process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com");
+        console.log('🌐 [RECORDING] API URL:', apiUrl.toString());
+        
+        const requestBody = {
           messages: [
             {
-              role: 'user',
+              role: 'user' as const,
               content: prompt,
             },
           ],
+        };
+        
+        console.log('📦 [RECORDING] Request body:', JSON.stringify(requestBody).substring(0, 200));
+        
+        const response = await fetch(apiUrl.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
         });
         
-        console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent);
-        if (reportContent) {
-          console.log('📝 [RECORDING] Primeros 200 chars:', reportContent.substring(0, 200));
+        console.log('📥 [RECORDING] Response Status:', response.status, response.statusText);
+        console.log('📥 [RECORDING] Response Content-Type:', response.headers.get('Content-Type'));
+        
+        const responseText = await response.text();
+        console.log('📥 [RECORDING] Response Body (primeros 200 chars):', responseText.substring(0, 200));
+        console.log('📥 [RECORDING] Response Body Length:', responseText.length);
+        
+        if (!response.ok) {
+          console.error('❌ [RECORDING] Response not OK:', response.status);
+          throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 200)}`);
         }
+        
+        const contentType = response.headers.get('Content-Type') || '';
+        if (!contentType.includes('application/json')) {
+          console.error('❌ [RECORDING] Content-Type inválido:', contentType);
+          console.error('❌ [RECORDING] Body completo:', responseText);
+          throw new Error(`Respuesta no es JSON. Content-Type: ${contentType}. Body: ${responseText.substring(0, 200)}`);
+        }
+        
+        let parsedResponse: any;
+        try {
+          parsedResponse = JSON.parse(responseText);
+          console.log('✅ [RECORDING] JSON parseado correctamente');
+          console.log('📋 [RECORDING] Estructura de respuesta:', JSON.stringify(parsedResponse).substring(0, 200));
+        } catch (parseError) {
+          console.error('❌ [RECORDING] Error al parsear JSON:', parseError);
+          throw new Error(`Error parsing JSON: ${parseError}`);
+        }
+        
+        reportContent = parsedResponse.text || parsedResponse.content || parsedResponse.message || '';
+        
+        if (!reportContent) {
+          console.error('❌ [RECORDING] No se encontró texto en la respuesta');
+          console.error('❌ [RECORDING] Respuesta completa:', JSON.stringify(parsedResponse, null, 2));
+          throw new Error('No se pudo extraer el texto generado de la respuesta');
+        }
+        
+        console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent);
+        console.log('📝 [RECORDING] Primeros 200 chars:', reportContent.substring(0, 200));
       } catch (genError: any) {
         console.error('❌ [RECORDING] Error en generateText:', genError);
         console.error('❌ [RECORDING] Tipo de error:', genError?.constructor?.name || typeof genError);

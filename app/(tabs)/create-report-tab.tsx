@@ -245,19 +245,67 @@ Sé directo y conciso.`;
         console.log('🌐 Idioma objetivo:', languageNames[outputLanguage]);
         console.log('📊 Nivel de estructuración:', structureLevel);
         
-        const { generateText } = await import('@rork/toolkit-sdk');
-        
-        console.log('📤 Enviando solicitud a API con generateText...');
+        console.log('📤 Enviando solicitud a API...');
         console.log('📤 Longitud del prompt:', prompt.length, 'caracteres');
         
-        generatedContent = await generateText({
+        const apiUrl = new URL("/agent/chat", process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com");
+        console.log('🌐 API URL:', apiUrl.toString());
+        
+        const requestBody = {
           messages: [
             {
-              role: 'user',
+              role: 'user' as const,
               content: prompt,
             },
           ],
+        };
+        
+        console.log('📦 Request body:', JSON.stringify(requestBody).substring(0, 200));
+        
+        const response = await fetch(apiUrl.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
         });
+        
+        console.log('📥 Response Status:', response.status, response.statusText);
+        console.log('📥 Response Content-Type:', response.headers.get('Content-Type'));
+        
+        const responseText = await response.text();
+        console.log('📥 Response Body (primeros 200 chars):', responseText.substring(0, 200));
+        console.log('📥 Response Body Length:', responseText.length);
+        
+        if (!response.ok) {
+          console.error('❌ Response not OK:', response.status);
+          throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 200)}`);
+        }
+        
+        const contentType = response.headers.get('Content-Type') || '';
+        if (!contentType.includes('application/json')) {
+          console.error('❌ Content-Type inválido:', contentType);
+          console.error('❌ Body completo:', responseText);
+          throw new Error(`Respuesta no es JSON. Content-Type: ${contentType}. Body: ${responseText.substring(0, 200)}`);
+        }
+        
+        let parsedResponse: any;
+        try {
+          parsedResponse = JSON.parse(responseText);
+          console.log('✅ JSON parseado correctamente');
+          console.log('📋 Estructura de respuesta:', JSON.stringify(parsedResponse).substring(0, 200));
+        } catch (parseError) {
+          console.error('❌ Error al parsear JSON:', parseError);
+          throw new Error(`Error parsing JSON: ${parseError}`);
+        }
+        
+        generatedContent = parsedResponse.text || parsedResponse.content || parsedResponse.message || '';
+        
+        if (!generatedContent) {
+          console.error('❌ No se encontró texto en la respuesta');
+          console.error('❌ Respuesta completa:', JSON.stringify(parsedResponse, null, 2));
+          throw new Error('No se pudo extraer el texto generado de la respuesta');
+        }
         
         console.log('✅ Contenido generado:', typeof generatedContent);
         console.log('✅ Longitud del contenido:', generatedContent?.length || 0);
