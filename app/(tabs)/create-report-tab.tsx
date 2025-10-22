@@ -282,38 +282,52 @@ Sé directo y conciso.`;
         const contentTypeHeader = response.headers.get('Content-Type');
         console.log('📥 [CREATE-REPORT] Response Content-Type:', `[${contentTypeHeader}]`);
         
-        const responseText = await response.text();
-        console.log('📥 [CREATE-REPORT] Response Body (primeros 200 chars):', `[${responseText.substring(0, 200)}]`);
-        console.log('📥 [CREATE-REPORT] Response Body Length:', responseText.length);
-        
         if (!response.ok) {
+          const errorText = await response.text();
           console.error('❌ Response not OK:', response.status);
-          throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 200)}`);
+          throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
         }
         
-        const contentType = response.headers.get('Content-Type') || '';
-        if (!contentType.includes('application/json')) {
-          console.error('❌ Content-Type inválido:', contentType);
-          console.error('❌ Body completo:', responseText);
-          throw new Error(`Respuesta no es JSON. Content-Type: ${contentType}. Body: ${responseText.substring(0, 200)}`);
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No se pudo leer la respuesta del servidor');
         }
         
-        let parsedResponse: any;
+        const decoder = new TextDecoder();
+        let accumulatedText = '';
+        
         try {
-          parsedResponse = JSON.parse(responseText);
-          console.log('✅ JSON parseado correctamente');
-          console.log('📋 Estructura de respuesta:', JSON.stringify(parsedResponse).substring(0, 200));
-        } catch (parseError) {
-          console.error('❌ Error al parsear JSON:', parseError);
-          throw new Error(`Error parsing JSON: ${parseError}`);
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('0:')) {
+                try {
+                  const jsonStr = line.substring(2);
+                  const data = JSON.parse(jsonStr);
+                  if (data.type === 'text-delta' && data.textDelta) {
+                    accumulatedText += data.textDelta;
+                  }
+                } catch (e) {
+                  console.warn('⚠️ Error parseando chunk:', e);
+                }
+              }
+            }
+          }
+        } catch (streamError) {
+          console.error('❌ [CREATE-REPORT] Error leyendo stream:', streamError);
+          throw new Error('Error al leer la respuesta del servidor');
         }
         
-        generatedContent = parsedResponse.text || parsedResponse.content || parsedResponse.message || '';
+        generatedContent = accumulatedText.trim();
         
         if (!generatedContent) {
-          console.error('❌ No se encontró texto en la respuesta');
-          console.error('❌ Respuesta completa:', JSON.stringify(parsedResponse, null, 2));
-          throw new Error('No se pudo extraer el texto generado de la respuesta');
+          console.error('❌ No se recibió contenido del servidor');
+          throw new Error('No se pudo generar el informe. El servidor no devolvió contenido.');
         }
         
         console.log('✅ Contenido generado:', typeof generatedContent);

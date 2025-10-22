@@ -841,38 +841,52 @@ DIAGNÓSTICOS DIFERENCIALES:
         const contentTypeHeader = response.headers.get('Content-Type');
         console.log('📥 [RECORDING] Response Content-Type:', `[${contentTypeHeader}]`);
         
-        const responseText = await response.text();
-        console.log('📥 [RECORDING] Response Body (primeros 200 chars):', `[${responseText.substring(0, 200)}]`);
-        console.log('📥 [RECORDING] Response Body Length:', responseText.length);
-        
         if (!response.ok) {
+          const errorText = await response.text();
           console.error('❌ [RECORDING] Response not OK:', response.status);
-          throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 200)}`);
+          throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
         }
         
-        const contentType = response.headers.get('Content-Type') || '';
-        if (!contentType.includes('application/json')) {
-          console.error('❌ [RECORDING] Content-Type inválido:', contentType);
-          console.error('❌ [RECORDING] Body completo:', responseText);
-          throw new Error(`Respuesta no es JSON. Content-Type: ${contentType}. Body: ${responseText.substring(0, 200)}`);
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No se pudo leer la respuesta del servidor');
         }
         
-        let parsedResponse: any;
+        const decoder = new TextDecoder();
+        let accumulatedText = '';
+        
         try {
-          parsedResponse = JSON.parse(responseText);
-          console.log('✅ [RECORDING] JSON parseado correctamente');
-          console.log('📋 [RECORDING] Estructura de respuesta:', JSON.stringify(parsedResponse).substring(0, 200));
-        } catch (parseError) {
-          console.error('❌ [RECORDING] Error al parsear JSON:', parseError);
-          throw new Error(`Error parsing JSON: ${parseError}`);
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('0:')) {
+                try {
+                  const jsonStr = line.substring(2);
+                  const data = JSON.parse(jsonStr);
+                  if (data.type === 'text-delta' && data.textDelta) {
+                    accumulatedText += data.textDelta;
+                  }
+                } catch (e) {
+                  console.warn('⚠️ Error parseando chunk:', e);
+                }
+              }
+            }
+          }
+        } catch (streamError) {
+          console.error('❌ [RECORDING] Error leyendo stream:', streamError);
+          throw new Error('Error al leer la respuesta del servidor');
         }
         
-        reportContent = parsedResponse.text || parsedResponse.content || parsedResponse.message || '';
+        reportContent = accumulatedText.trim();
         
         if (!reportContent) {
-          console.error('❌ [RECORDING] No se encontró texto en la respuesta');
-          console.error('❌ [RECORDING] Respuesta completa:', JSON.stringify(parsedResponse, null, 2));
-          throw new Error('No se pudo extraer el texto generado de la respuesta');
+          console.error('❌ [RECORDING] No se recibió contenido del servidor');
+          throw new Error('No se pudo generar el informe. El servidor no devolvió contenido.');
         }
         
         console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent);
