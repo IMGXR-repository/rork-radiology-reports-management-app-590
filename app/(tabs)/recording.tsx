@@ -803,11 +803,26 @@ DIAGNÓSTICOS DIFERENCIALES:
       console.log('📝 [RECORDING] Idioma de salida:', outputLanguage, languageNames[outputLanguage]);
       console.log('📝 [RECORDING] Longitud del prompt:', prompt.length);
       
-      const reportContent = await generateText(prompt);
+      let reportContent: string;
+      try {
+        reportContent = await generateText(prompt);
+        console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent, reportContent?.substring(0, 100));
+      } catch (genError) {
+        console.error('❌ [RECORDING] Error en generateText:', genError);
+        console.error('❌ [RECORDING] Tipo de error:', genError instanceof Error ? genError.name : typeof genError);
+        console.error('❌ [RECORDING] Mensaje:', genError instanceof Error ? genError.message : String(genError));
+        throw new Error(`Error al generar informe: ${genError instanceof Error ? genError.message : 'Error desconocido'}`);
+      }
       
       if (!reportContent || typeof reportContent !== 'string') {
         console.error('❌ [RECORDING] Respuesta inválida:', reportContent);
         throw new Error('No se recibió contenido válido del servidor');
+      }
+      
+      // Verificar si la respuesta contiene un error del servidor
+      if (reportContent.includes('Internal Server Error') || reportContent.includes('Internal S')) {
+        console.error('❌ [RECORDING] El servidor devolvió un error:', reportContent.substring(0, 200));
+        throw new Error('El servidor de IA está experimentando problemas. Por favor, intenta de nuevo en unos momentos.');
       }
 
       console.log('✅ [RECORDING] Informe generado. Longitud:', reportContent.length);
@@ -884,8 +899,37 @@ DIAGNÓSTICOS DIFERENCIALES:
         setDifferentials(differentials);
       }
     } catch (error) {
-      console.error('Error al generar informe:', error);
-      console.error('No se pudo generar el informe final');
+      console.error('❌ Error al generar informe:', error);
+      
+      let errorMessage = 'No se pudo generar el informe final';
+      
+      if (error instanceof Error) {
+        console.error('❌ Tipo de error:', error.name);
+        console.error('❌ Mensaje completo:', error.message);
+        console.error('❌ Stack:', error.stack);
+        
+        if (error.message.includes('Internal Server Error')) {
+          errorMessage = 'El servidor de IA está temporalmente fuera de servicio. Intenta de nuevo en unos minutos.';
+        } else if (error.message.includes('did not match the expected pattern')) {
+          errorMessage = 'Error de formato en la respuesta del servidor. El servicio de IA puede estar experimentando problemas.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Error de conexión. Verifica tu conexión a internet.';
+        } else if (error.message) {
+          errorMessage = `Error: ${error.message}`;
+        }
+      } else {
+        console.error('❌ Error desconocido:', error);
+      }
+      
+      if (Platform.OS === 'web') {
+        alert(`❌ Error al generar informe: ${errorMessage}`);
+      } else {
+        Alert.alert(
+          '❌ Error al generar informe',
+          errorMessage,
+          [{ text: 'Entendido', style: 'default' }]
+        );
+      }
     } finally {
       setIsGenerating(false);
     }
