@@ -805,13 +805,42 @@ DIAGNÓSTICOS DIFERENCIALES:
       
       let reportContent: string;
       try {
-        reportContent = await generateText(prompt);
-        console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent, reportContent?.substring(0, 100));
-      } catch (genError) {
+        console.log('📝 [RECORDING] Llamando a generateText con prompt de', prompt.length, 'caracteres');
+        
+        reportContent = await generateText({
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        });
+        
+        console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent);
+        if (reportContent) {
+          console.log('📝 [RECORDING] Primeros 200 chars:', reportContent.substring(0, 200));
+        }
+      } catch (genError: any) {
         console.error('❌ [RECORDING] Error en generateText:', genError);
-        console.error('❌ [RECORDING] Tipo de error:', genError instanceof Error ? genError.name : typeof genError);
-        console.error('❌ [RECORDING] Mensaje:', genError instanceof Error ? genError.message : String(genError));
-        throw new Error(`Error al generar informe: ${genError instanceof Error ? genError.message : 'Error desconocido'}`);
+        console.error('❌ [RECORDING] Tipo de error:', genError?.constructor?.name || typeof genError);
+        console.error('❌ [RECORDING] Mensaje:', genError?.message || String(genError));
+        console.error('❌ [RECORDING] Stack:', genError?.stack);
+        
+        let userMessage = 'Error al generar informe. ';
+        
+        if (genError?.message?.includes('did not match the expected pattern')) {
+          userMessage += 'El servidor de IA devolvió una respuesta inválida. El servicio puede estar temporalmente no disponible. Por favor, intenta de nuevo en unos minutos.';
+        } else if (genError?.message?.includes('Failed to fetch') || genError?.message?.includes('NetworkError')) {
+          userMessage += 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
+        } else if (genError?.message?.includes('timeout')) {
+          userMessage += 'La solicitud tardó demasiado tiempo. Intenta con un texto más corto.';
+        } else if (genError?.message) {
+          userMessage += genError.message;
+        } else {
+          userMessage += 'Error desconocido del servidor. Intenta de nuevo.';
+        }
+        
+        throw new Error(userMessage);
       }
       
       if (!reportContent || typeof reportContent !== 'string') {

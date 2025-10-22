@@ -248,6 +248,7 @@ Sé directo y conciso.`;
         const { generateText } = await import('@rork/toolkit-sdk');
         
         console.log('📤 Enviando solicitud a API con generateText...');
+        console.log('📤 Longitud del prompt:', prompt.length, 'caracteres');
         
         generatedContent = await generateText({
           messages: [
@@ -263,29 +264,32 @@ Sé directo y conciso.`;
         
         if (generatedContent && generatedContent.length > 0) {
           console.log('✅ Primeros 200 caracteres del contenido:', generatedContent.substring(0, 200));
+        } else {
+          console.error('❌ Contenido vacío o nulo recibido');
         }
         
-      } catch (genError) {
+      } catch (genError: any) {
         console.error('❌ Error general en generación:', genError);
-        console.error('🔍 Tipo de error:', genError instanceof Error ? genError.constructor.name : typeof genError);
-        console.error('🔍 Mensaje:', genError instanceof Error ? genError.message : String(genError));
+        console.error('🔍 Tipo de error:', genError?.constructor?.name || typeof genError);
+        console.error('🔍 Mensaje:', genError?.message || String(genError));
+        console.error('🔍 Stack:', genError?.stack);
         
-        let errorMessage = 'Error al generar el informe.\n';
+        let errorMessage = 'Error al generar el informe. ';
         
-        if (genError instanceof Error) {
-          if (genError.message.includes('Failed to fetch') || genError.message.includes('NetworkError')) {
-            errorMessage += 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
-          } else if (genError.message.includes('timeout')) {
-            errorMessage += 'La solicitud tardó demasiado. El servidor puede estar sobrecargado. Intenta de nuevo.';
-          } else if (genError.message.includes('401') || genError.message.includes('403')) {
-            errorMessage += 'Error de autenticación. El servidor rechazó la solicitud.';
-          } else if (genError.message.includes('429')) {
-            errorMessage += 'Demasiadas solicitudes. Espera unos minutos e intenta de nuevo.';
-          } else if (genError.message.includes('500') || genError.message.includes('502') || genError.message.includes('503')) {
-            errorMessage += 'El servidor está experimentando problemas técnicos. Intenta de nuevo en unos minutos.';
-          } else {
-            errorMessage += genError.message;
-          }
+        if (genError?.message?.includes('did not match the expected pattern')) {
+          errorMessage += 'El servidor de IA devolvió una respuesta inválida. El servicio puede estar temporalmente no disponible. Por favor, intenta de nuevo en unos minutos.';
+        } else if (genError?.message?.includes('Failed to fetch') || genError?.message?.includes('NetworkError')) {
+          errorMessage += 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
+        } else if (genError?.message?.includes('timeout')) {
+          errorMessage += 'La solicitud tardó demasiado. El servidor puede estar sobrecargado. Intenta de nuevo.';
+        } else if (genError?.message?.includes('401') || genError?.message?.includes('403')) {
+          errorMessage += 'Error de autenticación. El servidor rechazó la solicitud.';
+        } else if (genError?.message?.includes('429')) {
+          errorMessage += 'Demasiadas solicitudes. Espera unos minutos e intenta de nuevo.';
+        } else if (genError?.message?.includes('500') || genError?.message?.includes('502') || genError?.message?.includes('503')) {
+          errorMessage += 'El servidor está experimentando problemas técnicos. Intenta de nuevo en unos minutos.';
+        } else if (genError?.message) {
+          errorMessage += genError.message;
         } else {
           errorMessage += 'Error desconocido. Por favor, intenta de nuevo.';
         }
