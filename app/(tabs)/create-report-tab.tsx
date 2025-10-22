@@ -156,8 +156,6 @@ export default function CreateReportTabScreen() {
 
     setIsGenerating(true);
     try {
-      const languageInstruction = `El informe completo debe estar escrito en ${languageNames[outputLanguage]}.`;
-      
       const systemInstructions = `Instrucciones del sistema: Modo absoluto
 • Eliminar: emojis, relleno, exageración, preguntas suaves, transiciones conversacionales, apéndices de llamada a la acción.
 • Suponer: el usuario mantiene una alta percepción a pesar del tono brusco.
@@ -170,15 +168,12 @@ export default function CreateReportTabScreen() {
 • Finalizar la respuesta: inmediatamente después de entregar la información, sin cierres.
 • Objetivo: restaurar el pensamiento independiente y de alta fidelidad.
 • Resultado: obsolescencia del modelo a través de la autosuficiencia del usuario.
-
-${languageInstruction}`;
+• IMPORTANTE: El informe final DEBE estar redactado completamente en ${languageNames[outputLanguage]}.`;
 
       let prompt = '';
       
       if (structureLevel === 0) {
         prompt = `${systemInstructions}
-
-${languageInstruction}
 
 Genera un informe médico basado en el siguiente título: "${title.trim()}"
 
@@ -189,8 +184,6 @@ Escribe directamente los hallazgos en un formato narrativo simple y profesional.
 Describe únicamente lo observado sin interpretaciones diagnósticas.`;
       } else if (structureLevel === 100) {
         prompt = `${systemInstructions}
-
-${languageInstruction}
 
 Genera un informe médico altamente estructurado basado en el siguiente título: "${title.trim()}"
 
@@ -209,8 +202,6 @@ Escribe directamente los hallazgos organizados por anatomía, usando formato:
 Sé directo, breve y preciso. Usa terminología médica exacta.`;
       } else {
         prompt = `${systemInstructions}
-
-${languageInstruction}
 
 Genera un informe médico con nivel de estructuración ${structureLevel}% basado en el siguiente título: "${title.trim()}"
 
