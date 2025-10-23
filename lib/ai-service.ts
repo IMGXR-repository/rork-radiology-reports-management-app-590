@@ -25,8 +25,12 @@ export class AIService {
 
   async generateText(options: GenerateTextOptions): Promise<string> {
     const provider = options.provider || process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork';
-    console.log('🤖 [AI Service] Provider:', provider);
-    console.log('🤖 [AI Service] Messages:', options.messages.length);
+    console.log('🤖 [AI Service] ===== GENERANDO TEXTO =====');
+    console.log('🤖 [AI Service] Provider seleccionado:', provider);
+    console.log('🤖 [AI Service] Provider desde options:', options.provider);
+    console.log('🤖 [AI Service] Provider desde env:', process.env.EXPO_PUBLIC_AI_PROVIDER);
+    console.log('🤖 [AI Service] Cantidad de mensajes:', options.messages.length);
+    console.log('🤖 [AI Service] ================================');
     
     switch (provider) {
       case 'openai':

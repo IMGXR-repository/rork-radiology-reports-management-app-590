@@ -815,6 +815,7 @@ DIAGNÓSTICOS DIFERENCIALES:
               content: prompt,
             },
           ],
+          provider: settings.aiProvider || 'rork',
         });
         
         console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent);
