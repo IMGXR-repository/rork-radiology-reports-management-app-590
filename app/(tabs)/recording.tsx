@@ -20,6 +20,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import { languageNames, Language } from '@/constants/translations';
+import { aiService } from '@/lib/ai-service';
 
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { SearchBar } from '@/components/SearchBar';
@@ -807,87 +808,14 @@ DIAGNÓSTICOS DIFERENCIALES:
       try {
         console.log('📝 [RECORDING] Generando informe con prompt de', prompt.length, 'caracteres');
         
-        const toolkitUrl = (process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com").trim();
-        console.log('🔍 [RECORDING] toolkitUrl RAW:', `[${toolkitUrl}]`);
-        console.log('🔍 [RECORDING] toolkitUrl type:', typeof toolkitUrl);
-        console.log('🔍 [RECORDING] toolkitUrl length:', toolkitUrl?.length);
-        console.log('🔍 [RECORDING] toolkitUrl is undefined:', toolkitUrl === undefined);
-        console.log('🔍 [RECORDING] toolkitUrl starts with https:', toolkitUrl?.startsWith('https://'));
-        
-        const apiUrl = `${toolkitUrl}/agent/chat`;
-        console.log('🌐 [RECORDING] API URL completa:', `[${apiUrl.toString()}]`);
-        
-        const requestBody = {
+        reportContent = await aiService.generateText({
           messages: [
             {
-              role: 'user' as const,
+              role: 'user',
               content: prompt,
             },
           ],
-        };
-        
-        console.log('📦 [RECORDING] Request body:', JSON.stringify(requestBody).substring(0, 200));
-        
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
         });
-        
-        console.log('📥 [RECORDING] Response Status:', `[${response.status}]`);
-        console.log('📥 [RECORDING] Response Status Text:', `[${response.statusText}]`);
-        const contentTypeHeader = response.headers.get('Content-Type');
-        console.log('📥 [RECORDING] Response Content-Type:', `[${contentTypeHeader}]`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ [RECORDING] Response not OK:', response.status);
-          throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
-        }
-        
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error('No se pudo leer la respuesta del servidor');
-        }
-        
-        const decoder = new TextDecoder();
-        let accumulatedText = '';
-        
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-            
-            for (const line of lines) {
-              if (line.startsWith('0:')) {
-                try {
-                  const jsonStr = line.substring(2);
-                  const data = JSON.parse(jsonStr);
-                  if (data.type === 'text-delta' && data.textDelta) {
-                    accumulatedText += data.textDelta;
-                  }
-                } catch (e) {
-                  console.warn('⚠️ Error parseando chunk:', e);
-                }
-              }
-            }
-          }
-        } catch (streamError) {
-          console.error('❌ [RECORDING] Error leyendo stream:', streamError);
-          throw new Error('Error al leer la respuesta del servidor');
-        }
-        
-        reportContent = accumulatedText.trim();
-        
-        if (!reportContent) {
-          console.error('❌ [RECORDING] No se recibió contenido del servidor');
-          throw new Error('No se pudo generar el informe. El servidor no devolvió contenido.');
-        }
         
         console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent);
         console.log('📝 [RECORDING] Primeros 200 chars:', reportContent.substring(0, 200));
@@ -899,8 +827,10 @@ DIAGNÓSTICOS DIFERENCIALES:
         
         let userMessage = 'Error al generar informe. ';
         
-        if (genError?.message?.includes('did not match the expected pattern')) {
-          userMessage += 'El servidor de IA devolvió una respuesta inválida. El servicio puede estar temporalmente no disponible. Por favor, intenta de nuevo en unos minutos.';
+        if (genError?.message?.includes('API key no configurada')) {
+          userMessage += genError.message + ' Consulta las instrucciones en el archivo .env';
+        } else if (genError?.message?.includes('did not match the expected pattern')) {
+          userMessage += 'El servidor de IA devolvió una respuesta inválida. El servicio puede estar temporalmente no disponible. Por favor, intenta de nuevo en unos minutos o cambia el proveedor de IA en el archivo .env';
         } else if (genError?.message?.includes('Failed to fetch') || genError?.message?.includes('NetworkError')) {
           userMessage += 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
         } else if (genError?.message?.includes('timeout')) {
