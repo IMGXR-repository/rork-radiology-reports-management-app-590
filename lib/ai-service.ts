@@ -253,11 +253,22 @@ export class AIService {
       });
 
       console.log('📥 [Rork] Status:', response.status);
+      console.log('📥 [Rork] Content-Type:', response.headers.get('Content-Type'));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ [Rork] Error:', errorText);
+        console.error('❌ [Rork] Error:', errorText.substring(0, 200));
+        console.error('❌ [Rork] Full status:', response.status, response.statusText);
         throw new Error(`Rork Error (${response.status}): ${errorText.substring(0, 200)}`);
+      }
+
+      const contentType = response.headers.get('Content-Type') || '';
+      
+      // Validar que la respuesta es del tipo correcto (no HTML)
+      if (contentType.includes('text/html') || contentType.includes('text/plain')) {
+        const errorText = await response.text();
+        console.error('❌ [Rork] Respuesta inesperada (HTML/Text):', errorText.substring(0, 200));
+        throw new Error('El servidor devolvió una respuesta no válida. El servicio puede estar temporalmente no disponible.');
       }
 
       const reader = response.body?.getReader();
@@ -277,9 +288,18 @@ export class AIService {
           const lines = chunk.split('\n');
 
           for (const line of lines) {
+            if (line.trim() === '' || line.trim().length === 0) continue;
+            
             if (line.startsWith('0:')) {
               try {
                 const jsonStr = line.substring(2);
+                
+                // Validar que el string parece JSON antes de parsear
+                if (!jsonStr.trim().startsWith('{') && !jsonStr.trim().startsWith('[')) {
+                  console.warn('⚠️ [Rork] Línea no parece JSON:', jsonStr.substring(0, 50));
+                  continue;
+                }
+                
                 const data = JSON.parse(jsonStr);
                 if (data.type === 'text-delta' && data.textDelta) {
                   accumulatedText += data.textDelta;
@@ -288,13 +308,21 @@ export class AIService {
                   }
                 }
               } catch (e) {
-                console.warn('⚠️ [Rork] Error parseando chunk:', e);
+                console.warn('⚠️ [Rork] Error parseando chunk:', line.substring(0, 50), e);
               }
             }
           }
         }
-      } catch (streamError) {
+      } catch (streamError: any) {
         console.error('❌ [Rork] Error leyendo stream:', streamError);
+        console.error('❌ [Rork] Error type:', streamError?.name);
+        console.error('❌ [Rork] Error message:', streamError?.message);
+        
+        // Detectar errores específicos de base64/encoding
+        if (streamError?.name === 'DOMException' || streamError?.message?.includes('did not match the expected pattern')) {
+          throw new Error('El servidor devolvió datos inválidos. El servicio puede estar experimentando problemas. Por favor, intenta de nuevo en unos minutos.');
+        }
+        
         throw new Error('Error al leer la respuesta del servidor');
       }
 
