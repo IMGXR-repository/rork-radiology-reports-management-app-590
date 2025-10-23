@@ -289,23 +289,51 @@ export class AIService {
             
             if (line.startsWith('0:')) {
               try {
-                const jsonStr = line.substring(2);
+                const jsonStr = line.substring(2).trim();
                 
-                // Validar que el string parece JSON antes de parsear
-                if (!jsonStr.trim().startsWith('{') && !jsonStr.trim().startsWith('[')) {
-                  console.warn('⚠️ [Rork] Línea no parece JSON:', jsonStr.substring(0, 50));
+                // VALIDACIÓN ROBUSTA: Verificar que es JSON válido
+                if (!jsonStr) {
                   continue;
                 }
                 
-                const data = JSON.parse(jsonStr);
-                if (data.type === 'text-delta' && data.textDelta) {
+                // Verificar que comienza con { o [
+                const firstChar = jsonStr.charAt(0);
+                if (firstChar !== '{' && firstChar !== '[') {
+                  console.warn('⚠️ [Rork] Línea no es JSON (no comienza con { o [):', jsonStr.substring(0, 100));
+                  continue;
+                }
+                
+                // Verificar que termina con } o ]
+                const lastChar = jsonStr.charAt(jsonStr.length - 1);
+                if (lastChar !== '}' && lastChar !== ']') {
+                  console.warn('⚠️ [Rork] Línea no es JSON completo (no termina con } o ]):', jsonStr.substring(0, 100));
+                  continue;
+                }
+                
+                // Intentar parsear con try-catch específico
+                let data;
+                try {
+                  data = JSON.parse(jsonStr);
+                } catch (parseError: any) {
+                  console.error('❌ [Rork] Error al parsear JSON:', {
+                    error: parseError?.message,
+                    line: jsonStr.substring(0, 200)
+                  });
+                  continue;
+                }
+                
+                // Verificar que el objeto tiene la estructura esperada
+                if (data && typeof data === 'object' && data.type === 'text-delta' && data.textDelta) {
                   accumulatedText += data.textDelta;
                   if (options.onStream) {
                     options.onStream(data.textDelta);
                   }
                 }
-              } catch (e) {
-                console.warn('⚠️ [Rork] Error parseando chunk:', line.substring(0, 50), e);
+              } catch (e: any) {
+                console.warn('⚠️ [Rork] Error procesando línea:', {
+                  error: e?.message,
+                  line: line.substring(0, 100)
+                });
               }
             }
           }
