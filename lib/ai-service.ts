@@ -6,7 +6,7 @@ interface Message {
 interface GenerateTextOptions {
   messages: Message[];
   onStream?: (text: string) => void;
-  provider?: 'rork' | 'groq' | 'gemini';
+  provider?: 'rork' | 'groq' | 'gemini' | 'openai';
 }
 
 export class AIService {
@@ -25,6 +25,7 @@ export class AIService {
 
   async generateText(options: GenerateTextOptions): Promise<string> {
     const provider = options.provider || process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork';
+    
     console.log('🤖 [AI Service] ===== GENERANDO TEXTO =====');
     console.log('🤖 [AI Service] Provider seleccionado:', provider);
     console.log('🤖 [AI Service] Provider desde options:', options.provider);
@@ -32,16 +33,32 @@ export class AIService {
     console.log('🤖 [AI Service] Cantidad de mensajes:', options.messages.length);
     console.log('🤖 [AI Service] ================================');
     
-    switch (provider) {
-      case 'openai':
-        return this.generateWithOpenAI(options, provider);
-      case 'groq':
-        return this.generateWithGroq(options, provider);
-      case 'gemini':
-        return this.generateWithGemini(options, provider);
-      case 'rork':
-      default:
-        return this.generateWithRork(options);
+    try {
+      switch (provider) {
+        case 'openai':
+          return await this.generateWithOpenAI(options, provider);
+        case 'groq':
+          return await this.generateWithGroq(options, provider);
+        case 'gemini':
+          return await this.generateWithGemini(options, provider);
+        case 'rork':
+        default:
+          return await this.generateWithRork(options);
+      }
+    } catch (error) {
+      console.error('❌ [AI Service] Error en generateText:', error);
+      
+      if (provider !== 'rork') {
+        console.log('🔄 [AI Service] Intentando con RORK como fallback...');
+        try {
+          return await this.generateWithRork(options);
+        } catch (fallbackError) {
+          console.error('❌ [AI Service] Error en fallback RORK:', fallbackError);
+          throw error;
+        }
+      }
+      
+      throw error;
     }
   }
 
@@ -242,6 +259,7 @@ export class AIService {
       const apiUrl = `${toolkitUrl}/agent/chat`;
       
       console.log('🌐 [Rork] URL:', apiUrl);
+      console.log('📝 [Rork] Mensaje:', options.messages[0]?.content?.substring(0, 100) + '...');
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -265,7 +283,6 @@ export class AIService {
 
       const contentType = response.headers.get('Content-Type') || '';
       
-      // Validar que la respuesta es del tipo correcto (no HTML)
       if (contentType.includes('text/html') || contentType.includes('text/plain')) {
         const errorText = await response.text();
         console.error('❌ [Rork] Respuesta inesperada (HTML/Text):', errorText.substring(0, 200));
@@ -295,26 +312,20 @@ export class AIService {
               try {
                 const jsonStr = line.substring(2).trim();
                 
-                // VALIDACIÓN ROBUSTA: Verificar que es JSON válido
-                if (!jsonStr) {
-                  continue;
-                }
+                if (!jsonStr) continue;
                 
-                // Verificar que comienza con { o [
                 const firstChar = jsonStr.charAt(0);
                 if (firstChar !== '{' && firstChar !== '[') {
                   console.warn('⚠️ [Rork] Línea no es JSON (no comienza con { o [):', jsonStr.substring(0, 100));
                   continue;
                 }
                 
-                // Verificar que termina con } o ]
                 const lastChar = jsonStr.charAt(jsonStr.length - 1);
                 if (lastChar !== '}' && lastChar !== ']') {
                   console.warn('⚠️ [Rork] Línea no es JSON completo (no termina con } o ]):', jsonStr.substring(0, 100));
                   continue;
                 }
                 
-                // Intentar parsear con try-catch específico
                 let data;
                 try {
                   data = JSON.parse(jsonStr);
@@ -326,7 +337,6 @@ export class AIService {
                   continue;
                 }
                 
-                // Verificar que el objeto tiene la estructura esperada
                 if (data && typeof data === 'object' && data.type === 'text-delta' && data.textDelta) {
                   accumulatedText += data.textDelta;
                   if (options.onStream) {
@@ -347,7 +357,6 @@ export class AIService {
         console.error('❌ [Rork] Error type:', streamError?.name);
         console.error('❌ [Rork] Error message:', streamError?.message);
         
-        // Detectar errores específicos de base64/encoding
         if (streamError?.name === 'DOMException' || streamError?.message?.includes('did not match the expected pattern')) {
           throw new Error('El servidor devolvió datos inválidos. El servicio puede estar experimentando problemas. Por favor, intenta de nuevo en unos minutos.');
         }
@@ -359,6 +368,7 @@ export class AIService {
         throw new Error('No se recibió contenido del servidor');
       }
 
+      console.log('✅ [Rork] Texto generado exitosamente. Longitud:', accumulatedText.length);
       return accumulatedText.trim();
     } catch (error) {
       console.error('❌ [Rork] Error:', error);
