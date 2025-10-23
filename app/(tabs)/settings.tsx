@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Switch, ScrollView, Platform, Image } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Moon, Sun, HardDrive, Heart, Info, User, LogIn, LogOut, Share2, Users, CreditCard, MapPin, Stethoscope, Edit, QrCode, Languages } from 'lucide-react-native';
+import { Moon, Sun, HardDrive, Heart, Info, User, LogIn, LogOut, Share2, Users, CreditCard, MapPin, Stethoscope, Edit, QrCode, Languages, Bot } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadiaLogo } from '@/components/RadiaLogo';
@@ -21,6 +21,7 @@ export default function SettingsScreen() {
   const [showSharedItems, setShowSharedItems] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [showAIProviderSelector, setShowAIProviderSelector] = useState(false);
 
   const sharedItemsReceived = getSharedItemsReceived();
   const sharedItemsSent = getSharedItemsSent();
@@ -37,6 +38,17 @@ export default function SettingsScreen() {
   const handleLanguageChange = async (language: Language) => {
     await saveSettings({ ...settings, language });
     setShowLanguageSelector(false);
+  };
+
+  const handleAIProviderChange = async (provider: 'rork' | 'groq' | 'gemini') => {
+    await saveSettings({ ...settings, aiProvider: provider });
+    setShowAIProviderSelector(false);
+  };
+
+  const aiProviderNames: Record<'rork' | 'groq' | 'gemini', string> = {
+    rork: 'RORK (Default)',
+    groq: 'GROQ',
+    gemini: 'GEMINI',
   };
 
 
@@ -229,6 +241,48 @@ export default function SettingsScreen() {
             trackColor={{ false: theme.outline, true: theme.primary }}
             thumbColor={settings.theme === 'dark' ? theme.onPrimary : theme.onSurface}
           />
+        )}
+        
+        {renderSettingItem(
+          <Bot size={20} color={theme.primary} />,
+          settings.language === 'es' ? 'Modelo de IA' :
+          settings.language === 'en' ? 'AI Model' :
+          settings.language === 'de' ? 'KI-Modell' :
+          settings.language === 'fr' ? 'Modèle IA' :
+          settings.language === 'pt' ? 'Modelo de IA' :
+          'Modello IA',
+          aiProviderNames[settings.aiProvider || 'rork'],
+          () => setShowAIProviderSelector(!showAIProviderSelector)
+        )}
+        
+        {showAIProviderSelector && (
+          <View style={[styles.languageSelector, { backgroundColor: theme.surfaceVariant }]}>
+            {(['rork', 'groq', 'gemini'] as const).map((provider) => (
+              <TouchableOpacity
+                key={provider}
+                style={[
+                  styles.languageOption,
+                  {
+                    backgroundColor: (settings.aiProvider || 'rork') === provider ? theme.primary : 'transparent',
+                    borderColor: theme.outline,
+                  },
+                ]}
+                onPress={() => handleAIProviderChange(provider)}
+              >
+                <Text
+                  style={[
+                    styles.languageOptionText,
+                    {
+                      color: (settings.aiProvider || 'rork') === provider ? theme.onPrimary : theme.onSurface,
+                      fontWeight: (settings.aiProvider || 'rork') === provider ? '600' : '400',
+                    },
+                  ]}
+                >
+                  {aiProviderNames[provider]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
         
         {renderSettingItem(

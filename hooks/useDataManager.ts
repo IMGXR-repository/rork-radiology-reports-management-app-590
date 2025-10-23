@@ -113,6 +113,7 @@ const defaultSettings: AppSettings = {
   showFavoritesFirst: true,
   autoBackupEnabled: false,
   autoBackupFrequencyDays: 3,
+  aiProvider: 'rork',
 };
 
 const defaultStats: ProductivityStats = {

@@ -70,6 +70,7 @@ export interface AppSettings {
   autoBackupEnabled: boolean;
   lastAutoBackupDate?: string;
   autoBackupFrequencyDays: number;
+  aiProvider?: 'rork' | 'groq' | 'gemini';
 }
 
 export interface ProductivityStats {

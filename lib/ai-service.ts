@@ -6,49 +6,44 @@ interface Message {
 interface GenerateTextOptions {
   messages: Message[];
   onStream?: (text: string) => void;
+  provider?: 'rork' | 'groq' | 'gemini';
 }
 
 export class AIService {
-  private provider: string;
-  private apiKey: string;
-
-  constructor() {
-    this.provider = process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork';
-    
-    switch (this.provider) {
+  private getApiKey(provider: string): string {
+    switch (provider) {
       case 'openai':
-        this.apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
-        break;
+        return process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
       case 'groq':
-        this.apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
-        break;
+        return process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
       case 'gemini':
-        this.apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-        break;
+        return process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
       default:
-        this.apiKey = '';
+        return '';
     }
   }
 
   async generateText(options: GenerateTextOptions): Promise<string> {
-    console.log('🤖 [AI Service] Provider:', this.provider);
+    const provider = options.provider || process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork';
+    console.log('🤖 [AI Service] Provider:', provider);
     console.log('🤖 [AI Service] Messages:', options.messages.length);
     
-    switch (this.provider) {
+    switch (provider) {
       case 'openai':
-        return this.generateWithOpenAI(options);
+        return this.generateWithOpenAI(options, provider);
       case 'groq':
-        return this.generateWithGroq(options);
+        return this.generateWithGroq(options, provider);
       case 'gemini':
-        return this.generateWithGemini(options);
+        return this.generateWithGemini(options, provider);
       case 'rork':
       default:
         return this.generateWithRork(options);
     }
   }
 
-  private async generateWithOpenAI(options: GenerateTextOptions): Promise<string> {
-    if (!this.apiKey) {
+  private async generateWithOpenAI(options: GenerateTextOptions, provider: string): Promise<string> {
+    const apiKey = this.getApiKey(provider);
+    if (!apiKey) {
       throw new Error('OpenAI API key no configurada. Agrega EXPO_PUBLIC_OPENAI_API_KEY en tu archivo .env');
     }
 
@@ -59,7 +54,7 @@ export class AIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model: 'gpt-4o',
@@ -132,8 +127,9 @@ export class AIService {
     return fullText;
   }
 
-  private async generateWithGroq(options: GenerateTextOptions): Promise<string> {
-    if (!this.apiKey) {
+  private async generateWithGroq(options: GenerateTextOptions, provider: string): Promise<string> {
+    const apiKey = this.getApiKey(provider);
+    if (!apiKey) {
       throw new Error('Groq API key no configurada. Agrega EXPO_PUBLIC_GROQ_API_KEY en tu archivo .env');
     }
 
@@ -144,7 +140,7 @@ export class AIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
@@ -174,8 +170,9 @@ export class AIService {
     }
   }
 
-  private async generateWithGemini(options: GenerateTextOptions): Promise<string> {
-    if (!this.apiKey) {
+  private async generateWithGemini(options: GenerateTextOptions, provider: string): Promise<string> {
+    const apiKey = this.getApiKey(provider);
+    if (!apiKey) {
       throw new Error('Gemini API key no configurada. Agrega EXPO_PUBLIC_GEMINI_API_KEY en tu archivo .env');
     }
 
@@ -185,7 +182,7 @@ export class AIService {
       const prompt = options.messages.map(m => m.content).join('\n\n');
       
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
