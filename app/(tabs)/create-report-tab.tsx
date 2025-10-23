@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Sparkles, Tag, Mic, Square, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
+import { aiService } from '@/lib/ai-service';
 import { Report } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
 
@@ -244,91 +245,18 @@ Sé directo y conciso.`;
         console.log('📝 Título:', title.trim());
         console.log('🌐 Idioma objetivo:', languageNames[outputLanguage]);
         console.log('📊 Nivel de estructuración:', structureLevel);
+        console.log('🤖 Proveedor de IA:', settings.aiProvider || 'rork');
         
-        console.log('📤 Enviando solicitud a API...');
-        console.log('📤 Longitud del prompt:', prompt.length, 'caracteres');
-        
-        const toolkitUrl = (process.env["EXPO_PUBLIC_TOOLKIT_URL"] || "https://toolkit.rork.com").trim();
-        console.log('🔍 [CREATE-REPORT] toolkitUrl RAW:', `[${toolkitUrl}]`);
-        console.log('🔍 [CREATE-REPORT] toolkitUrl type:', typeof toolkitUrl);
-        console.log('🔍 [CREATE-REPORT] toolkitUrl length:', toolkitUrl?.length);
-        console.log('🔍 [CREATE-REPORT] toolkitUrl is undefined:', toolkitUrl === undefined);
-        console.log('🔍 [CREATE-REPORT] toolkitUrl starts with https:', toolkitUrl?.startsWith('https://'));
-        
-        const apiUrl = `${toolkitUrl}/agent/chat`;
-        console.log('🌐 [CREATE-REPORT] API URL completa:', `[${apiUrl.toString()}]`);
-        
-        const requestBody = {
+        // Usar el aiService que ya maneja múltiples proveedores
+        generatedContent = await aiService.generateText({
           messages: [
             {
-              role: 'user' as const,
+              role: 'user',
               content: prompt,
             },
           ],
-        };
-        
-        console.log('📦 Request body:', JSON.stringify(requestBody).substring(0, 200));
-        
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
+          provider: settings.aiProvider || 'rork',
         });
-        
-        console.log('📥 [CREATE-REPORT] Response Status:', `[${response.status}]`);
-        console.log('📥 [CREATE-REPORT] Response Status Text:', `[${response.statusText}]`);
-        const contentTypeHeader = response.headers.get('Content-Type');
-        console.log('📥 [CREATE-REPORT] Response Content-Type:', `[${contentTypeHeader}]`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Response not OK:', response.status);
-          throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
-        }
-        
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error('No se pudo leer la respuesta del servidor');
-        }
-        
-        const decoder = new TextDecoder();
-        let accumulatedText = '';
-        
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-            
-            for (const line of lines) {
-              if (line.startsWith('0:')) {
-                try {
-                  const jsonStr = line.substring(2);
-                  const data = JSON.parse(jsonStr);
-                  if (data.type === 'text-delta' && data.textDelta) {
-                    accumulatedText += data.textDelta;
-                  }
-                } catch (e) {
-                  console.warn('⚠️ Error parseando chunk:', e);
-                }
-              }
-            }
-          }
-        } catch (streamError) {
-          console.error('❌ [CREATE-REPORT] Error leyendo stream:', streamError);
-          throw new Error('Error al leer la respuesta del servidor');
-        }
-        
-        generatedContent = accumulatedText.trim();
-        
-        if (!generatedContent) {
-          console.error('❌ No se recibió contenido del servidor');
-          throw new Error('No se pudo generar el informe. El servidor no devolvió contenido.');
-        }
         
         console.log('✅ Contenido generado:', typeof generatedContent);
         console.log('✅ Longitud del contenido:', generatedContent?.length || 0);
