@@ -269,11 +269,12 @@ Sé directo y conciso.`;
         console.log('📝 Título:', title.trim());
         console.log('🌐 Idioma objetivo:', languageNames[outputLanguage]);
         console.log('📊 Nivel de estructuración:', structureLevel);
-        console.log('🤖 Provider configurado:', process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork');
+        console.log('🤖 Provider configurado en settings:', settings.aiProvider || 'rork');
         
         const { aiService } = await import('@/lib/ai-service');
         
         console.log('📤 Enviando solicitud a API con aiService...');
+        console.log('🔧 Proveedor seleccionado en settings:', settings.aiProvider);
         
         generatedContent = await aiService.generateText({
           messages: [
@@ -282,7 +283,7 @@ Sé directo y conciso.`;
               content: prompt,
             },
           ],
-          provider: (process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork') as 'rork' | 'groq' | 'gemini' | 'openai',
+          provider: settings.aiProvider || 'rork',
         });
         
         console.log('✅ Contenido generado:', typeof generatedContent);
