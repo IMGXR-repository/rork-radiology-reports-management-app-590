@@ -826,20 +826,22 @@ DIAGNÓSTICOS DIFERENCIALES:
         console.error('❌ [RECORDING] Mensaje:', genError?.message || String(genError));
         console.error('❌ [RECORDING] Stack:', genError?.stack);
         
-        let userMessage = 'Error al generar informe. ';
+        let userMessage = '';
         
         if (genError?.message?.includes('API key no configurada')) {
-          userMessage += genError.message + ' Consulta las instrucciones en el archivo .env';
+          userMessage = genError.message + '\n\nConsulta el archivo README-FIXING-AI-ERRORS.md para instrucciones.';
+        } else if (genError?.message?.includes('problemas técnicos') || genError?.message?.includes('no está disponible')) {
+          userMessage = genError.message + '\n\nPuedes:\n1. Esperar 2-5 minutos e intentar de nuevo\n2. Cambiar a otro proveedor de IA (consulta README-FIXING-AI-ERRORS.md)';
         } else if (genError?.message?.includes('did not match the expected pattern')) {
-          userMessage += 'El servidor de IA devolvió una respuesta inválida. El servicio puede estar temporalmente no disponible. Por favor, intenta de nuevo en unos minutos o cambia el proveedor de IA en el archivo .env';
+          userMessage = 'El servidor de IA devolvió una respuesta inválida.\n\nSoluciones:\n1. Intenta de nuevo en unos minutos\n2. Cambia el proveedor de IA (ver README-FIXING-AI-ERRORS.md)';
         } else if (genError?.message?.includes('Failed to fetch') || genError?.message?.includes('NetworkError')) {
-          userMessage += 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
-        } else if (genError?.message?.includes('timeout')) {
-          userMessage += 'La solicitud tardó demasiado tiempo. Intenta con un texto más corto.';
+          userMessage = 'No se pudo conectar al servidor de IA.\n\nVerifica:\n1. Tu conexión a internet\n2. Que no haya un firewall bloqueando la conexión';
+        } else if (genError?.message?.includes('timeout') || genError?.message?.includes('tardó demasiado')) {
+          userMessage = 'La solicitud tardó demasiado tiempo.\n\nSoluciones:\n1. Intenta con un texto más corto\n2. Verifica tu conexión a internet\n3. Intenta de nuevo en unos minutos';
         } else if (genError?.message) {
-          userMessage += genError.message;
+          userMessage = genError.message + '\n\nSi el problema persiste, consulta README-FIXING-AI-ERRORS.md';
         } else {
-          userMessage += 'Error desconocido del servidor. Intenta de nuevo.';
+          userMessage = 'Error desconocido del servidor.\n\nIntenta de nuevo o consulta README-FIXING-AI-ERRORS.md';
         }
         
         throw new Error(userMessage);
@@ -939,17 +941,10 @@ DIAGNÓSTICOS DIFERENCIALES:
         console.error('❌ Mensaje completo:', error.message);
         console.error('❌ Stack:', error.stack);
         
-        if (error.message.includes('Internal Server Error')) {
-          errorMessage = 'El servidor de IA está temporalmente fuera de servicio. Intenta de nuevo en unos minutos.';
-        } else if (error.message.includes('did not match the expected pattern')) {
-          errorMessage = 'Error de formato en la respuesta del servidor. El servicio de IA puede estar experimentando problemas.';
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          errorMessage = 'Error de conexión. Verifica tu conexión a internet.';
-        } else if (error.message) {
-          errorMessage = `Error: ${error.message}`;
-        }
+        errorMessage = error.message;
       } else {
         console.error('❌ Error desconocido:', error);
+        errorMessage = 'Error desconocido. Consulta README-FIXING-AI-ERRORS.md para más información.';
       }
       
       if (Platform.OS === 'web') {

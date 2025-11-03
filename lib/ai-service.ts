@@ -261,6 +261,13 @@ export class AIService {
       console.log('🌐 [Rork] URL:', apiUrl);
       console.log('📝 [Rork] Mensaje:', options.messages[0]?.content?.substring(0, 100) + '...');
 
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log('⏰ [Rork] Request timeout after 60 seconds');
+      }, 60000);
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -269,7 +276,10 @@ export class AIService {
         body: JSON.stringify({
           messages: options.messages,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       console.log('📥 [Rork] Status:', response.status);
       console.log('📥 [Rork] Content-Type:', response.headers.get('Content-Type'));
@@ -278,7 +288,22 @@ export class AIService {
         const errorText = await response.text();
         console.error('❌ [Rork] Error:', errorText.substring(0, 200));
         console.error('❌ [Rork] Full status:', response.status, response.statusText);
-        throw new Error(`Rork Error (${response.status}): ${errorText.substring(0, 200)}`);
+        
+        // Better error messages based on status code
+        let errorMessage = '';
+        if (response.status === 500) {
+          errorMessage = 'El servidor de IA Rork está experimentando problemas técnicos. Por favor, intenta de nuevo en unos minutos.';
+        } else if (response.status === 502 || response.status === 503) {
+          errorMessage = 'El servicio de IA Rork no está disponible temporalmente. Por favor, intenta de nuevo.';
+        } else if (response.status === 429) {
+          errorMessage = 'Demasiadas solicitudes. Por favor, espera un momento e intenta de nuevo.';
+        } else if (response.status === 401 || response.status === 403) {
+          errorMessage = 'Error de autenticación con el servicio de IA.';
+        } else {
+          errorMessage = `Error del servidor (${response.status}): ${errorText.substring(0, 100)}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const contentType = response.headers.get('Content-Type') || '';
@@ -357,7 +382,9 @@ export class AIService {
         console.error('❌ [Rork] Error type:', streamError?.name);
         console.error('❌ [Rork] Error message:', streamError?.message);
         
-        if (streamError?.name === 'DOMException' || streamError?.message?.includes('did not match the expected pattern')) {
+        if (streamError?.name === 'AbortError') {
+          throw new Error('La solicitud tardó demasiado tiempo. El servidor puede estar sobrecargado. Por favor, intenta de nuevo.');
+        } else if (streamError?.name === 'DOMException' || streamError?.message?.includes('did not match the expected pattern')) {
           throw new Error('El servidor devolvió datos inválidos. El servicio puede estar experimentando problemas. Por favor, intenta de nuevo en unos minutos.');
         }
         
