@@ -270,6 +270,8 @@ Sé directo y conciso.`;
         console.log('🌐 Idioma objetivo:', languageNames[outputLanguage]);
         console.log('📊 Nivel de estructuración:', structureLevel);
         console.log('🤖 Provider configurado en settings:', settings.aiProvider || 'rork');
+        console.log('🔧 Valor completo de settings.aiProvider:', settings.aiProvider);
+        console.log('🔧 Tipo de settings.aiProvider:', typeof settings.aiProvider);
         
         const { aiService } = await import('@/lib/ai-service');
         

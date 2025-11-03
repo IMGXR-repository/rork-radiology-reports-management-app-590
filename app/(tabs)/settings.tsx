@@ -40,15 +40,16 @@ export default function SettingsScreen() {
     setShowLanguageSelector(false);
   };
 
-  const handleAIProviderChange = async (provider: 'rork' | 'groq' | 'gemini') => {
+  const handleAIProviderChange = async (provider: 'rork' | 'groq' | 'gemini' | 'openai') => {
     await saveSettings({ ...settings, aiProvider: provider });
     setShowAIProviderSelector(false);
   };
 
-  const aiProviderNames: Record<'rork' | 'groq' | 'gemini', string> = {
+  const aiProviderNames: Record<'rork' | 'groq' | 'gemini' | 'openai', string> = {
     rork: 'RORK (Default)',
     groq: 'GROQ',
     gemini: 'GEMINI',
+    openai: 'OpenAI',
   };
 
 
@@ -251,13 +252,13 @@ export default function SettingsScreen() {
           settings.language === 'fr' ? 'Modèle IA' :
           settings.language === 'pt' ? 'Modelo de IA' :
           'Modello IA',
-          aiProviderNames[settings.aiProvider || 'rork'],
+          aiProviderNames[(settings.aiProvider || 'rork') as 'rork' | 'groq' | 'gemini' | 'openai'],
           () => setShowAIProviderSelector(!showAIProviderSelector)
         )}
         
         {showAIProviderSelector && (
           <View style={[styles.languageSelector, { backgroundColor: theme.surfaceVariant }]}>
-            {(['rork', 'groq', 'gemini'] as const).map((provider) => (
+            {(['rork', 'groq', 'gemini', 'openai'] as const).map((provider) => (
               <TouchableOpacity
                 key={provider}
                 style={[
