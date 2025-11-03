@@ -51,6 +51,18 @@ export class AIService {
       }
     } catch (error) {
       console.error('❌ [AI Service] Error en generateText:', error);
+      
+      // Si el provider seleccionado falla y es diferente de rork, intentar con rork como fallback
+      if (provider !== 'rork' && !String(error).includes('API key no configurada')) {
+        console.log('⚠️ [AI Service] Intentando fallback con RORK...');
+        try {
+          return await this.generateWithRork(options);
+        } catch (fallbackError) {
+          console.error('❌ [AI Service] Error en fallback RORK:', fallbackError);
+          throw error; // Lanzar el error original, no el del fallback
+        }
+      }
+      
       throw error;
     }
   }
