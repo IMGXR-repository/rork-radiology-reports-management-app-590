@@ -113,7 +113,11 @@ export default function CreateReportScreen() {
       };
 
       await addReport(newReport);
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)/home');
+      }
     } catch (error) {
       console.error('Error creating report:', error);
       if (Platform.OS === 'web') {
@@ -352,7 +356,11 @@ Sé directo y conciso.`;
     if (title.trim() || content.trim() || selectedFilters.length > 0) {
       if (Platform.OS === 'web') {
         if (confirm('¿Descartar los cambios?')) {
-          router.back();
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/(tabs)/home');
+          }
         }
       } else {
         Alert.alert(
@@ -360,12 +368,26 @@ Sé directo y conciso.`;
           '¿Estás seguro de que quieres descartar los cambios?',
           [
             { text: 'Cancelar', style: 'cancel' },
-            { text: 'Descartar', style: 'destructive', onPress: () => router.back() },
+            { 
+              text: 'Descartar', 
+              style: 'destructive', 
+              onPress: () => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/(tabs)/home');
+                }
+              }
+            },
           ]
         );
       }
     } else {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)/home');
+      }
     }
   };
 

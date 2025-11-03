@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, ActivityIndicator } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Save, X, Tag, Mic, Square } from 'lucide-react-native';
+import { Save, Tag, Mic, Square } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { CommonPhrase } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -90,7 +90,11 @@ export default function CreatePhraseScreen() {
         Alert.alert('Éxito', 'Frase creada exitosamente');
       }
       
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)/phrases');
+      }
     } catch (error) {
       console.error('Error creating phrase:', error);
       if (Platform.OS === 'web') {
@@ -115,7 +119,11 @@ export default function CreatePhraseScreen() {
     if (text.trim() || selectedFilters.length > 0) {
       if (Platform.OS === 'web') {
         if (confirm('¿Descartar los cambios?')) {
-          router.back();
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/(tabs)/phrases');
+          }
         }
       } else {
         Alert.alert(
@@ -123,12 +131,26 @@ export default function CreatePhraseScreen() {
           '¿Estás seguro de que quieres descartar los cambios?',
           [
             { text: 'Cancelar', style: 'cancel' },
-            { text: 'Descartar', style: 'destructive', onPress: () => router.back() },
+            { 
+              text: 'Descartar', 
+              style: 'destructive', 
+              onPress: () => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/(tabs)/phrases');
+                }
+              }
+            },
           ]
         );
       }
     } else {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)/phrases');
+      }
     }
   };
 
