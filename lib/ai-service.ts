@@ -12,20 +12,26 @@ interface GenerateTextOptions {
 export class AIService {
   private getApiKey(provider: string): string {
     console.log('🔑 [AI Service] Obteniendo API key para provider:', provider);
+    console.log('🔑 [AI Service] process.env completo:', JSON.stringify(Object.keys(process.env).filter(k => k.startsWith('EXPO_PUBLIC'))));
     console.log('🔑 [AI Service] EXPO_PUBLIC_GROQ_API_KEY:', process.env.EXPO_PUBLIC_GROQ_API_KEY ? 'Configurada' : 'NO configurada');
     console.log('🔑 [AI Service] EXPO_PUBLIC_GEMINI_API_KEY:', process.env.EXPO_PUBLIC_GEMINI_API_KEY ? 'Configurada' : 'NO configurada');
     console.log('🔑 [AI Service] EXPO_PUBLIC_OPENAI_API_KEY:', process.env.EXPO_PUBLIC_OPENAI_API_KEY ? 'Configurada' : 'NO configurada');
     
-    switch (provider) {
-      case 'openai':
-        return process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
-      case 'groq':
-        return process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
-      case 'gemini':
-        return process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-      default:
-        return '';
-    }
+    const apiKey = (() => {
+      switch (provider) {
+        case 'openai':
+          return process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
+        case 'groq':
+          return process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
+        case 'gemini':
+          return process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+        default:
+          return '';
+      }
+    })();
+    
+    console.log('🔑 [AI Service] API key encontrada:', apiKey ? `Sí (${apiKey.substring(0, 10)}...)` : 'NO');
+    return apiKey;
   }
 
   async generateText(options: GenerateTextOptions): Promise<string> {
