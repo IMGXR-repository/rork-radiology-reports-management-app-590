@@ -269,18 +269,20 @@ Sé directo y conciso.`;
         console.log('📝 Título:', title.trim());
         console.log('🌐 Idioma objetivo:', languageNames[outputLanguage]);
         console.log('📊 Nivel de estructuración:', structureLevel);
+        console.log('🤖 Provider configurado:', process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork');
         
-        const { generateText } = await import('@rork/toolkit-sdk');
+        const { aiService } = await import('@/lib/ai-service');
         
-        console.log('📤 Enviando solicitud a API con generateText...');
+        console.log('📤 Enviando solicitud a API con aiService...');
         
-        generatedContent = await generateText({
+        generatedContent = await aiService.generateText({
           messages: [
             {
               role: 'user',
               content: prompt,
             },
           ],
+          provider: (process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork') as 'rork' | 'groq' | 'gemini' | 'openai',
         });
         
         console.log('✅ Contenido generado:', typeof generatedContent);
