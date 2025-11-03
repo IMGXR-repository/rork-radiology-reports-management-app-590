@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -53,6 +53,8 @@ export default function RecordingScreen() {
   const insets = useSafeAreaInsets();
   
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const recordingRef = useRef<Audio.Recording | null>(null);
+  const isUnloadedRef = useRef<boolean>(false);
   const [webRecording, setWebRecording] = useState<WebRecordingState>({
     mediaRecorder: null,
     audioChunks: [],
@@ -97,14 +99,14 @@ export default function RecordingScreen() {
           webRecording.stream.getTracks().forEach(track => track.stop());
         }
       } else {
-        if (recording && !isRecordingUnloaded) {
-          recording.stopAndUnloadAsync().catch((error) => {
+        if (recordingRef.current && !isUnloadedRef.current) {
+          recordingRef.current.stopAndUnloadAsync().catch((error) => {
             console.error('Error during cleanup:', error);
           });
         }
       }
     };
-  }, [recording, isRecordingUnloaded, webRecording]);
+  }, [webRecording]);
 
   // Preseleccionar el informe si se pasa reportId
   useEffect(() => {
@@ -265,6 +267,8 @@ export default function RecordingScreen() {
         });
         
         setRecording(newRecording);
+        recordingRef.current = newRecording;
+        isUnloadedRef.current = false;
         setIsRecordingUnloaded(false);
         setRecordingState({
           isRecording: true,
@@ -305,6 +309,7 @@ export default function RecordingScreen() {
         
         const uri = recording.getURI();
         await recording.stopAndUnloadAsync();
+        isUnloadedRef.current = true;
         setIsRecordingUnloaded(true);
         
         await Audio.setAudioModeAsync({
@@ -312,6 +317,7 @@ export default function RecordingScreen() {
         });
         
         console.log('Grabación guardada:', uri);
+        recordingRef.current = null;
         setRecording(null);
         
         if (uri) {
@@ -320,6 +326,8 @@ export default function RecordingScreen() {
       }
     } catch (error) {
       console.error('Error al detener grabación:', error);
+      recordingRef.current = null;
+      isUnloadedRef.current = true;
       setRecording(null);
       setIsRecordingUnloaded(true);
       console.error('Error al detener la grabación');
@@ -854,13 +862,15 @@ REGLAS:
         stream: null,
       });
     } else {
-      if (recording && !isRecordingUnloaded) {
+      if (recordingRef.current && !isUnloadedRef.current) {
         try {
-          await recording.stopAndUnloadAsync();
+          await recordingRef.current.stopAndUnloadAsync();
+          isUnloadedRef.current = true;
           setIsRecordingUnloaded(true);
         } catch (error) {
           console.error('Error stopping recording during reset:', error);
         }
+        recordingRef.current = null;
         setRecording(null);
       }
     }
