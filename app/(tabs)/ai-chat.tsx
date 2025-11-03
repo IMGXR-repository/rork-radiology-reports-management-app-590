@@ -21,6 +21,7 @@ import { lightTheme, darkTheme } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { MEDICAL_SPECIALTIES } from '@/constants/userOptions';
 import { CustomPicker } from '@/components/CustomPicker';
+import { aiService } from '@/lib/ai-service';
 
 
 
@@ -182,115 +183,13 @@ ${systemInstructions}${redirectInstruction}`;
         
         console.log('🔍 [AI CHAT DEBUG] Mensajes a enviar:', JSON.stringify(messagesToSend, null, 2));
         
-        const toolkitUrl = process.env.EXPO_PUBLIC_TOOLKIT_URL || 'https://toolkit.rork.com';
-        const apiUrl = `${toolkitUrl}/agent/chat`;
+        const aiProvider = process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork';
+        console.log('🔍 [AI CHAT DEBUG] Proveedor de IA:', aiProvider);
         
-        console.log('🔍 [AI CHAT DEBUG] URL de API:', apiUrl);
-        console.log('🔍 [AI CHAT DEBUG] Toolkit URL:', toolkitUrl);
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-          controller.abort();
-          console.error('⏰ [AI CHAT ERROR] Request timeout después de 60 segundos');
-        }, 60000);
-        
-        console.log('🔍 [AI CHAT DEBUG] Realizando fetch...');
-        
-        let response;
-        try {
-          response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messages: messagesToSend,
-            }),
-            signal: controller.signal,
-          });
-          
-          console.log('🔍 [AI CHAT DEBUG] Response status:', response.status);
-          console.log('🔍 [AI CHAT DEBUG] Response ok:', response.ok);
-          console.log('🔍 [AI CHAT DEBUG] Response headers:', JSON.stringify([...response.headers.entries()]));
-        } catch (fetchError) {
-          clearTimeout(timeoutId);
-          console.error('❌ [AI CHAT ERROR] Error en fetch:', fetchError);
-          
-          if (fetchError instanceof Error) {
-            if (fetchError.name === 'AbortError') {
-              throw new Error('La solicitud tardó demasiado tiempo (timeout). El servidor puede estar sobrecargado. Intenta de nuevo en unos minutos.');
-            }
-            throw new Error(`Error de conexión: ${fetchError.message}. Verifica tu conexión a internet.`);
-          }
-          throw new Error('Error de conexión desconocido. Verifica tu conexión a internet.');
-        }
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          let errorText = '';
-          let errorDetails = {};
-          
-          try {
-            errorText = await response.text();
-            console.error('❌ [AI CHAT ERROR] Response text:', errorText);
-            
-            try {
-              errorDetails = JSON.parse(errorText);
-              console.error('❌ [AI CHAT ERROR] Error details:', errorDetails);
-            } catch (e) {
-              console.log('ℹ️ [AI CHAT INFO] Error response no es JSON');
-            }
-          } catch (e) {
-            console.error('❌ [AI CHAT ERROR] No se pudo leer el error:', e);
-          }
-          
-          let userFriendlyMessage = '';
-          
-          if (response.status === 500) {
-            userFriendlyMessage = 'El servidor de IA está experimentando problemas técnicos (Error 500). Esto puede ser temporal. Intenta de nuevo en unos minutos.';
-          } else if (response.status === 503) {
-            userFriendlyMessage = 'El servicio de IA no está disponible temporalmente (Error 503). El servidor puede estar en mantenimiento o sobrecargado.';
-          } else if (response.status === 429) {
-            userFriendlyMessage = 'Has alcanzado el límite de solicitudes (Error 429). Por favor espera unos minutos antes de intentar de nuevo.';
-          } else if (response.status === 401 || response.status === 403) {
-            userFriendlyMessage = 'Error de autenticación (Error ' + response.status + '). Verifica tu configuración.';
-          } else if (response.status >= 500) {
-            userFriendlyMessage = `Error del servidor (${response.status}). El servicio de IA puede estar caído temporalmente.`;
-          } else if (response.status >= 400) {
-            userFriendlyMessage = `Error en la solicitud (${response.status}). ${errorText ? 'Detalles: ' + errorText.substring(0, 100) : ''}`;
-          }
-          
-          console.error('❌ [AI CHAT ERROR] Status:', response.status);
-          console.error('❌ [AI CHAT ERROR] Mensaje amigable:', userFriendlyMessage);
-          
-          throw new Error(userFriendlyMessage || `Error ${response.status}: ${errorText}`);
-        }
-        
-        let result;
-        try {
-          result = await response.json();
-          console.log('✅ [AI CHAT SUCCESS] Response completo:', JSON.stringify(result, null, 2));
-        } catch (jsonError) {
-          console.error('❌ [AI CHAT ERROR] Error parseando JSON:', jsonError);
-          throw new Error('El servidor respondió con un formato inválido. Intenta de nuevo.');
-        }
-        
-        console.log('🔍 [AI CHAT DEBUG] Extrayendo respuesta de IA...');
-        console.log('🔍 [AI CHAT DEBUG] result.message:', result.message);
-        console.log('🔍 [AI CHAT DEBUG] result.completion:', result.completion);
-        console.log('🔍 [AI CHAT DEBUG] result.text:', result.text);
-        console.log('🔍 [AI CHAT DEBUG] result.response:', result.response);
-        
-        const aiResponse = result.message?.content || result.completion || result.text || result.response || result.content;
-        
-        console.log('🔍 [AI CHAT DEBUG] AI Response extraída:', aiResponse);
-        
-        if (!aiResponse) {
-          console.error('❌ [AI CHAT ERROR] No se encontró contenido en la respuesta');
-          console.error('❌ [AI CHAT ERROR] Estructura completa del resultado:', JSON.stringify(result, null, 2));
-          throw new Error('El servidor no devolvió una respuesta válida. La estructura de la respuesta es inesperada.');
-        }
+        const aiResponse = await aiService.generateText({
+          messages: messagesToSend,
+          provider: aiProvider as 'rork' | 'groq' | 'gemini' | 'openai',
+        });
         
         const formattedResponse = formatAIResponse(aiResponse);
         const aiChatMessage: ChatMessage = {

@@ -694,6 +694,9 @@ REGLAS:
       try {
         console.log('📝 [RECORDING] Generando informe con prompt de', prompt.length, 'caracteres');
         
+        const aiProvider = (process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork') as 'rork' | 'groq' | 'gemini' | 'openai';
+        console.log('📝 [RECORDING] Usando proveedor de IA:', aiProvider);
+        
         reportContent = await aiService.generateText({
           messages: [
             {
@@ -701,7 +704,7 @@ REGLAS:
               content: prompt,
             },
           ],
-          provider: settings.aiProvider || 'rork',
+          provider: aiProvider,
         });
         
         console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent);
