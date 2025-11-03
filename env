@@ -1,8 +1,11 @@
 # Rork AI Configuration
 # This is the default AI provider that comes with Rork
 # No API key needed
-EXPO_PUBLIC_AI_PROVIDER=rork
+# EXPO_PUBLIC_AI_PROVIDER=rork
 EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
+
+# AI Provider configurado desde la app (se usa groq porque rork dejó de funcionar)
+EXPO_PUBLIC_AI_PROVIDER=groq
 
 # Optional: OpenAI Configuration
 # Uncomment and add your API key to use OpenAI instead of Rork
