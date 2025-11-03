@@ -652,152 +652,30 @@ export default function RecordingScreen() {
       let prompt = '';
       
       if (selectedReport) {
-        prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico final coherente y profesional.
+        prompt = `Eres radiólogo especialista. Crea informe médico en ${languageNames[outputLanguage]} integrando:
 
-IMPORTANTE: El informe completo debe estar escrito en ${languageNames[outputLanguage]}.
-
-INFORME BASE ESTRUCTURADO:
+INFORME BASE:
 ${selectedReport.content}
 
-OBSERVACIONES DICTADAS (NUEVOS HALLAZGOS):
+NUEVOS HALLAZGOS:
 ${transcribedText}
 
-INSTRUCCIONES CRÍTICAS DE COHERENCIA MÉDICA:
-1. ANÁLISIS DE COHERENCIA OBLIGATORIO:
-   - ANTES de escribir, analiza si las observaciones dictadas contradicen el informe base
-   - Si hay contradicciones (ej: informe base dice "no hay lesiones" pero dictado describe "tumor"), ELIMINA o MODIFICA las partes contradictorias del informe base
-   - PRIORIZA SIEMPRE las observaciones dictadas más recientes sobre el informe base
-   - Asegura coherencia absoluta entre TODOS los hallazgos y la conclusión final
-
-2. REGLAS DE ELIMINACIÓN AUTOMÁTICA:
-   - Si dictado menciona lesiones/tumores/masas → ELIMINA frases como "no hay procesos expansivos", "ausencia de lesiones"
-   - Si dictado menciona restricción de difusión → ELIMINA "difusión normal" del informe base
-   - Si dictado menciona edema/inflamación → ELIMINA "sin signos de edema" del informe base
-   - Si dictado menciona hemorragia → ELIMINA "ausencia de sangrado" del informe base
-   - NUNCA mantengas afirmaciones negativas que contradigan hallazgos positivos dictados
-
-3. ESTRUCTURA DE PÁRRAFOS SEPARADOS:
-   - MANTÉN cada tópico anatómico en párrafo separado (sustancia blanca, sustancia gris, ventrículos, etc.)
-   - NO combines párrafos que estaban separados en el informe original
-   - RESPETA los saltos de línea entre diferentes estructuras anatómicas
-   - Cada párrafo debe tratar UN solo tópico anatómico o hallazgo
-
-4. CONTENIDO POR SECCIONES:
-   HALLAZGOS:
-   - Descripción detallada y técnica de cada estructura anatómica
-   - Integra observaciones dictadas en el párrafo correspondiente a cada estructura
-   - Usa terminología médica precisa para especialistas
-   - NO incluyas interpretaciones o conclusiones aquí
-   - Mantén separación clara entre diferentes estructuras/órganos
-   
-   CONCLUSIÓN:
-   - Máximo 2-3 líneas, concisa y directa
-   - DEBE ser 100% congruente con TODOS los hallazgos descritos
-   - NO repitas descripciones detalladas
-   - Enfócate en el diagnóstico principal y significado clínico
-   
-   DIAGNÓSTICOS DIFERENCIALES:
-   - Mínimo 6 diagnósticos con porcentajes realistas
-   - Ordena por probabilidad (mayor a menor)
-   - Incluye diagnósticos tanto comunes como raros pero relevantes
-   - Los porcentajes deben sumar aproximadamente 100%
-
-5. RESTRICCIONES ABSOLUTAS:
-   - NO incluyas preguntas, sugerencias o comentarios adicionales
-   - NO uses símbolos como ###, ---, *** 
-   - NO agregues texto como "¿Deseas...?", "¿Te gustaría...?"
-   - Termina directamente sin texto adicional
-   - Usa solo terminología médica profesional
-
-FORMATO FINAL REQUERIDO:
-HALLAZGOS:
-[Párrafo 1: Estructura anatómica específica]
-
-[Párrafo 2: Otra estructura anatómica específica]
-
-[Párrafo 3: Otra estructura anatómica específica]
-
-[Continúa con cada estructura en párrafo separado]
-
-CONCLUSIÓN:
-[Conclusión concisa de máximo 3 líneas, coherente con TODOS los hallazgos]
-
-DIAGNÓSTICOS DIFERENCIALES:
-1. [Diagnóstico más probable] - [X]%
-2. [Segundo diagnóstico] - [X]%
-3. [Tercer diagnóstico] - [X]%
-4. [Cuarto diagnóstico] - [X]%
-5. [Quinto diagnóstico] - [X]%
-6. [Sexto diagnóstico] - [X]%`;
+REGLAS:
+1. Si nuevos hallazgos contradicen base, prioriza nuevos hallazgos
+2. Mantén párrafos separados por estructura anatómica
+3. Formato: HALLAZGOS (descripción técnica), CONCLUSIÓN (2-3 líneas), DIAGNÓSTICOS DIFERENCIALES (6 con %)
+4. Sin preguntas, símbolos decorativos o texto extra
+5. Coherencia absoluta entre hallazgos y conclusión`;
       } else {
-        prompt = `Eres un médico radiólogo especialista con experiencia en informes estructurados. Tu tarea es crear un informe médico profesional a partir de las siguientes observaciones clínicas.
+        prompt = `Eres radiólogo especialista. Crea informe médico profesional en ${languageNames[outputLanguage]} de estas observaciones:
 
-IMPORTANTE: El informe completo debe estar escrito en ${languageNames[outputLanguage]}.
-
-OBSERVACIONES CLÍNICAS:
 ${transcribedText}
 
-INSTRUCCIONES PARA CREAR EL INFORME:
-1. ANÁLISIS DEL TEXTO:
-   - Analiza cuidadosamente todas las observaciones proporcionadas
-   - Identifica estructuras anatómicas mencionadas
-   - Detecta hallazgos patológicos y normales
-   - Organiza la información de manera lógica y estructurada
-
-2. ESTRUCTURA DE PÁRRAFOS SEPARADOS:
-   - Organiza cada estructura anatómica o sistema en párrafo separado
-   - Mantén claridad y separación entre diferentes hallazgos
-   - Usa saltos de línea entre diferentes estructuras
-   - Cada párrafo debe tratar UN solo tópico anatómico
-
-3. CONTENIDO POR SECCIONES:
-   HALLAZGOS:
-   - Descripción detallada y técnica de cada estructura anatómica mencionada
-   - Usa terminología médica precisa para especialistas
-   - Incluye medidas, características y localizaciones específicas
-   - NO incluyas interpretaciones o conclusiones aquí
-   - Mantén separación clara entre diferentes estructuras/órganos
-   
-   CONCLUSIÓN:
-   - Máximo 2-3 líneas, concisa y directa
-   - Resume los hallazgos más relevantes
-   - Proporciona impresión diagnóstica principal
-   - Enfócate en el significado clínico
-   
-   DIAGNÓSTICOS DIFERENCIALES:
-   - Mínimo 6 diagnósticos con porcentajes realistas
-   - Ordena por probabilidad (mayor a menor)
-   - Incluye diagnósticos tanto comunes como raros pero relevantes
-   - Los porcentajes deben sumar aproximadamente 100%
-   - Basa los diagnósticos en los hallazgos descritos
-
-4. RESTRICCIONES ABSOLUTAS:
-   - NO incluyas preguntas, sugerencias o comentarios adicionales
-   - NO uses símbolos como ###, ---, *** 
-   - NO agregues texto como "¿Deseas...?", "¿Te gustaría...?"
-   - Termina directamente sin texto adicional
-   - Usa solo terminología médica profesional
-
-FORMATO FINAL REQUERIDO:
-HALLAZGOS:
-[Párrafo 1: Estructura anatómica específica]
-
-[Párrafo 2: Otra estructura anatómica específica]
-
-[Párrafo 3: Otra estructura anatómica específica]
-
-[Continúa con cada estructura en párrafo separado]
-
-CONCLUSIÓN:
-[Conclusión concisa de máximo 3 líneas basada en los hallazgos]
-
-DIAGNÓSTICOS DIFERENCIALES:
-1. [Diagnóstico más probable] - [X]%
-2. [Segundo diagnóstico] - [X]%
-3. [Tercer diagnóstico] - [X]%
-4. [Cuarto diagnóstico] - [X]%
-5. [Quinto diagnóstico] - [X]%
-6. [Sexto diagnóstico] - [X]%`;
+REGLAS:
+1. Organiza por estructura anatómica (párrafo separado cada una)
+2. Formato: HALLAZGOS (descripción técnica), CONCLUSIÓN (2-3 líneas), DIAGNÓSTICOS DIFERENCIALES (6 con %)
+3. Terminología médica precisa
+4. Sin preguntas, símbolos decorativos o texto extra`;
       }
       
       console.log('📝 [RECORDING] Generando informe con generateText...');
