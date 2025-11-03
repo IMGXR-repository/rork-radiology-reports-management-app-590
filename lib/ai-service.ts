@@ -11,6 +11,11 @@ interface GenerateTextOptions {
 
 export class AIService {
   private getApiKey(provider: string): string {
+    console.log('🔑 [AI Service] Obteniendo API key para provider:', provider);
+    console.log('🔑 [AI Service] EXPO_PUBLIC_GROQ_API_KEY:', process.env.EXPO_PUBLIC_GROQ_API_KEY ? 'Configurada' : 'NO configurada');
+    console.log('🔑 [AI Service] EXPO_PUBLIC_GEMINI_API_KEY:', process.env.EXPO_PUBLIC_GEMINI_API_KEY ? 'Configurada' : 'NO configurada');
+    console.log('🔑 [AI Service] EXPO_PUBLIC_OPENAI_API_KEY:', process.env.EXPO_PUBLIC_OPENAI_API_KEY ? 'Configurada' : 'NO configurada');
+    
     switch (provider) {
       case 'openai':
         return process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
