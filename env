@@ -14,13 +14,13 @@ EXPO_PUBLIC_OPENAI_API_KEY=sk_your_openai_api_key_here
 # Uncomment and add your API key to use Groq instead of Rork
 # Get your key from: https://console.groq.com/keys
 # EXPO_PUBLIC_AI_PROVIDER=groq
-EXPO_PUBLIC_GROQ_API_KEY=gsk_your_groq_api_key_here
+EXPO_PUBLIC_GROQ_API_KEY=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
 
 # Optional: Gemini Configuration
 # Uncomment and add your API key to use Gemini instead of Rork
 # Get your key from: https://aistudio.google.com/app/apikey
 # EXPO_PUBLIC_AI_PROVIDER=gemini
-EXPO_PUBLIC_GEMINI_API_KEY=AIzaYour_Gemini_API_Key_Here
+EXPO_PUBLIC_GEMINI_API_KEY=AIzaSyD1nWjJZ6jAvgUQqtvX1j9KGoGbmx_qwaA
 
 # Instructions:
 # 1. By default, the app uses Rork AI (no API key required)
