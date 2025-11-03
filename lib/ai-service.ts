@@ -29,12 +29,11 @@ export class AIService {
   }
 
   async generateText(options: GenerateTextOptions): Promise<string> {
-    const provider = options.provider || process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork';
+    const provider = options.provider || 'rork';
     
     console.log('🤖 [AI Service] ===== GENERANDO TEXTO =====');
     console.log('🤖 [AI Service] Provider seleccionado:', provider);
     console.log('🤖 [AI Service] Provider desde options:', options.provider);
-    console.log('🤖 [AI Service] Provider desde env:', process.env.EXPO_PUBLIC_AI_PROVIDER);
     console.log('🤖 [AI Service] Cantidad de mensajes:', options.messages.length);
     console.log('🤖 [AI Service] ================================');
     
@@ -52,17 +51,6 @@ export class AIService {
       }
     } catch (error) {
       console.error('❌ [AI Service] Error en generateText:', error);
-      
-      if (provider !== 'rork') {
-        console.log('🔄 [AI Service] Intentando con RORK como fallback...');
-        try {
-          return await this.generateWithRork(options);
-        } catch (fallbackError) {
-          console.error('❌ [AI Service] Error en fallback RORK:', fallbackError);
-          throw error;
-        }
-      }
-      
       throw error;
     }
   }

@@ -333,6 +333,9 @@ export function useDataManager() {
       if (loadedSettings && !loadedSettings.autoBackupFrequencyDays) {
         loadedSettings.autoBackupFrequencyDays = 3;
       }
+      if (!loadedSettings.aiProvider) {
+        loadedSettings.aiProvider = 'rork';
+      }
       setSettings(loadedSettings);
       
       // Load and update stats
