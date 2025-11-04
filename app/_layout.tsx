@@ -97,6 +97,13 @@ function RootLayoutNav() {
               presentation: 'modal'
             }} 
           />
+          <Stack.Screen 
+            name="backup-management" 
+            options={{ 
+              headerShown: true,
+              title: 'Gestión de Respaldos'
+            }} 
+          />
         </Stack>
       ) : (
         <View style={styles.loadingContainer}>
