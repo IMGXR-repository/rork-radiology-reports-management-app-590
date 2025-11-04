@@ -139,6 +139,23 @@ export interface Translations {
     noMessagesDescription: string;
     typingIndicator: string;
   };
+  iterate: {
+    title: string;
+    inputLabel: string;
+    inputPlaceholder: string;
+    outputLabel: string;
+    outputPlaceholder: string;
+    mode: string;
+    narrative: string;
+    structured: string;
+    narrativeLevel: string;
+    structuredLevel: string;
+    fidelityLevel: string;
+    generate: string;
+    clear: string;
+    copy: string;
+    processing: string;
+  };
   productivity: {
     title: string;
     totalCopies: string;
@@ -328,6 +345,23 @@ export const translations: Record<Language, Translations> = {
       noMessagesDescription: 'Inicia una conversación con el asistente IA',
       typingIndicator: 'Escribiendo...',
     },
+    iterate: {
+      title: 'Iterar',
+      inputLabel: 'Texto Original',
+      inputPlaceholder: 'Pega aquí tu descripción médica o conclusión...',
+      outputLabel: 'Texto Reescrito',
+      outputPlaceholder: 'El resultado aparecerá aquí...',
+      mode: 'Modo',
+      narrative: 'Narrativo',
+      structured: 'Estructurado',
+      narrativeLevel: 'Grado Narrativo',
+      structuredLevel: 'Grado Estructurado',
+      fidelityLevel: 'Respeto al Original',
+      generate: 'Generar',
+      clear: 'Limpiar',
+      copy: 'Copiar',
+      processing: 'Procesando...',
+    },
     productivity: {
       title: 'Productividad',
       totalCopies: 'Copias totales',
@@ -514,6 +548,23 @@ export const translations: Record<Language, Translations> = {
       noMessages: 'No messages yet',
       noMessagesDescription: 'Start a conversation with the AI assistant',
       typingIndicator: 'Typing...',
+    },
+    iterate: {
+      title: 'Iterate',
+      inputLabel: 'Original Text',
+      inputPlaceholder: 'Paste your medical description or conclusion here...',
+      outputLabel: 'Rewritten Text',
+      outputPlaceholder: 'The result will appear here...',
+      mode: 'Mode',
+      narrative: 'Narrative',
+      structured: 'Structured',
+      narrativeLevel: 'Narrative Degree',
+      structuredLevel: 'Structured Degree',
+      fidelityLevel: 'Respect for Original',
+      generate: 'Generate',
+      clear: 'Clear',
+      copy: 'Copy',
+      processing: 'Processing...',
     },
     productivity: {
       title: 'Productivity',
@@ -702,6 +753,23 @@ export const translations: Record<Language, Translations> = {
       noMessagesDescription: 'Beginnen Sie ein Gespräch mit dem KI-Assistenten',
       typingIndicator: 'Schreibt...',
     },
+    iterate: {
+      title: 'Iterieren',
+      inputLabel: 'Originaltext',
+      inputPlaceholder: 'Fügen Sie hier Ihre medizinische Beschreibung oder Schlussfolgerung ein...',
+      outputLabel: 'Umgeschriebener Text',
+      outputPlaceholder: 'Das Ergebnis wird hier erscheinen...',
+      mode: 'Modus',
+      narrative: 'Narrativ',
+      structured: 'Strukturiert',
+      narrativeLevel: 'Narrativer Grad',
+      structuredLevel: 'Strukturierungsgrad',
+      fidelityLevel: 'Respekt für Original',
+      generate: 'Generieren',
+      clear: 'Löschen',
+      copy: 'Kopieren',
+      processing: 'Verarbeitung...',
+    },
     productivity: {
       title: 'Produktivität',
       totalCopies: 'Gesamtkopien',
@@ -888,6 +956,23 @@ export const translations: Record<Language, Translations> = {
       noMessages: 'Aucun message pour le moment',
       noMessagesDescription: 'Commencez une conversation avec l\'assistant IA',
       typingIndicator: 'Écriture...',
+    },
+    iterate: {
+      title: 'Itérer',
+      inputLabel: 'Texte Original',
+      inputPlaceholder: 'Collez ici votre description médicale ou conclusion...',
+      outputLabel: 'Texte Réécrit',
+      outputPlaceholder: 'Le résultat apparaîtra ici...',
+      mode: 'Mode',
+      narrative: 'Narratif',
+      structured: 'Structuré',
+      narrativeLevel: 'Degré Narratif',
+      structuredLevel: 'Degré Structuré',
+      fidelityLevel: 'Respect de l\'Original',
+      generate: 'Générer',
+      clear: 'Effacer',
+      copy: 'Copier',
+      processing: 'Traitement...',
     },
     productivity: {
       title: 'Productivité',
@@ -1076,6 +1161,23 @@ export const translations: Record<Language, Translations> = {
       noMessagesDescription: 'Inicie uma conversa com o assistente IA',
       typingIndicator: 'Digitando...',
     },
+    iterate: {
+      title: 'Iterar',
+      inputLabel: 'Texto Original',
+      inputPlaceholder: 'Cole aqui sua descrição médica ou conclusão...',
+      outputLabel: 'Texto Reescrito',
+      outputPlaceholder: 'O resultado aparecerá aqui...',
+      mode: 'Modo',
+      narrative: 'Narrativo',
+      structured: 'Estruturado',
+      narrativeLevel: 'Grau Narrativo',
+      structuredLevel: 'Grau Estruturado',
+      fidelityLevel: 'Respeito ao Original',
+      generate: 'Gerar',
+      clear: 'Limpar',
+      copy: 'Copiar',
+      processing: 'Processando...',
+    },
     productivity: {
       title: 'Produtividade',
       totalCopies: 'Cópias totais',
@@ -1262,6 +1364,23 @@ export const translations: Record<Language, Translations> = {
       noMessages: 'Ancora nessun messaggio',
       noMessagesDescription: 'Inizia una conversazione con l\'assistente IA',
       typingIndicator: 'Sta scrivendo...',
+    },
+    iterate: {
+      title: 'Iterare',
+      inputLabel: 'Testo Originale',
+      inputPlaceholder: 'Incolla qui la tua descrizione medica o conclusione...',
+      outputLabel: 'Testo Riscritto',
+      outputPlaceholder: 'Il risultato apparirà qui...',
+      mode: 'Modalità',
+      narrative: 'Narrativo',
+      structured: 'Strutturato',
+      narrativeLevel: 'Grado Narrativo',
+      structuredLevel: 'Grado Strutturato',
+      fidelityLevel: 'Rispetto per l\'Originale',
+      generate: 'Genera',
+      clear: 'Cancella',
+      copy: 'Copia',
+      processing: 'Elaborazione...',
     },
     productivity: {
       title: 'Produttività',
