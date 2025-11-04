@@ -44,7 +44,7 @@ export default function ReportsScreen() {
     if (selectedFilters.length > 0) {
       filtered = filtered.filter(report =>
         selectedFilters.some(filterId =>
-          report.filters.includes(filterId)
+          report.filters?.includes(filterId)
         )
       );
     }
