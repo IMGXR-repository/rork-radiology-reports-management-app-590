@@ -26,7 +26,7 @@ import {
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
-import * as FileSystem from 'expo-file-system';
+import { File, Directory, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 
@@ -173,53 +173,102 @@ export default function BackupManagementScreen() {
 
   const handleImportBackup = async () => {
     try {
-      setLoading(true);
-      
       if (Platform.OS === 'web') {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
         input.onchange = async (e: Event) => {
-          const target = e.target as HTMLInputElement;
-          const file = target.files?.[0];
-          if (file) {
+          try {
+            setLoading(true);
+            console.log('📂 [Import] Archivo seleccionado');
+            
+            const target = e.target as HTMLInputElement;
+            const file = target.files?.[0];
+            
+            if (!file) {
+              console.log('⚠️ [Import] No se seleccionó archivo');
+              setLoading(false);
+              return;
+            }
+            
+            console.log('📂 [Import] Leyendo archivo:', file.name, 'Tamaño:', file.size, 'bytes');
             const text = await file.text();
+            console.log('📂 [Import] Archivo leído, longitud:', text.length);
+            
             const success = await importData(text);
+            console.log('📂 [Import] Resultado importación:', success);
+            
             if (success) {
+              console.log('✅ [Import] Recargando página en 500ms...');
               setTimeout(() => {
                 window.location.reload();
               }, 500);
             } else {
-              showAlert('Error', 'No se pudo importar el respaldo');
+              console.error('❌ [Import] La importación falló');
+              setLoading(false);
+              showAlert('Error', 'No se pudo importar el respaldo. Verifica que el archivo sea válido.');
             }
+          } catch (fileError) {
+            console.error('❌ [Import] Error procesando archivo:', fileError);
+            setLoading(false);
+            showAlert('Error', 'Error al procesar el archivo');
           }
+        };
+        
+        input.onerror = () => {
+          console.error('❌ [Import] Error al seleccionar archivo');
+          setLoading(false);
+          showAlert('Error', 'Error al seleccionar el archivo');
+        };
+        
+        input.oncancel = () => {
+          console.log('⚠️ [Import] Selección de archivo cancelada');
           setLoading(false);
         };
+        
         input.click();
       } else {
+        setLoading(true);
         const result = await DocumentPicker.getDocumentAsync({
           type: 'application/json',
           copyToCacheDirectory: true,
         });
 
-        if (!result.canceled && result.assets && result.assets.length > 0) {
+        if (result.canceled) {
+          console.log('⚠️ [Import] Selección cancelada');
+          setLoading(false);
+          return;
+        }
+
+        if (result.assets && result.assets.length > 0) {
           const fileUri = result.assets[0].uri;
-          const fileContent = await FileSystem.readAsStringAsync(fileUri);
+          console.log('📂 [Import] Leyendo archivo:', fileUri);
+          const file = new File(fileUri);
+          const fileContent = await file.text();
+          console.log('📂 [Import] Contenido leído, longitud:', fileContent.length);
+          
           const success = await importData(fileContent);
+          console.log('📂 [Import] Resultado importación:', success);
           
           if (success) {
             await loadBackups();
+            setLoading(false);
             router.back();
           } else {
-            showAlert('Error', 'No se pudo importar el respaldo');
+            setLoading(false);
+            showAlert('Error', 'No se pudo importar el respaldo. Verifica que el archivo sea válido.');
           }
+        } else {
+          setLoading(false);
         }
-        setLoading(false);
       }
     } catch (error) {
-      console.error('Error importing backup:', error);
-      showAlert('Error', 'No se pudo importar el respaldo');
+      console.error('❌ [Import] Error general:', error);
+      if (error instanceof Error) {
+        console.error('❌ [Import] Stack:', error.stack);
+      }
       setLoading(false);
+      showAlert('Error', 'No se pudo importar el respaldo');
     }
   };
 
@@ -252,12 +301,12 @@ export default function BackupManagementScreen() {
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-        await FileSystem.writeAsStringAsync(fileUri, backupData);
+        const file = new File(Paths.cache, fileName);
+        file.write(backupData);
 
         const canShare = await Sharing.isAvailableAsync();
         if (canShare) {
-          await Sharing.shareAsync(fileUri, {
+          await Sharing.shareAsync(file.uri, {
             mimeType: 'application/json',
             dialogTitle: 'Guardar respaldo de RAD-IA',
           });
