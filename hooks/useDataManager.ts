@@ -795,29 +795,89 @@ export function useDataManager() {
 
   const importData = async (jsonData: string) => {
     try {
+      console.log('🔍 [Import] Iniciando importación de datos...');
+      
       if (!jsonData || typeof jsonData !== 'string' || jsonData.trim().length === 0) {
+        console.error('❌ [Import] Datos vacíos o inválidos');
         return false;
       }
-      const data = JSON.parse(jsonData.trim());
-      if (data.reports) await saveReports(data.reports);
+      
+      console.log('🔍 [Import] Longitud de datos:', jsonData.length);
+      
+      let data;
+      try {
+        data = JSON.parse(jsonData.trim());
+        console.log('✅ [Import] JSON parseado correctamente');
+      } catch (parseError) {
+        console.error('❌ [Import] Error al parsear JSON:', parseError);
+        console.error('🔍 [Import] Primeros 100 caracteres:', jsonData.substring(0, 100));
+        return false;
+      }
+      
+      if (!data || typeof data !== 'object') {
+        console.error('❌ [Import] Datos parseados no son un objeto válido');
+        return false;
+      }
+      
+      console.log('🔍 [Import] Claves encontradas:', Object.keys(data));
+      
+      if (data.reports) {
+        console.log('📝 [Import] Importando', data.reports.length, 'informes...');
+        await saveReports(Array.isArray(data.reports) ? data.reports : []);
+      }
       
       // Handle new format
-      if (data.reportCategories) await saveReportCategories(data.reportCategories);
-      if (data.reportFilters) await saveReportFilters(data.reportFilters);
-      if (data.phraseCategories) await savePhraseCategories(data.phraseCategories);
-      if (data.phraseFilters) await savePhraseFilters(data.phraseFilters);
+      if (data.reportCategories) {
+        console.log('📂 [Import] Importando', data.reportCategories.length, 'categorías de informes...');
+        await saveReportCategories(Array.isArray(data.reportCategories) ? data.reportCategories : []);
+      }
+      if (data.reportFilters) {
+        console.log('🏷️ [Import] Importando', data.reportFilters.length, 'filtros de informes...');
+        await saveReportFilters(Array.isArray(data.reportFilters) ? data.reportFilters : []);
+      }
+      if (data.phraseCategories) {
+        console.log('📂 [Import] Importando', data.phraseCategories.length, 'categorías de frases...');
+        await savePhraseCategories(Array.isArray(data.phraseCategories) ? data.phraseCategories : []);
+      }
+      if (data.phraseFilters) {
+        console.log('🏷️ [Import] Importando', data.phraseFilters.length, 'filtros de frases...');
+        await savePhraseFilters(Array.isArray(data.phraseFilters) ? data.phraseFilters : []);
+      }
       
       // Handle legacy format
-      if (data.categories && !data.reportCategories) await saveReportCategories(data.categories);
-      if (data.filters && !data.reportFilters) await saveReportFilters(data.filters);
+      if (data.categories && !data.reportCategories) {
+        console.log('📂 [Import] Importando categorías (formato legacy)...');
+        await saveReportCategories(Array.isArray(data.categories) ? data.categories : []);
+      }
+      if (data.filters && !data.reportFilters) {
+        console.log('🏷️ [Import] Importando filtros (formato legacy)...');
+        await saveReportFilters(Array.isArray(data.filters) ? data.filters : []);
+      }
       
-      if (data.phrases) await savePhrases(data.phrases);
-      if (data.savedTranscriptions) await saveSavedTranscriptions(data.savedTranscriptions);
-      if (data.settings) await saveSettings(data.settings);
-      if (data.stats) await saveStats(data.stats);
+      if (data.phrases) {
+        console.log('💬 [Import] Importando', data.phrases.length, 'frases...');
+        await savePhrases(Array.isArray(data.phrases) ? data.phrases : []);
+      }
+      if (data.savedTranscriptions) {
+        console.log('🎤 [Import] Importando', data.savedTranscriptions.length, 'transcripciones...');
+        await saveSavedTranscriptions(Array.isArray(data.savedTranscriptions) ? data.savedTranscriptions : []);
+      }
+      if (data.settings) {
+        console.log('⚙️ [Import] Importando configuración...');
+        await saveSettings(data.settings);
+      }
+      if (data.stats) {
+        console.log('📊 [Import] Importando estadísticas...');
+        await saveStats(data.stats);
+      }
+      
+      console.log('✅ [Import] Importación completada con éxito');
       return true;
     } catch (error) {
-      console.error('Error importing data:', error);
+      console.error('❌ [Import] Error general en importación:', error);
+      if (error instanceof Error) {
+        console.error('❌ [Import] Stack:', error.stack);
+      }
       return false;
     }
   };
