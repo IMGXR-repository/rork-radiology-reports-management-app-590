@@ -1,29 +1,4 @@
 # Rork AI Configuration
 # This is the default AI provider that comes with Rork
 # No API key needed
-# EXPO_PUBLIC_AI_PROVIDER=rork
 EXPO_PUBLIC_TOOLKIT_URL=https://toolkit.rork.com
-
-# AI Provider configurado desde la app (se usa groq porque rork dejó de funcionar)
-EXPO_PUBLIC_AI_PROVIDER=groq
-
-# Optional: OpenAI Configuration
-# Uncomment and add your API key to use OpenAI instead of Rork
-# Get your key from: https://platform.openai.com/api-keys
-# EXPO_PUBLIC_AI_PROVIDER=openai
-# EXPO_PUBLIC_OPENAI_API_KEY=sk_your_openai_api_key_here
-
-# Optional: Groq Configuration
-# Get your key from: https://console.groq.com/keys
-EXPO_PUBLIC_GROQ_API_KEY=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
-
-# Optional: Gemini Configuration
-# Get your key from: https://aistudio.google.com/app/apikey
-EXPO_PUBLIC_GEMINI_API_KEY=AIzaSyD1nWjJZ6jAvgUQqtvX1j9KGoGbmx_qwaA
-
-# Instructions:
-# 1. By default, the app uses Rork AI (no API key required)
-# 2. If Rork is experiencing issues (500 errors), you can:
-#    a) Wait a few minutes and try again
-#    b) Switch to another provider by changing EXPO_PUBLIC_AI_PROVIDER above
-# 3. After changing this file, restart your development server with: bun expo start

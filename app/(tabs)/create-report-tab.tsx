@@ -245,9 +245,7 @@ Sé directo y conciso.`;
         console.log('📝 Título:', title.trim());
         console.log('🌐 Idioma objetivo:', languageNames[outputLanguage]);
         console.log('📊 Nivel de estructuración:', structureLevel);
-        console.log('🤖 Proveedor de IA:', settings.aiProvider || 'rork');
         
-        // Usar el aiService que ya maneja múltiples proveedores
         generatedContent = await aiService.generateText({
           messages: [
             {
@@ -255,7 +253,6 @@ Sé directo y conciso.`;
               content: prompt,
             },
           ],
-          provider: settings.aiProvider || 'rork',
         });
         
         console.log('✅ Contenido generado:', typeof generatedContent);

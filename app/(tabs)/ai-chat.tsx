@@ -183,12 +183,8 @@ ${systemInstructions}${redirectInstruction}`;
         
         console.log('🔍 [AI CHAT DEBUG] Mensajes a enviar:', JSON.stringify(messagesToSend, null, 2));
         
-        const aiProvider = process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork';
-        console.log('🔍 [AI CHAT DEBUG] Proveedor de IA:', aiProvider);
-        
         const aiResponse = await aiService.generateText({
           messages: messagesToSend,
-          provider: aiProvider as 'rork' | 'groq' | 'gemini' | 'openai',
         });
         
         const formattedResponse = formatAIResponse(aiResponse);
