@@ -12,7 +12,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { useTranslation } from '@/hooks/useTranslation';
-import { generateText } from '@rork/toolkit-sdk';
+import { generateText } from '@rork-ai/toolkit-sdk';
 import * as Clipboard from 'expo-clipboard';
 import CustomSlider from '@/components/CustomSlider';
 import { Stack } from 'expo-router';

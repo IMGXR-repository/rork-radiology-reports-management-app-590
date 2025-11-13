@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LoginModal } from "@/components/LoginModal";
 import { PinModal } from "@/components/PinModal";
 import { QRSyncModal } from "@/components/QRSyncModal";
+import { MobileViewButton } from "@/components/MobileViewButton";
 import { trpc, trpcClient } from "@/lib/trpc";
 
 SplashScreen.preventAutoHideAsync();
@@ -47,6 +48,7 @@ function RootLayoutNav() {
 
   return (
     <>
+      <MobileViewButton />
       {isAuthenticated ? (
         <Stack screenOptions={{ headerBackTitle: "Atrás" }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

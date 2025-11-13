@@ -1,4 +1,4 @@
-import { generateText } from "@rork/toolkit-sdk";
+import { generateText } from "@rork-ai/toolkit-sdk";
 
 interface Message {
   role: 'user' | 'assistant';
