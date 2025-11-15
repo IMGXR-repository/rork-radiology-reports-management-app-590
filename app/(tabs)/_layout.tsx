@@ -108,6 +108,12 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <SettingsIcon color={color} size={size} />,
         }}
       />
+      <Tabs.Screen
+        name="backup-management"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

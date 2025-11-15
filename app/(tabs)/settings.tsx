@@ -407,7 +407,7 @@ export default function SettingsScreen() {
           <HardDrive size={20} color={theme.primary} />,
           t.settings.backupManagement,
           t.settings.backupManagementDescription,
-          () => router.push('/backup-management')
+          () => router.push('/(tabs)/backup-management')
         )}
         
         {renderSettingItem(
