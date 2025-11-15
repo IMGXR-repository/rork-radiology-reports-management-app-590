@@ -23,6 +23,7 @@ import {
   HardDrive,
   Download,
   Info,
+  ArrowLeft,
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -423,6 +424,14 @@ export default function BackupManagementScreen() {
           title: 'Gestión de Respaldos',
           headerStyle: { backgroundColor: theme.surface },
           headerTintColor: theme.onSurface,
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ marginLeft: 8, padding: 8 }}
+            >
+              <ArrowLeft size={24} color={theme.onSurface} />
+            </TouchableOpacity>
+          ),
         }}
       />
 
