@@ -3,10 +3,10 @@ import { TouchableOpacity, StyleSheet, Platform, View, Text } from 'react-native
 import { Smartphone } from 'lucide-react-native';
 
 const MOBILE_WINDOW_CONFIG = {
-  width: 375,
-  height: 812,
-  left: 50,
-  top: 50,
+  width: 390,
+  height: window.screen.availHeight - 50,
+  left: 0,
+  top: 0,
 };
 
 const STORAGE_KEY = 'mobile_window_config';
@@ -34,7 +34,10 @@ export function MobileViewButton() {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const storedConfig = localStorage.getItem(STORAGE_KEY);
-    let config = MOBILE_WINDOW_CONFIG;
+    let config = {
+      ...MOBILE_WINDOW_CONFIG,
+      height: window.screen.availHeight - 50,
+    };
     
     if (storedConfig) {
       try {
