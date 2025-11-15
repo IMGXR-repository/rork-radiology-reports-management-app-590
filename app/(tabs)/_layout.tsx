@@ -1,5 +1,5 @@
 import { Tabs, router } from 'expo-router';
-import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, FileBarChart, FileEdit, Brain, RefreshCw } from 'lucide-react-native';
+import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, FileBarChart, FileEdit, Brain, RefreshCw, Sparkles } from 'lucide-react-native';
 import React from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -66,6 +66,13 @@ export default function TabLayout() {
         options={{
           title: 'Iterar',
           tabBarIcon: ({ color, size }) => <RefreshCw color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="radia-2"
+        options={{
+          title: 'RAD IA-2',
+          tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
         }}
       />
       <Tabs.Screen
