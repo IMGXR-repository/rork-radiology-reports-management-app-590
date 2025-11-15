@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -18,6 +18,7 @@ export function PhraseFilterChips({ selectedFilters, onFilterToggle }: PhraseFil
 
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
 
   const getFiltersForCategory = (categoryId: string) => {
     return activeFilters.filter(filter => filter.categoryId === categoryId);
@@ -83,7 +84,12 @@ export function PhraseFilterChips({ selectedFilters, onFilterToggle }: PhraseFil
             </TouchableOpacity>
             
             {isExpanded && (
-              <View style={styles.filtersContainer}>
+              <ScrollView 
+                style={[styles.filtersScrollContainer, { maxHeight: screenHeight * 0.25 }]}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled
+              >
+                <View style={styles.filtersContainer}>
                 <TouchableOpacity
                   key={`all-${category.id}`}
                   onPress={() => onFilterToggle('', category.id)}
@@ -139,7 +145,8 @@ export function PhraseFilterChips({ selectedFilters, onFilterToggle }: PhraseFil
                     </TouchableOpacity>
                   );
                 })}
-              </View>
+                </View>
+              </ScrollView>
             )}
           </View>
         );
@@ -176,10 +183,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginLeft: 8,
   },
+  filtersScrollContainer: {
+    paddingHorizontal: 16,
+  },
   filtersContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 16,
     gap: 8,
   },
   filterChip: {
