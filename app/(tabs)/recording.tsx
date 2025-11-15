@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Audio } from 'expo-av';
-import { Mic, Square, FileText, Send, ChevronDown, ChevronUp, Copy, Trash2, RotateCcw } from 'lucide-react-native';
+import { Mic, Square, FileText, Send, ChevronDown, ChevronUp, Trash2, RotateCcw } from 'lucide-react-native';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
@@ -1128,90 +1128,99 @@ REGLAS:
           <View style={[styles.section, { backgroundColor: theme.surface }]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.findings}</Text>
-              <TouchableOpacity
-                style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
-                onPress={async () => {
-                  if (findings.trim()) {
-                    await Clipboard.setStringAsync(findings);
-                  }
-                }}
-                disabled={!findings.trim()}
-              >
-                <Copy size={16} color={theme.onPrimary} />
-                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>{t.common.copy.toUpperCase()}</Text>
-              </TouchableOpacity>
             </View>
-            <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
+            <TouchableOpacity
+              style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}
+              onPress={async () => {
+                if (findings.trim()) {
+                  await Clipboard.setStringAsync(findings);
+                  console.log('✅ Hallazgos copiados al portapapeles');
+                  if (Platform.OS === 'web') {
+                    alert('Hallazgos copiados al portapapeles');
+                  } else {
+                    Alert.alert('Copiado', 'Hallazgos copiados al portapapeles');
+                  }
+                }
+              }}
+              activeOpacity={findings.trim() ? 0.7 : 1}
+            >
               <TextInput
                 style={[styles.textInput, { color: theme.onBackground }]}
                 value={findings}
-                onChangeText={setFindings}
                 placeholder={t.recording.findingsPlaceholder}
                 placeholderTextColor={theme.outline}
                 multiline
                 textAlignVertical="top"
+                editable={false}
+                pointerEvents="none"
               />
-            </View>
+            </TouchableOpacity>
           </View>
 
           {/* Conclusiones */}
           <View style={[styles.section, { backgroundColor: theme.surface }]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.conclusion}</Text>
-              <TouchableOpacity
-                style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
-                onPress={async () => {
-                  if (conclusions.trim()) {
-                    await Clipboard.setStringAsync(conclusions);
-                  }
-                }}
-                disabled={!conclusions.trim()}
-              >
-                <Copy size={16} color={theme.onPrimary} />
-                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>{t.common.copy.toUpperCase()}</Text>
-              </TouchableOpacity>
             </View>
-            <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
+            <TouchableOpacity
+              style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}
+              onPress={async () => {
+                if (conclusions.trim()) {
+                  await Clipboard.setStringAsync(conclusions);
+                  console.log('✅ Conclusión copiada al portapapeles');
+                  if (Platform.OS === 'web') {
+                    alert('Conclusión copiada al portapapeles');
+                  } else {
+                    Alert.alert('Copiado', 'Conclusión copiada al portapapeles');
+                  }
+                }
+              }}
+              activeOpacity={conclusions.trim() ? 0.7 : 1}
+            >
               <TextInput
                 style={[styles.textInput, { color: theme.onBackground }]}
                 value={conclusions}
-                onChangeText={setConclusions}
                 placeholder={t.recording.conclusionPlaceholder}
                 placeholderTextColor={theme.outline}
                 multiline
                 textAlignVertical="top"
+                editable={false}
+                pointerEvents="none"
               />
-            </View>
+            </TouchableOpacity>
           </View>
 
           {/* Diagnósticos Diferenciales */}
           <View style={[styles.section, { backgroundColor: theme.surface }]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>{t.recording.differentials}</Text>
-              <TouchableOpacity
-                style={[styles.wideCopyButton, { backgroundColor: theme.primary }]}
-                onPress={async () => {
-                  if (differentials.trim()) {
-                    await Clipboard.setStringAsync(differentials);
-                  }
-                }}
-                disabled={!differentials.trim()}
-              >
-                <Copy size={16} color={theme.onPrimary} />
-                <Text style={[styles.copyButtonText, { color: theme.onPrimary }]}>{t.common.copy.toUpperCase()}</Text>
-              </TouchableOpacity>
             </View>
-            <View style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}>
+            <TouchableOpacity
+              style={[styles.textInputContainer, { backgroundColor: theme.background, borderColor: theme.outline }]}
+              onPress={async () => {
+                if (differentials.trim()) {
+                  await Clipboard.setStringAsync(differentials);
+                  console.log('✅ Diferenciales copiados al portapapeles');
+                  if (Platform.OS === 'web') {
+                    alert('Diferenciales copiados al portapapeles');
+                  } else {
+                    Alert.alert('Copiado', 'Diferenciales copiados al portapapeles');
+                  }
+                }
+              }}
+              activeOpacity={differentials.trim() ? 0.7 : 1}
+            >
               <TextInput
                 style={[styles.textInput, { color: theme.onBackground }]}
                 value={differentials}
-                onChangeText={setDifferentials}
                 placeholder={t.recording.differentialsPlaceholder}
                 placeholderTextColor={theme.outline}
                 multiline
                 textAlignVertical="top"
+                editable={false}
+                pointerEvents="none"
               />
-            </View>
+            </TouchableOpacity>
           </View>
 
           {/* Botón grande Nuevo Informe al final */}
