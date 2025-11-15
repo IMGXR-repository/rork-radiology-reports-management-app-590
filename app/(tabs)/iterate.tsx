@@ -90,7 +90,6 @@ IMPORTANTE:
   const handleCopy = async () => {
     if (outputText.trim()) {
       await Clipboard.setStringAsync(outputText);
-      Alert.alert(t.common.success, t.common.copy);
       console.log('📋 [Iterate] Text copied to clipboard');
     }
   };
