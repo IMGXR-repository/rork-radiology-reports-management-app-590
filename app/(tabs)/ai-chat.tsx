@@ -14,9 +14,8 @@ import {
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Send, Brain, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp, Copy } from 'lucide-react-native';
+import { Send, Brain, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
-import * as Clipboard from 'expo-clipboard';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
@@ -244,14 +243,7 @@ ${systemInstructions}${redirectInstruction}`;
     });
   };
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await Clipboard.setStringAsync(text);
-      console.log('📋 Texto copiado al portapapeles');
-    } catch (error) {
-      console.error('Error al copiar:', error);
-    }
-  };
+
 
   const renderFormattedText = (text: string, isUser: boolean) => {
     const lines = text.split('\n').filter(line => line.trim());
@@ -313,22 +305,7 @@ ${systemInstructions}${redirectInstruction}`;
         currentList = null;
       }
       
-      // Detectar texto en negrita (entre **)
-      const boldMatch = trimmedLine.match(/^\*\*(.+)\*\*$/);
-      if (boldMatch) {
-        elements.push(
-          <Text
-            key={`bold-${index}`}
-            style={[
-              styles.messageBold,
-              { color: isUser ? '#FFFFFF' : theme.onSurface }
-            ]}
-          >
-            {boldMatch[1]}
-          </Text>
-        );
-        return;
-      }
+
       
       // Texto normal con posible negrita inline
       const parts = parseInlineFormatting(trimmedLine);
@@ -369,10 +346,6 @@ ${systemInstructions}${redirectInstruction}`;
     let i = 0;
     
     while (i < text.length) {
-      if (text[i] === '*' && text[i + 1] === '*' && !text[i + 2]) {
-        i += 2;
-        continue;
-      }
       if (text[i] === '*' && text[i + 1] === '*') {
         if (current) {
           parts.push({ text: current });
@@ -387,7 +360,9 @@ ${systemInstructions}${redirectInstruction}`;
         if (boldText) {
           parts.push({ text: boldText, bold: true });
         }
-        i += 2;
+        if (i < text.length && text[i] === '*' && text[i + 1] === '*') {
+          i += 2;
+        }
       } else {
         current += text[i];
         i++;
@@ -456,15 +431,7 @@ ${systemInstructions}${redirectInstruction}`;
               {item.role === 'user' ? 'Tú' : `IA - ${item.specialty}`}
             </Text>
           </View>
-          {item.role === 'assistant' && (
-            <TouchableOpacity 
-              style={[styles.copyButton, { backgroundColor: theme.primary, borderColor: theme.outline }]}
-              onPress={() => copyToClipboard(item.content)}
-            >
-              <Copy size={14} color="#FFFFFF" />
-              <Text style={[styles.copyButtonText, { color: '#FFFFFF' }]}>Copiar</Text>
-            </TouchableOpacity>
-          )}
+
         </View>
         
         <ScrollView 
@@ -1016,18 +983,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'italic',
   },
-  copyButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: 32,
-  },
-  copyButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
+
 });
