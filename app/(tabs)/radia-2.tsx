@@ -89,7 +89,7 @@ export default function RadIA2Screen() {
   const executeVoiceCommand = async (command: string) => {
     try {
       setIsGenerating(true);
-      setStatusMessage('🤖 Procesando comando con IA...');
+      setStatusMessage('🔍 Buscando informes almacenados...');
       setErrorMessage('');
       
       console.log('🎯 Ejecutando comando:', command);
@@ -107,10 +107,23 @@ export default function RadIA2Screen() {
       }
       
       let baseContent = '';
+      let contextReports = '';
+      
+      if (reports.length > 0) {
+        const relevantReports = reports
+          .slice(0, 5)
+          .map(r => `Título: ${r.title}\nContenido: ${r.content}\n---`)
+          .join('\n\n');
+        
+        contextReports = `\n\nINFORMES ALMACENADOS PARA REFERENCIA:\n${relevantReports}`;
+        console.log('📚 Se encontraron', reports.length, 'informes almacenados');
+        setStatusMessage(`📚 Analizando ${reports.length} informes almacenados...`);
+      }
+      
       if (selectedReport) {
         console.log('📋 Predefinido encontrado:', selectedReport.title);
         baseContent = selectedReport.content;
-        setStatusMessage(`📋 Usando predefinido: ${selectedReport.title}`);
+        setStatusMessage(`📋 Usando predefinido: ${selectedReport.title} + ${reports.length} informes almacenados`);
       }
       
       const detectStructuredOrNarrative = (cmd: string): 'structured' | 'narrative' | 'auto' => {
@@ -172,9 +185,16 @@ ${lengthInstructions}
 
 CONTENIDO BASE:
 ${baseContent ? `Predefinido seleccionado:\n${baseContent}\n\n` : 'Sin predefinido base.\n'}
+${contextReports}
 
 COMANDO RECIBIDO:
 "${command}"
+
+IMPORTANTE: Utiliza los informes almacenados como referencia para:
+- Mantener consistencia en el estilo y terminología
+- Seguir el formato que has usado previamente
+- Aprender de ejemplos anteriores
+- Pero adapta el contenido específicamente al comando actual
 
 Tu tarea es interpretar el comando y generar un informe médico completo con:
 

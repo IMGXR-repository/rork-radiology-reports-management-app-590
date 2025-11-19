@@ -110,6 +110,19 @@ export default function AIChatScreen() {
       try {
         console.log('🔍 [AI CHAT DEBUG] Iniciando solicitud...');
         console.log('🔍 [AI CHAT DEBUG] Mensaje del usuario:', userMessage);
+        console.log('🔍 [AI CHAT DEBUG] Buscando informes almacenados para contexto...');
+        
+        let contextReports = '';
+        if (reports.length > 0) {
+          const relevantReports = reports
+            .slice(0, 5)
+            .map(r => `- ${r.title}: ${r.content.substring(0, 300)}...`)
+            .join('\n');
+          
+          contextReports = `\n\nINFORMES PREVIOS PARA REFERENCIA (últimos 5):\n${relevantReports}\n\nUsa estos informes como referencia para mantener consistencia en estilo y terminología cuando sea relevante para la consulta.`;
+          console.log('📚 [AI CHAT DEBUG] Se encontraron', reports.length, 'informes almacenados');
+        }
+        
         let systemInstructions = '';
         
         if (isAbsoluteMode) {
@@ -146,7 +159,7 @@ ${lengthInstructions}
             ? '\n- Mantén el contexto de la conversación previa'
             : '\n- Mantén el contexto de la conversación previa\n- Si la pregunta no está relacionada con medicina, redirige amablemente hacia temas médicos de tu especialidad';
           
-          const systemPrompt = `Eres un asistente médico especializado en ${selectedSpecialty}. ${systemInstructions}${contextInstruction}`;
+          const systemPrompt = `Eres un asistente médico especializado en ${selectedSpecialty}. ${systemInstructions}${contextInstruction}${contextReports}`;
           
           const conversationHistory = chatMessages.map(msg => ({
             role: msg.role,
@@ -172,7 +185,7 @@ ${lengthInstructions}
           
           const contextualMessage = `Eres un asistente médico especializado en ${selectedSpecialty}. Un médico especialista te hace la siguiente consulta: "${userMessage}". 
 
-${systemInstructions}${redirectInstruction}`;
+${systemInstructions}${redirectInstruction}${contextReports}`;
           
           messagesToSend = [
             {
