@@ -660,51 +660,112 @@ export default function RecordingScreen() {
       let prompt = '';
       
       if (selectedReport) {
-        prompt = `Eres radiólogo especialista. Tu tarea es MODIFICAR el informe base manteniendo EXACTAMENTE su FORMA Y ESTRUCTURA.
+        prompt = `Eres un radiólogo experto. Tu tarea es modificar el informe base integrando los nuevos hallazgos mientras mantienes EXACTAMENTE su formato y estilo.
 
-INFORME BASE (MANTENER SU FORMA Y ESTRUCTURA):
+=== INFORME BASE (REFERENCIA DE FORMATO) ===
 ${selectedReport.content}
 
-NUEVOS HALLAZGOS A INTEGRAR:
+=== NUEVOS HALLAZGOS DEL RADIÓLOGO ===
 ${transcribedText}
 
-INSTRUCCIONES CRÍTICAS:
-1. FORMA Y ESTRUCTURA:
-   - Mantén EXACTAMENTE la misma forma de redacción del informe base
-   - Si el informe base usa párrafos narrativos, usa párrafos narrativos
-   - Si el informe base usa viñetas o listas, usa viñetas o listas
-   - Si el informe base estructura por órganos, mantén esa estructura
-   - Respeta el estilo de puntuación del informe base
-   - Copia el tono y estilo de redacción del informe base
+=== INSTRUCCIONES CRÍTICAS ===
 
-2. CONTENIDO:
-   - Modifica SOLAMENTE lo necesario para agregar los nuevos hallazgos
-   - Si nuevos hallazgos contradicen base, prioriza nuevos hallazgos
-   - Mantén la información del base que no contradice los nuevos hallazgos
+1. ESTRUCTURA Y FORMATO:
+   • Analiza cuidadosamente el FORMATO del informe base (narrativo con párrafos O estructurado con viñetas)
+   • Mantén EXACTAMENTE el mismo estilo de redacción
+   • Si el informe base usa párrafos narrativos fluidos → Usa párrafos narrativos fluidos
+   • Si el informe base usa viñetas y listas → Usa viñetas y listas
+   • Si el informe base organiza por órganos/sistemas → Mantén esa organización
+   • Respeta el tono profesional y estilo de puntuación del informe base
 
-3. FORMATO FINAL:
-   - HALLAZGOS: Descripción con MISMA FORMA que el informe base
-   - CONCLUSIÓN: 2-3 líneas con MISMO ESTILO que el informe base
-   - DIAGNÓSTICOS DIFERENCIALES: 6 con porcentajes
+2. INTEGRACIÓN DE HALLAZGOS:
+   • Los "NUEVOS HALLAZGOS" son observaciones del radiólogo que DEBEN incluirse en la sección de HALLAZGOS
+   • Integra estos hallazgos coherentemente en el informe base
+   • Si hay contradicción entre el informe base y los nuevos hallazgos → prioriza los nuevos hallazgos
+   • Mantén del informe base solo lo que NO contradice los nuevos hallazgos
+   • Los hallazgos deben estar en la misma forma/estructura del informe base
 
-4. PROHIBIDO:
-   - Cambiar la forma de redacción del informe base
-   - Agregar preguntas, símbolos decorativos o texto extra
-   - Cambiar de narrativo a estructurado o viceversa
+3. SECCIÓN HALLAZGOS:
+   • Debe contener TODOS los hallazgos mencionados en "NUEVOS HALLAZGOS"
+   • Redacta con la MISMA forma del informe base (narrativo O estructurado)
+   • Organiza anatómicamente si el informe base lo hace
+   • Usa terminología médica precisa
 
-5. Idioma de salida: ${languageNames[outputLanguage]}
+4. CONCLUSIÓN:
+   • Máximo 2-3 líneas
+   • BREVE, PRECISA y CONCISA
+   • Resume los hallazgos más relevantes
+   • Sin repetir detalles ya mencionados en hallazgos
+   • Estilo directo y claro
 
-RECUERDA: El objetivo es que el texto final parezca escrito por la misma persona que escribió el informe base, solo con la información actualizada.`;
+5. DIAGNÓSTICOS DIFERENCIALES:
+   • Lista 6 diagnósticos con porcentajes de probabilidad
+   • Basados en los hallazgos descritos
+   • Formato: "Diagnóstico: XX%"
+
+6. FORMATO DE RESPUESTA:
+   HALLAZGOS:
+   [Texto con la misma forma del informe base, incluyendo todos los nuevos hallazgos]
+   
+   CONCLUSIÓN:
+   [Máximo 2-3 líneas, breve y precisa]
+   
+   DIAGNÓSTICOS DIFERENCIALES:
+   [6 diagnósticos con porcentajes]
+
+7. IDIOMA: ${languageNames[outputLanguage]}
+
+8. PROHIBIDO:
+   ✗ Cambiar el formato (narrativo → estructurado o viceversa)
+   ✗ Omitir hallazgos mencionados en "NUEVOS HALLAZGOS"
+   ✗ Conclusiones largas o redundantes
+   ✗ Agregar preguntas o símbolos decorativos
+   ✗ Texto no solicitado
+
+RECUERDA: El informe final debe parecer escrito por la misma persona que escribió el informe base, con los nuevos hallazgos integrados naturalmente.`;
       } else {
-        prompt = `Eres radiólogo especialista. Crea informe médico profesional en ${languageNames[outputLanguage]} de estas observaciones:
+        prompt = `Eres un radiólogo experto. Crea un informe médico profesional a partir de estas observaciones:
 
+=== HALLAZGOS DEL RADIÓLOGO ===
 ${transcribedText}
 
-REGLAS:
-1. Organiza por estructura anatómica (párrafo separado cada una)
-2. Formato: HALLAZGOS (descripción técnica), CONCLUSIÓN (2-3 líneas), DIAGNÓSTICOS DIFERENCIALES (6 con %)
-3. Terminología médica precisa
-4. Sin preguntas, símbolos decorativos o texto extra`;
+=== INSTRUCCIONES ===
+
+1. SECCIÓN HALLAZGOS:
+   • Describe todos los hallazgos mencionados
+   • Organiza por estructura anatómica (un párrafo por órgano/sistema)
+   • Usa terminología médica precisa
+   • Formato narrativo profesional con párrafos fluidos
+
+2. CONCLUSIÓN:
+   • Máximo 2-3 líneas
+   • BREVE, PRECISA y CONCISA
+   • Resume los hallazgos más importantes
+   • Sin repetir detalles ya mencionados
+   • Estilo directo
+
+3. DIAGNÓSTICOS DIFERENCIALES:
+   • Lista 6 diagnósticos con porcentajes de probabilidad
+   • Basados en los hallazgos descritos
+   • Formato: "Diagnóstico: XX%"
+
+4. FORMATO DE RESPUESTA:
+   HALLAZGOS:
+   [Descripción técnica organizada anatómicamente]
+   
+   CONCLUSIÓN:
+   [Máximo 2-3 líneas]
+   
+   DIAGNÓSTICOS DIFERENCIALES:
+   [6 diagnósticos con porcentajes]
+
+5. IDIOMA: ${languageNames[outputLanguage]}
+
+6. PROHIBIDO:
+   ✗ Preguntas al lector
+   ✗ Símbolos decorativos
+   ✗ Texto no solicitado
+   ✗ Conclusiones largas o redundantes`;
       }
       
       console.log('📝 [RECORDING] Generando informe con generateText...');
