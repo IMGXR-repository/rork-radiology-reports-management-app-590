@@ -413,11 +413,12 @@ REGLAS IMPORTANTES:
               HALLAZGOS
             </Text>
             <TouchableOpacity 
-              style={styles.copyIconButton}
+              style={[styles.copyButton, { backgroundColor: generatedSections.findings ? theme.primary : theme.surface, borderColor: theme.outline }]}
               onPress={() => copyToClipboard(generatedSections.findings, 'Hallazgos')}
               disabled={!generatedSections.findings}
             >
-              <Copy size={18} color={generatedSections.findings ? theme.primary : theme.outline} />
+              <Copy size={16} color={generatedSections.findings ? '#FFFFFF' : theme.outline} />
+              <Text style={[styles.copyButtonText, { color: generatedSections.findings ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
           <TextInput
@@ -438,11 +439,12 @@ REGLAS IMPORTANTES:
               CONCLUSIÓN
             </Text>
             <TouchableOpacity 
-              style={styles.copyIconButton}
+              style={[styles.copyButton, { backgroundColor: generatedSections.conclusion ? theme.primary : theme.surface, borderColor: theme.outline }]}
               onPress={() => copyToClipboard(generatedSections.conclusion, 'Conclusión')}
               disabled={!generatedSections.conclusion}
             >
-              <Copy size={18} color={generatedSections.conclusion ? theme.primary : theme.outline} />
+              <Copy size={16} color={generatedSections.conclusion ? '#FFFFFF' : theme.outline} />
+              <Text style={[styles.copyButtonText, { color: generatedSections.conclusion ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
           <TextInput
@@ -463,11 +465,12 @@ REGLAS IMPORTANTES:
               DIFERENCIALES
             </Text>
             <TouchableOpacity 
-              style={styles.copyIconButton}
+              style={[styles.copyButton, { backgroundColor: (generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? theme.primary : theme.surface, borderColor: theme.outline }]}
               onPress={() => copyToClipboard(generatedSections.differentials, 'Diferenciales')}
               disabled={!generatedSections.differentials || generatedSections.differentials.toLowerCase() === 'no aplica'}
             >
-              <Copy size={18} color={(generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? theme.primary : theme.outline} />
+              <Copy size={16} color={(generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? '#FFFFFF' : theme.outline} />
+              <Text style={[styles.copyButtonText, { color: (generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
           <TextInput
@@ -642,9 +645,20 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-  copyIconButton: {
+  copyButton: {
     marginLeft: 'auto',
-    padding: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 36,
+  },
+  copyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 16,

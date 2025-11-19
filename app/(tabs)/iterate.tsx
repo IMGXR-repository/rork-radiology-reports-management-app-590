@@ -341,13 +341,15 @@ function createStyles(theme: typeof lightTheme | typeof darkTheme) {
       alignItems: 'center',
     },
     copyButton: {
-      paddingVertical: 6,
-      paddingHorizontal: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 18,
       borderRadius: 8,
       backgroundColor: theme.primary,
+      minHeight: 40,
+      justifyContent: 'center',
     },
     copyButtonText: {
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: '600' as const,
       color: '#FFFFFF',
     },
