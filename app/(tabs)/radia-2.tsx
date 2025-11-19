@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Mic, Square, Sparkles, FileText, ListChecks, Brain } from 'lucide-react-native';
+import { Mic, Square, Sparkles, FileText, ListChecks, Brain, Copy, ChevronDown, ChevronUp } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -39,6 +40,7 @@ export default function RadIA2Screen() {
   const [commandText, setCommandText] = useState<string>('');
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isInstructionsExpanded, setIsInstructionsExpanded] = useState<boolean>(false);
   
   const scrollViewRef = useRef<ScrollView>(null);
   
@@ -52,7 +54,6 @@ export default function RadIA2Screen() {
     isTranscribing,
     startRecording,
     stopRecording,
-    resetRecording,
   } = useAudioRecording({
     onTranscriptionComplete: async (text: string) => {
       console.log('✅ Transcripción completada:', text);
@@ -280,6 +281,15 @@ REGLAS IMPORTANTES:
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
   
+  const copyToClipboard = async (text: string, sectionName: string) => {
+    try {
+      await Clipboard.setStringAsync(text);
+      console.log(`📋 ${sectionName} copiado al portapapeles`);
+    } catch (error) {
+      console.error('Error al copiar:', error);
+    }
+  };
+  
   if (!user) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -317,31 +327,45 @@ REGLAS IMPORTANTES:
         contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.instructionsCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+        <TouchableOpacity 
+          style={[styles.instructionsCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}
+          onPress={() => setIsInstructionsExpanded(!isInstructionsExpanded)}
+          activeOpacity={0.7}
+        >
           <View style={styles.instructionsHeader}>
             <Sparkles size={20} color={theme.primary} />
             <Text style={[styles.instructionsTitle, { color: theme.onSurface }]}>
               Cómo usar RAD IA-2
             </Text>
+            {isInstructionsExpanded ? (
+              <ChevronUp size={20} color={theme.outline} />
+            ) : (
+              <ChevronDown size={20} color={theme.outline} />
+            )}
           </View>
-          <Text style={[styles.instructionsText, { color: theme.outline }]}>
-            Presiona el micrófono y da comandos de voz como:
-          </Text>
-          <View style={styles.examplesList}>
-            <Text style={[styles.exampleItem, { color: theme.onSurface }]}>
-              • "Coge el predefinido de ecografía abdominal y agrega masa hepática de 3 cm en lóbulo derecho"
-            </Text>
-            <Text style={[styles.exampleItem, { color: theme.onSurface }]}>
-              • "Crea un informe de TC de tórax estructurado con derrame pleural bilateral"
-            </Text>
-            <Text style={[styles.exampleItem, { color: theme.onSurface }]}>
-              • "Informe narrativo breve de resonancia cerebral sin hallazgos"
-            </Text>
-            <Text style={[styles.exampleItem, { color: theme.onSurface }]}>
-              • "Predefinido de radiografía de tórax sin usar el predefinido, informe extenso"
-            </Text>
-          </View>
-        </View>
+          
+          {isInstructionsExpanded && (
+            <>
+              <Text style={[styles.instructionsText, { color: theme.outline }]}>
+                Presiona el micrófono y da comandos de voz como:
+              </Text>
+              <View style={styles.examplesList}>
+                <Text style={[styles.exampleItem, { color: theme.onSurface }]}>
+                  • &ldquo;Coge el predefinido de ecografía abdominal y agrega masa hepática de 3 cm en lóbulo derecho&rdquo;
+                </Text>
+                <Text style={[styles.exampleItem, { color: theme.onSurface }]}>
+                  • &ldquo;Crea un informe de TC de tórax estructurado con derrame pleural bilateral&rdquo;
+                </Text>
+                <Text style={[styles.exampleItem, { color: theme.onSurface }]}>
+                  • &ldquo;Informe narrativo breve de resonancia cerebral sin hallazgos&rdquo;
+                </Text>
+                <Text style={[styles.exampleItem, { color: theme.onSurface }]}>
+                  • &ldquo;Predefinido de radiografía de tórax sin usar el predefinido, informe extenso&rdquo;
+                </Text>
+              </View>
+            </>
+          )}
+        </TouchableOpacity>
         
         {commandText !== '' && (
           <View style={[styles.commandCard, { backgroundColor: theme.surface, borderColor: theme.primary }]}>
@@ -382,59 +406,80 @@ REGLAS IMPORTANTES:
           </View>
         )}
         
-        {generatedSections.findings !== '' && (
-          <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
-            <View style={styles.sectionHeader}>
-              <ListChecks size={20} color={theme.primary} />
-              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
-                HALLAZGOS
-              </Text>
-            </View>
-            <TextInput
-              style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
-              value={generatedSections.findings}
-              onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, findings: text }))}
-              multiline
-              textAlignVertical="top"
-            />
+        <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+          <View style={styles.sectionHeader}>
+            <ListChecks size={20} color={theme.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
+              HALLAZGOS
+            </Text>
+            <TouchableOpacity 
+              style={styles.copyIconButton}
+              onPress={() => copyToClipboard(generatedSections.findings, 'Hallazgos')}
+              disabled={!generatedSections.findings}
+            >
+              <Copy size={18} color={generatedSections.findings ? theme.primary : theme.outline} />
+            </TouchableOpacity>
           </View>
-        )}
+          <TextInput
+            style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
+            value={generatedSections.findings}
+            onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, findings: text }))}
+            multiline
+            textAlignVertical="top"
+            placeholder="Los hallazgos aparecerán aquí..."
+            placeholderTextColor={theme.outline}
+          />
+        </View>
         
-        {generatedSections.conclusion !== '' && (
-          <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
-            <View style={styles.sectionHeader}>
-              <FileText size={20} color={theme.primary} />
-              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
-                CONCLUSIÓN
-              </Text>
-            </View>
-            <TextInput
-              style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
-              value={generatedSections.conclusion}
-              onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, conclusion: text }))}
-              multiline
-              textAlignVertical="top"
-            />
+        <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+          <View style={styles.sectionHeader}>
+            <FileText size={20} color={theme.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
+              CONCLUSIÓN
+            </Text>
+            <TouchableOpacity 
+              style={styles.copyIconButton}
+              onPress={() => copyToClipboard(generatedSections.conclusion, 'Conclusión')}
+              disabled={!generatedSections.conclusion}
+            >
+              <Copy size={18} color={generatedSections.conclusion ? theme.primary : theme.outline} />
+            </TouchableOpacity>
           </View>
-        )}
+          <TextInput
+            style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
+            value={generatedSections.conclusion}
+            onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, conclusion: text }))}
+            multiline
+            textAlignVertical="top"
+            placeholder="La conclusión aparecerá aquí..."
+            placeholderTextColor={theme.outline}
+          />
+        </View>
         
-        {generatedSections.differentials !== '' && generatedSections.differentials.toLowerCase() !== 'no aplica' && (
-          <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
-            <View style={styles.sectionHeader}>
-              <Brain size={20} color={theme.primary} />
-              <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
-                DIFERENCIALES
-              </Text>
-            </View>
-            <TextInput
-              style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
-              value={generatedSections.differentials}
-              onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, differentials: text }))}
-              multiline
-              textAlignVertical="top"
-            />
+        <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
+          <View style={styles.sectionHeader}>
+            <Brain size={20} color={theme.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>
+              DIFERENCIALES
+            </Text>
+            <TouchableOpacity 
+              style={styles.copyIconButton}
+              onPress={() => copyToClipboard(generatedSections.differentials, 'Diferenciales')}
+              disabled={!generatedSections.differentials || generatedSections.differentials.toLowerCase() === 'no aplica'}
+            >
+              <Copy size={18} color={(generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? theme.primary : theme.outline} />
+            </TouchableOpacity>
           </View>
-        )}
+          <TextInput
+            style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
+            value={generatedSections.differentials}
+            onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, differentials: text }))}
+            multiline
+            textAlignVertical="top"
+            placeholder="Los diferenciales aparecerán aquí..."
+            placeholderTextColor={theme.outline}
+          />
+        </View>
       </ScrollView>
       
       <View style={[styles.recordingContainer, { backgroundColor: theme.surface, borderTopColor: theme.outline, paddingBottom: insets.bottom }]}>
@@ -518,7 +563,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
   },
   instructionsTitle: {
     fontSize: 18,
@@ -528,6 +572,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 12,
+    marginTop: 12,
   },
   examplesList: {
     gap: 8,
@@ -596,6 +641,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 12,
+  },
+  copyIconButton: {
+    marginLeft: 'auto',
+    padding: 4,
   },
   sectionTitle: {
     fontSize: 16,
