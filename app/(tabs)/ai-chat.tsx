@@ -254,31 +254,181 @@ ${systemInstructions}${redirectInstruction}`;
   };
 
   const renderFormattedText = (text: string, isUser: boolean) => {
-    // Dividir el texto en párrafos
-    const paragraphs = text.split('\n\n').filter(p => p.trim());
+    const lines = text.split('\n').filter(line => line.trim());
+    const elements: React.JSX.Element[] = [];
+    let currentList: { type: 'ordered' | 'unordered'; items: string[] } | null = null;
     
-    return paragraphs.map((paragraph, index) => {
-      // Detectar si es un título (texto en negrita)
-      const isBold = paragraph.startsWith('**') && paragraph.endsWith('**');
-      const cleanText = isBold ? paragraph.replace(/\*\*/g, '') : paragraph;
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim();
       
-      return (
-        <Text 
-          key={index}
+      // Detectar títulos (líneas con : al final o que empiezan con ##)
+      if (trimmedLine.endsWith(':') && trimmedLine.length < 60) {
+        if (currentList) {
+          elements.push(renderList(currentList, isUser, elements.length));
+          currentList = null;
+        }
+        elements.push(
+          <Text
+            key={`title-${index}`}
+            style={[
+              styles.messageTitle,
+              { color: isUser ? '#FFFFFF' : theme.primary, marginTop: elements.length > 0 ? 16 : 0 }
+            ]}
+          >
+            {trimmedLine}
+          </Text>
+        );
+        return;
+      }
+      
+      // Detectar listas numeradas
+      const orderedMatch = trimmedLine.match(/^(\d+)[.)\-]\s+(.+)/);
+      if (orderedMatch) {
+        if (!currentList || currentList.type !== 'ordered') {
+          if (currentList) {
+            elements.push(renderList(currentList, isUser, elements.length));
+          }
+          currentList = { type: 'ordered', items: [] };
+        }
+        currentList.items.push(orderedMatch[2]);
+        return;
+      }
+      
+      // Detectar listas con viñetas
+      const unorderedMatch = trimmedLine.match(/^[•\-*]\s+(.+)/);
+      if (unorderedMatch) {
+        if (!currentList || currentList.type !== 'unordered') {
+          if (currentList) {
+            elements.push(renderList(currentList, isUser, elements.length));
+          }
+          currentList = { type: 'unordered', items: [] };
+        }
+        currentList.items.push(unorderedMatch[1]);
+        return;
+      }
+      
+      // Si llegamos aquí con una lista activa, la cerramos
+      if (currentList) {
+        elements.push(renderList(currentList, isUser, elements.length));
+        currentList = null;
+      }
+      
+      // Detectar texto en negrita (entre **)
+      const boldMatch = trimmedLine.match(/^\*\*(.+)\*\*$/);
+      if (boldMatch) {
+        elements.push(
+          <Text
+            key={`bold-${index}`}
+            style={[
+              styles.messageBold,
+              { color: isUser ? '#FFFFFF' : theme.onSurface }
+            ]}
+          >
+            {boldMatch[1]}
+          </Text>
+        );
+        return;
+      }
+      
+      // Texto normal con posible negrita inline
+      const parts = parseInlineFormatting(trimmedLine);
+      elements.push(
+        <Text
+          key={`text-${index}`}
           style={[
-            styles.messageText,
-            { 
-              color: isUser ? '#FFFFFF' : theme.onSurface,
-              fontWeight: isBold ? '600' : 'normal',
-              marginBottom: index < paragraphs.length - 1 ? 8 : 0,
-            },
+            styles.messageParagraph,
+            { color: isUser ? '#FFFFFF' : theme.onSurface }
           ]}
         >
-          {cleanText}
+          {parts.map((part, i) => (
+            <Text
+              key={i}
+              style={[
+                part.bold && { fontWeight: '700' as const },
+                part.italic && { fontStyle: 'italic' as const }
+              ]}
+            >
+              {part.text}
+            </Text>
+          ))}
         </Text>
       );
     });
+    
+    // Cerrar lista si quedó abierta
+    if (currentList) {
+      elements.push(renderList(currentList, isUser, elements.length));
+    }
+    
+    return elements;
   };
+  
+  const parseInlineFormatting = (text: string) => {
+    const parts: { text: string; bold?: boolean; italic?: boolean }[] = [];
+    let current = '';
+    let i = 0;
+    
+    while (i < text.length) {
+      if (text[i] === '*' && text[i + 1] === '*' && !text[i + 2]) {
+        i += 2;
+        continue;
+      }
+      if (text[i] === '*' && text[i + 1] === '*') {
+        if (current) {
+          parts.push({ text: current });
+          current = '';
+        }
+        i += 2;
+        let boldText = '';
+        while (i < text.length && !(text[i] === '*' && text[i + 1] === '*')) {
+          boldText += text[i];
+          i++;
+        }
+        if (boldText) {
+          parts.push({ text: boldText, bold: true });
+        }
+        i += 2;
+      } else {
+        current += text[i];
+        i++;
+      }
+    }
+    
+    if (current) {
+      parts.push({ text: current });
+    }
+    
+    return parts.length > 0 ? parts : [{ text }];
+  };
+  
+  const renderList = (
+    list: { type: 'ordered' | 'unordered'; items: string[] },
+    isUser: boolean,
+    key: number
+  ) => (
+    <View key={`list-${key}`} style={styles.messageList}>
+      {list.items.map((item, i) => (
+        <View key={i} style={styles.messageListItem}>
+          <Text
+            style={[
+              styles.messageListBullet,
+              { color: isUser ? 'rgba(255,255,255,0.8)' : theme.primary }
+            ]}
+          >
+            {list.type === 'ordered' ? `${i + 1}.` : '•'}
+          </Text>
+          <Text
+            style={[
+              styles.messageListText,
+              { color: isUser ? '#FFFFFF' : theme.onSurface }
+            ]}
+          >
+            {item}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
 
   const renderMessage = ({ item }: { item: ChatMessage }) => (
     <View style={[
@@ -775,6 +925,44 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     lineHeight: 24,
+  },
+  messageTitle: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    lineHeight: 24,
+    marginBottom: 8,
+  },
+  messageBold: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    lineHeight: 24,
+    marginVertical: 4,
+  },
+  messageParagraph: {
+    fontSize: 16,
+    lineHeight: 24,
+    marginVertical: 6,
+  },
+  messageList: {
+    marginVertical: 8,
+    paddingLeft: 4,
+  },
+  messageListItem: {
+    flexDirection: 'row',
+    marginVertical: 4,
+    paddingRight: 8,
+  },
+  messageListBullet: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600' as const,
+    marginRight: 8,
+    minWidth: 24,
+  },
+  messageListText: {
+    fontSize: 16,
+    lineHeight: 24,
+    flex: 1,
   },
   timestamp: {
     fontSize: 11,
