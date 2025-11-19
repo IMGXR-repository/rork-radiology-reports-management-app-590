@@ -22,7 +22,6 @@ import { lightTheme, darkTheme } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { MEDICAL_SPECIALTIES } from '@/constants/userOptions';
 import { CustomPicker } from '@/components/CustomPicker';
-import { Report } from '@/types';
 import { aiService } from '@/lib/ai-service';
 
 
@@ -36,7 +35,7 @@ interface ChatMessage {
 }
 
 export default function AIChatScreen() {
-  const { settings, trackAIChatQuery, reports } = useApp();
+  const { settings, trackAIChatQuery } = useApp();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const theme = settings?.theme === 'dark' ? darkTheme : lightTheme;
@@ -47,7 +46,6 @@ export default function AIChatScreen() {
   const [isLinkedQuestions, setIsLinkedQuestions] = useState<boolean>(false);
   const [isAbsoluteMode, setIsAbsoluteMode] = useState<boolean>(false);
   const [isConfigExpanded, setIsConfigExpanded] = useState<boolean>(false);
-  const [selectedReport, setSelectedReport] = useState<string | null>(null);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -58,14 +56,7 @@ export default function AIChatScreen() {
     if (params.initialText) {
       setNewMessage(params.initialText);
     }
-    if (params.reportId) {
-      setSelectedReport(params.reportId);
-      const report = reports.find(r => r.id === params.reportId);
-      if (report) {
-        setNewMessage(`Por favor analiza el siguiente informe médico y proporciona tus observaciones:\n\n"${report.title}"\n\n${report.content}`);
-      }
-    }
-  }, [params.initialText, params.reportId, reports]);
+  }, [params.initialText]);
 
   useEffect(() => {
     if (chatMessages.length > 0) {
@@ -111,24 +102,7 @@ export default function AIChatScreen() {
       try {
         console.log('🔍 [AI CHAT DEBUG] Iniciando solicitud...');
         console.log('🔍 [AI CHAT DEBUG] Mensaje del usuario:', userMessage);
-        console.log('🔍 [AI CHAT DEBUG] Buscando informes almacenados para contexto...');
-        
-        let contextReports = '';
-        if (selectedReport) {
-          const baseReport = reports.find(r => r.id === selectedReport);
-          if (baseReport) {
-            contextReports = `\n\nINFORME BASE SELECCIONADO MANUALMENTE:\nTítulo: ${baseReport.title}\nContenido: ${baseReport.content}\n\nIMPORTANTE: Usa este informe como base principal para tus respuestas. Mantén su estilo, estructura y terminología.`;
-            console.log('📋 [AI CHAT DEBUG] Usando informe base seleccionado:', baseReport.title);
-          }
-        } else if (reports.length > 0) {
-          const relevantReports = reports
-            .slice(0, 5)
-            .map(r => `- ${r.title}: ${r.content.substring(0, 300)}...`)
-            .join('\n');
-          
-          contextReports = `\n\nINFORMES PREVIOS PARA REFERENCIA (últimos 5):\n${relevantReports}\n\nUsa estos informes como referencia para mantener consistencia en estilo y terminología cuando sea relevante para la consulta.`;
-          console.log('📚 [AI CHAT DEBUG] Se encontraron', reports.length, 'informes almacenados');
-        }
+        console.log('🔍 [AI CHAT DEBUG] Chat IA - Consulta médica');
         
         let systemInstructions = '';
         
@@ -166,7 +140,7 @@ ${lengthInstructions}
             ? '\n- Mantén el contexto de la conversación previa'
             : '\n- Mantén el contexto de la conversación previa\n- Si la pregunta no está relacionada con medicina, redirige amablemente hacia temas médicos de tu especialidad';
           
-          const systemPrompt = `Eres un asistente médico especializado en ${selectedSpecialty}. ${systemInstructions}${contextInstruction}${contextReports}`;
+          const systemPrompt = `Eres un asistente médico especializado en ${selectedSpecialty}. ${systemInstructions}${contextInstruction}`;
           
           const conversationHistory = chatMessages.map(msg => ({
             role: msg.role,
@@ -192,7 +166,7 @@ ${lengthInstructions}
           
           const contextualMessage = `Eres un asistente médico especializado en ${selectedSpecialty}. Un médico especialista te hace la siguiente consulta: "${userMessage}". 
 
-${systemInstructions}${redirectInstruction}${contextReports}`;
+${systemInstructions}${redirectInstruction}`;
           
           messagesToSend = [
             {
@@ -410,7 +384,7 @@ ${systemInstructions}${redirectInstruction}${contextReports}`;
           <View style={styles.headerLeft}>
             <Brain size={24} color={theme.primary} />
             <Text style={[styles.headerTitle, { color: theme.onSurface }]}>
-              RAD IA-1
+              Chat IA
             </Text>
           </View>
         </View>
@@ -553,44 +527,7 @@ ${systemInstructions}${redirectInstruction}${contextReports}`;
               </Text>
             </View>
             
-            {/* Selector de informe base */}
-            <View style={styles.configItem}>
-              <View style={styles.responseTypeLeft}>
-                <FileText size={16} color={theme.primary} />
-                <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
-                  Informe Base (Predefinido)
-                </Text>
-              </View>
-              <View style={styles.specialtyPickerContainer}>
-                <CustomPicker
-                  value={selectedReport ? (reports.find(r => r.id === selectedReport)?.title || '') : ''}
-                  onValueChange={(value: string) => {
-                    if (value === 'Sin predefinido') {
-                      setSelectedReport(null);
-                      console.log('📋 Informe base deseleccionado');
-                    } else {
-                      const report = reports.find(r => r.title === value);
-                      if (report) {
-                        setSelectedReport(report.id);
-                        console.log('📋 Informe base seleccionado:', value);
-                      }
-                    }
-                  }}
-                  options={[
-                    'Sin predefinido',
-                    ...reports.map((report: Report) => report.title),
-                  ]}
-                  placeholder="Seleccionar informe base"
-                  icon={<FileText size={16} color={theme.primary} />}
-                />
-              </View>
-              <Text style={[styles.responseTypeDescription, { color: theme.outline }]}>
-                {selectedReport 
-                  ? 'La IA usará este informe como base principal para sus respuestas'
-                  : 'La IA usará todos los informes almacenados como referencia general'
-                }
-              </Text>
-            </View>
+
           </View>
         )}
       </View>
