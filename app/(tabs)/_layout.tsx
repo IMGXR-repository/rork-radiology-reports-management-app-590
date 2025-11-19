@@ -55,17 +55,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="ai-chat"
-        options={{
-          title: 'Chat IA',
-          tabBarIcon: ({ color, size }) => <Brain color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
         name="iterate"
         options={{
           title: 'Iterar',
           tabBarIcon: ({ color, size }) => <RefreshCw color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ai-chat"
+        options={{
+          title: 'Chat IA',
+          tabBarIcon: ({ color, size }) => <Brain color={color} size={size} />,
         }}
       />
       <Tabs.Screen
