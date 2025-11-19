@@ -25,10 +25,11 @@ export default function EditReportScreen() {
   useEffect(() => {
     if (id) {
       console.log('🔍 [Edit] Buscando informe con ID:', id);
+      console.log('🔍 [Edit] Tipo de ID:', typeof id);
       console.log('🔍 [Edit] Total de informes:', reports.length);
-      console.log('🔍 [Edit] IDs de informes:', reports.map(r => r.id));
+      console.log('🔍 [Edit] IDs de informes:', reports.map(r => ({ id: r.id, type: typeof r.id })));
       
-      const foundReport = reports.find(r => r.id === id);
+      const foundReport = reports.find(r => String(r.id) === String(id));
       
       if (foundReport) {
         console.log('✅ [Edit] Informe encontrado:', foundReport.title);

@@ -23,13 +23,21 @@ export default function EditPhraseScreen() {
 
   useEffect(() => {
     if (id) {
-      const foundPhrase = phrases.find(p => p.id === id);
+      console.log('🔍 [Edit Phrase] Buscando frase con ID:', id);
+      console.log('🔍 [Edit Phrase] Tipo de ID:', typeof id);
+      console.log('🔍 [Edit Phrase] Total de frases:', phrases.length);
+      console.log('🔍 [Edit Phrase] IDs de frases:', phrases.map(p => ({ id: p.id, type: typeof p.id })));
+      
+      const foundPhrase = phrases.find(p => String(p.id) === String(id));
       if (foundPhrase) {
+        console.log('✅ [Edit Phrase] Frase encontrada:', foundPhrase.text.substring(0, 50));
+        console.log('🔍 [Edit Phrase] Filtros de la frase:', foundPhrase.filters);
         setPhrase(foundPhrase);
         setText(foundPhrase.text);
         setSelectedFilters(foundPhrase.filters || []);
       } else {
-        // Phrase not found, go back
+        console.error('❌ [Edit Phrase] Frase NO encontrada con ID:', id);
+        console.log('⚠️ [Edit Phrase] Retrocediendo...');
         router.back();
       }
     }
