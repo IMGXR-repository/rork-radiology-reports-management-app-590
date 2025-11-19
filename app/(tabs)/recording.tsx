@@ -660,20 +660,41 @@ export default function RecordingScreen() {
       let prompt = '';
       
       if (selectedReport) {
-        prompt = `Eres radiólogo especialista. Crea informe médico en ${languageNames[outputLanguage]} integrando:
+        prompt = `Eres radiólogo especialista. Tu tarea es MODIFICAR el informe base manteniendo EXACTAMENTE su FORMA Y ESTRUCTURA.
 
-INFORME BASE:
+INFORME BASE (MANTENER SU FORMA Y ESTRUCTURA):
 ${selectedReport.content}
 
-NUEVOS HALLAZGOS:
+NUEVOS HALLAZGOS A INTEGRAR:
 ${transcribedText}
 
-REGLAS:
-1. Si nuevos hallazgos contradicen base, prioriza nuevos hallazgos
-2. Mantén párrafos separados por estructura anatómica
-3. Formato: HALLAZGOS (descripción técnica), CONCLUSIÓN (2-3 líneas), DIAGNÓSTICOS DIFERENCIALES (6 con %)
-4. Sin preguntas, símbolos decorativos o texto extra
-5. Coherencia absoluta entre hallazgos y conclusión`;
+INSTRUCCIONES CRÍTICAS:
+1. FORMA Y ESTRUCTURA:
+   - Mantén EXACTAMENTE la misma forma de redacción del informe base
+   - Si el informe base usa párrafos narrativos, usa párrafos narrativos
+   - Si el informe base usa viñetas o listas, usa viñetas o listas
+   - Si el informe base estructura por órganos, mantén esa estructura
+   - Respeta el estilo de puntuación del informe base
+   - Copia el tono y estilo de redacción del informe base
+
+2. CONTENIDO:
+   - Modifica SOLAMENTE lo necesario para agregar los nuevos hallazgos
+   - Si nuevos hallazgos contradicen base, prioriza nuevos hallazgos
+   - Mantén la información del base que no contradice los nuevos hallazgos
+
+3. FORMATO FINAL:
+   - HALLAZGOS: Descripción con MISMA FORMA que el informe base
+   - CONCLUSIÓN: 2-3 líneas con MISMO ESTILO que el informe base
+   - DIAGNÓSTICOS DIFERENCIALES: 6 con porcentajes
+
+4. PROHIBIDO:
+   - Cambiar la forma de redacción del informe base
+   - Agregar preguntas, símbolos decorativos o texto extra
+   - Cambiar de narrativo a estructurado o viceversa
+
+5. Idioma de salida: ${languageNames[outputLanguage]}
+
+RECUERDA: El objetivo es que el texto final parezca escrito por la misma persona que escribió el informe base, solo con la información actualizada.`;
       } else {
         prompt = `Eres radiólogo especialista. Crea informe médico profesional en ${languageNames[outputLanguage]} de estas observaciones:
 
@@ -694,9 +715,6 @@ REGLAS:
       try {
         console.log('📝 [RECORDING] Generando informe con prompt de', prompt.length, 'caracteres');
         
-        const aiProvider = (process.env.EXPO_PUBLIC_AI_PROVIDER || 'rork') as 'rork' | 'groq' | 'gemini' | 'openai';
-        console.log('📝 [RECORDING] Usando proveedor de IA:', aiProvider);
-        
         reportContent = await aiService.generateText({
           messages: [
             {
@@ -704,7 +722,6 @@ REGLAS:
               content: prompt,
             },
           ],
-          provider: aiProvider,
         });
         
         console.log('📝 [RECORDING] Respuesta recibida:', typeof reportContent);
