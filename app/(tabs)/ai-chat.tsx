@@ -22,6 +22,7 @@ import { lightTheme, darkTheme } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { MEDICAL_SPECIALTIES } from '@/constants/userOptions';
 import { CustomPicker } from '@/components/CustomPicker';
+import { Report } from '@/types';
 import { aiService } from '@/lib/ai-service';
 
 
@@ -113,7 +114,13 @@ export default function AIChatScreen() {
         console.log('🔍 [AI CHAT DEBUG] Buscando informes almacenados para contexto...');
         
         let contextReports = '';
-        if (reports.length > 0) {
+        if (selectedReport) {
+          const baseReport = reports.find(r => r.id === selectedReport);
+          if (baseReport) {
+            contextReports = `\n\nINFORME BASE SELECCIONADO MANUALMENTE:\nTítulo: ${baseReport.title}\nContenido: ${baseReport.content}\n\nIMPORTANTE: Usa este informe como base principal para tus respuestas. Mantén su estilo, estructura y terminología.`;
+            console.log('📋 [AI CHAT DEBUG] Usando informe base seleccionado:', baseReport.title);
+          }
+        } else if (reports.length > 0) {
           const relevantReports = reports
             .slice(0, 5)
             .map(r => `- ${r.title}: ${r.content.substring(0, 300)}...`)
@@ -538,6 +545,45 @@ ${systemInstructions}${redirectInstruction}${contextReports}`;
                 {isAbsoluteMode 
                   ? 'Respuestas directas sin relleno, transiciones ni preguntas'
                   : 'Respuestas con tono profesional y contextualizado'
+                }
+              </Text>
+            </View>
+            
+            {/* Selector de informe base */}
+            <View style={styles.configItem}>
+              <View style={styles.responseTypeLeft}>
+                <FileText size={16} color={theme.primary} />
+                <Text style={[styles.responseTypeLabel, { color: theme.onSurface }]}>
+                  Informe Base (Predefinido)
+                </Text>
+              </View>
+              <View style={styles.specialtyPickerContainer}>
+                <CustomPicker
+                  value={selectedReport ? (reports.find(r => r.id === selectedReport)?.title || '') : ''}
+                  onValueChange={(value: string) => {
+                    if (value === 'Sin predefinido') {
+                      setSelectedReport(null);
+                      console.log('📋 Informe base deseleccionado');
+                    } else {
+                      const report = reports.find(r => r.title === value);
+                      if (report) {
+                        setSelectedReport(report.id);
+                        console.log('📋 Informe base seleccionado:', value);
+                      }
+                    }
+                  }}
+                  options={[
+                    'Sin predefinido',
+                    ...reports.map((report: Report) => report.title),
+                  ]}
+                  placeholder="Seleccionar informe base"
+                  icon={<FileText size={16} color={theme.primary} />}
+                />
+              </View>
+              <Text style={[styles.responseTypeDescription, { color: theme.outline }]}>
+                {selectedReport 
+                  ? 'La IA usará este informe como base principal para sus respuestas'
+                  : 'La IA usará todos los informes almacenados como referencia general'
                 }
               </Text>
             </View>
