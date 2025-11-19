@@ -106,6 +106,11 @@ export default function ReportsScreen() {
   };
 
   const handleEditReport = (report: Report) => {
+    console.log('📋 [Home] Editando informe:', {
+      id: report.id,
+      title: report.title,
+      filters: report.filters,
+    });
     router.push(`/edit-report?id=${report.id}`);
   };
 

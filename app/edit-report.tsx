@@ -24,13 +24,22 @@ export default function EditReportScreen() {
 
   useEffect(() => {
     if (id) {
+      console.log('🔍 [Edit] Buscando informe con ID:', id);
+      console.log('🔍 [Edit] Total de informes:', reports.length);
+      console.log('🔍 [Edit] IDs de informes:', reports.map(r => r.id));
+      
       const foundReport = reports.find(r => r.id === id);
+      
       if (foundReport) {
+        console.log('✅ [Edit] Informe encontrado:', foundReport.title);
+        console.log('🔍 [Edit] Filtros del informe:', foundReport.filters);
         setReport(foundReport);
         setTitle(foundReport.title);
         setContent(foundReport.content);
         setSelectedFilters(foundReport.filters || []);
       } else {
+        console.error('❌ [Edit] Informe NO encontrado con ID:', id);
+        console.log('⚠️ [Edit] Retrocediendo...');
         // Report not found, go back
         router.back();
       }

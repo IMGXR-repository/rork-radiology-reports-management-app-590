@@ -20,6 +20,14 @@ export function ReportCard({ report, onEdit }: ReportCardProps) {
   const theme = settings.theme === 'dark' ? darkTheme : lightTheme;
   const [showShareModal, setShowShareModal] = useState(false);
 
+  console.log('📋 [ReportCard] Renderizando informe:', {
+    id: report.id,
+    title: report.title,
+    hasFilters: !!report.filters,
+    filtersCount: report.filters?.length || 0,
+    filterIds: report.filters || [],
+  });
+
   const handleCopy = async () => {
     try {
       await Clipboard.setStringAsync(report.content);
@@ -110,7 +118,16 @@ export function ReportCard({ report, onEdit }: ReportCardProps) {
           <Bot size={12} color="#FFFFFF" />
           <Text style={styles.aiButtonText}>IA</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onEdit(report)} style={styles.editButton}>
+        <TouchableOpacity
+          onPress={() => {
+            console.log('✏️ [ReportCard] Botón Editar presionado:', {
+              id: report.id,
+              title: report.title,
+            });
+            onEdit(report);
+          }}
+          style={styles.editButton}
+        >
           <Text style={styles.editButtonText}>Editar</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
