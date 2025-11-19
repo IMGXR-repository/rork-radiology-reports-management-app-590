@@ -85,7 +85,7 @@ export function PhraseFilterChips({ selectedFilters, onFilterToggle }: PhraseFil
             
             {isExpanded && (
               <ScrollView 
-                style={[styles.filtersScrollContainer, { maxHeight: screenHeight * 0.25 }]}
+                style={[styles.filtersScrollContainer, { maxHeight: screenHeight * 0.18 }]}
                 showsVerticalScrollIndicator={false}
                 nestedScrollEnabled
               >
@@ -157,10 +157,10 @@ export function PhraseFilterChips({ selectedFilters, onFilterToggle }: PhraseFil
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   categorySection: {
-    marginBottom: 16,
+    marginBottom: 8,
     backgroundColor: 'transparent',
     borderRadius: 12,
     overflow: 'hidden',
@@ -170,18 +170,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 16,
-    marginBottom: 8,
-    paddingVertical: 4,
+    marginBottom: 6,
+    paddingVertical: 2,
   },
   categoryTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     flex: 1,
   },
   expandButton: {
-    padding: 6,
-    borderRadius: 12,
-    marginLeft: 8,
+    padding: 4,
+    borderRadius: 10,
+    marginLeft: 6,
   },
   filtersScrollContainer: {
     paddingHorizontal: 16,
@@ -192,16 +192,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 32,
+    minHeight: 28,
   },
   filterText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
     textAlign: 'center',
   },
