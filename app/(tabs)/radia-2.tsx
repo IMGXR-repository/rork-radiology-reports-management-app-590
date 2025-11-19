@@ -417,7 +417,7 @@ REGLAS IMPORTANTES:
               onPress={() => copyToClipboard(generatedSections.findings, 'Hallazgos')}
               disabled={!generatedSections.findings}
             >
-              <Copy size={16} color={generatedSections.findings ? '#FFFFFF' : theme.outline} />
+              <Copy size={14} color={generatedSections.findings ? '#FFFFFF' : theme.outline} />
               <Text style={[styles.copyButtonText, { color: generatedSections.findings ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
@@ -443,7 +443,7 @@ REGLAS IMPORTANTES:
               onPress={() => copyToClipboard(generatedSections.conclusion, 'Conclusión')}
               disabled={!generatedSections.conclusion}
             >
-              <Copy size={16} color={generatedSections.conclusion ? '#FFFFFF' : theme.outline} />
+              <Copy size={14} color={generatedSections.conclusion ? '#FFFFFF' : theme.outline} />
               <Text style={[styles.copyButtonText, { color: generatedSections.conclusion ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
@@ -469,7 +469,7 @@ REGLAS IMPORTANTES:
               onPress={() => copyToClipboard(generatedSections.differentials, 'Diferenciales')}
               disabled={!generatedSections.differentials || generatedSections.differentials.toLowerCase() === 'no aplica'}
             >
-              <Copy size={16} color={(generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? '#FFFFFF' : theme.outline} />
+              <Copy size={14} color={(generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? '#FFFFFF' : theme.outline} />
               <Text style={[styles.copyButtonText, { color: (generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
@@ -506,7 +506,7 @@ REGLAS IMPORTANTES:
         
         <TouchableOpacity
           style={[
-            styles.micButton,
+            styles.recordButton,
             {
               backgroundColor: recordingState.isRecording ? '#FF6B6B' : theme.primary,
             },
@@ -515,10 +515,13 @@ REGLAS IMPORTANTES:
           disabled={isTranscribing || isGenerating}
         >
           {recordingState.isRecording ? (
-            <Square size={32} color="#FFFFFF" fill="#FFFFFF" />
+            <Square size={20} color="#FFFFFF" fill="#FFFFFF" />
           ) : (
-            <Mic size={32} color="#FFFFFF" />
+            <Mic size={20} color="#FFFFFF" />
           )}
+          <Text style={styles.recordButtonText}>
+            {recordingState.isRecording ? 'Detener Grabación' : 'Grabar'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -543,8 +546,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '600',
   },
   headerSubtitle: {
     fontSize: 14,
@@ -647,17 +650,17 @@ const styles = StyleSheet.create({
   },
   copyButton: {
     marginLeft: 'auto',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 36,
+    minHeight: 32,
   },
   copyButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   sectionTitle: {
@@ -701,17 +704,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'italic',
   },
-  micButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    justifyContent: 'center',
+  recordButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    gap: 10,
+    minWidth: 200,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  recordButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   loginPrompt: {
     flex: 1,

@@ -386,7 +386,7 @@ ${systemInstructions}${redirectInstruction}`;
           <View style={styles.headerLeft}>
             <Brain size={24} color={theme.primary} />
             <Text style={[styles.headerTitle, { color: theme.onSurface }]}>
-              Chat IA Médico
+              RAD IA-1
             </Text>
           </View>
         </View>
