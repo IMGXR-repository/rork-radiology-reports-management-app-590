@@ -131,15 +131,6 @@ export default function CreateReportScreen() {
   };
 
   const handleGenerateStructuredReport = async () => {
-    if (!title.trim()) {
-      if (Platform.OS === 'web') {
-        alert('Por favor ingresa un título para generar el informe');
-      } else {
-        Alert.alert('Error', 'Por favor ingresa un título para generar el informe');
-      }
-      return;
-    }
-
     setIsGenerating(true);
     try {
       const systemInstructions = `Instrucciones del sistema: Modo absoluto
@@ -332,11 +323,7 @@ Sé directo y conciso.`;
     } catch (error) {
       console.error('Error generating structured report:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      if (Platform.OS === 'web') {
-        alert('Error al generar el informe estructurado: ' + errorMessage);
-      } else {
-        Alert.alert('Error', 'Error al generar el informe estructurado: ' + errorMessage);
-      }
+      console.error('⚠️ Error al generar informe:', errorMessage);
     } finally {
       setIsGenerating(false);
     }
