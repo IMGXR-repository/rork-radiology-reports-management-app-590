@@ -14,8 +14,9 @@ import {
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Send, Brain, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Send, Brain, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp, Copy } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
@@ -249,6 +250,15 @@ ${systemInstructions}${redirectInstruction}`;
     });
   };
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await Clipboard.setStringAsync(text);
+      console.log('📋 Texto copiado al portapapeles');
+    } catch (error) {
+      console.error('Error al copiar:', error);
+    }
+  };
+
   const renderFormattedText = (text: string, isUser: boolean) => {
     // Dividir el texto en párrafos
     const paragraphs = text.split('\n\n').filter(p => p.trim());
@@ -289,17 +299,28 @@ ${systemInstructions}${redirectInstruction}`;
         },
       ]}>
         <View style={styles.messageHeader}>
-          {item.role === 'user' ? (
-            <User size={16} color={item.role === 'user' ? '#FFFFFF' : theme.primary} />
-          ) : (
-            <Brain size={16} color={theme.primary} />
+          <View style={styles.messageHeaderLeft}>
+            {item.role === 'user' ? (
+              <User size={16} color={item.role === 'user' ? '#FFFFFF' : theme.primary} />
+            ) : (
+              <Brain size={16} color={theme.primary} />
+            )}
+            <Text style={[
+              styles.messageRole,
+              { color: item.role === 'user' ? '#FFFFFF' : theme.primary },
+            ]}>
+              {item.role === 'user' ? 'Tú' : `IA - ${item.specialty}`}
+            </Text>
+          </View>
+          {item.role === 'assistant' && (
+            <TouchableOpacity 
+              style={[styles.copyButton, { backgroundColor: theme.primary, borderColor: theme.outline }]}
+              onPress={() => copyToClipboard(item.content)}
+            >
+              <Copy size={14} color="#FFFFFF" />
+              <Text style={[styles.copyButtonText, { color: '#FFFFFF' }]}>Copiar</Text>
+            </TouchableOpacity>
           )}
-          <Text style={[
-            styles.messageRole,
-            { color: item.role === 'user' ? '#FFFFFF' : theme.primary },
-          ]}>
-            {item.role === 'user' ? 'Tú' : `IA - ${item.specialty}`}
-          </Text>
         </View>
         
         <View style={styles.messageContent}>
@@ -734,7 +755,13 @@ const styles = StyleSheet.create({
   messageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 6,
+    gap: 8,
+  },
+  messageHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
   messageRole: {
@@ -799,5 +826,19 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  copyButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 32,
+  },
+  copyButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
