@@ -497,13 +497,13 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingTop: 2,
+    paddingBottom: 2,
   },
   actionButtonsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 4,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
