@@ -301,10 +301,9 @@ REGLAS IMPORTANTES:
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
   
-  const copyToClipboard = async (text: string, sectionName: string) => {
+  const copyToClipboard = async (text: string) => {
     try {
       await Clipboard.setStringAsync(text);
-      console.log(`📋 ${sectionName} copiado al portapapeles`);
     } catch (error) {
       console.error('Error al copiar:', error);
     }
@@ -434,22 +433,28 @@ REGLAS IMPORTANTES:
             </Text>
             <TouchableOpacity 
               style={[styles.copyButton, { backgroundColor: generatedSections.findings ? theme.primary : theme.surface, borderColor: theme.outline }]}
-              onPress={() => copyToClipboard(generatedSections.findings, 'Hallazgos')}
+              onPress={() => copyToClipboard(generatedSections.findings)}
               disabled={!generatedSections.findings}
             >
               <Copy size={14} color={generatedSections.findings ? '#FFFFFF' : theme.outline} />
               <Text style={[styles.copyButtonText, { color: generatedSections.findings ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
-          <TextInput
-            style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
-            value={generatedSections.findings}
-            onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, findings: text }))}
-            multiline
-            textAlignVertical="top"
-            placeholder="Los hallazgos aparecerán aquí..."
-            placeholderTextColor={theme.outline}
-          />
+          <ScrollView 
+            style={[styles.sectionContentScroll, { borderColor: theme.outline }]}
+            nestedScrollEnabled={true}
+          >
+            <TextInput
+              style={[styles.sectionContent, { color: theme.onSurface }]}
+              value={generatedSections.findings}
+              onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, findings: text }))}
+              multiline
+              textAlignVertical="top"
+              placeholder="Los hallazgos aparecerán aquí..."
+              placeholderTextColor={theme.outline}
+              scrollEnabled={false}
+            />
+          </ScrollView>
         </View>
         
         <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
@@ -460,22 +465,28 @@ REGLAS IMPORTANTES:
             </Text>
             <TouchableOpacity 
               style={[styles.copyButton, { backgroundColor: generatedSections.conclusion ? theme.primary : theme.surface, borderColor: theme.outline }]}
-              onPress={() => copyToClipboard(generatedSections.conclusion, 'Conclusión')}
+              onPress={() => copyToClipboard(generatedSections.conclusion)}
               disabled={!generatedSections.conclusion}
             >
               <Copy size={14} color={generatedSections.conclusion ? '#FFFFFF' : theme.outline} />
               <Text style={[styles.copyButtonText, { color: generatedSections.conclusion ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
-          <TextInput
-            style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
-            value={generatedSections.conclusion}
-            onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, conclusion: text }))}
-            multiline
-            textAlignVertical="top"
-            placeholder="La conclusión aparecerá aquí..."
-            placeholderTextColor={theme.outline}
-          />
+          <ScrollView 
+            style={[styles.sectionContentScroll, { borderColor: theme.outline }]}
+            nestedScrollEnabled={true}
+          >
+            <TextInput
+              style={[styles.sectionContent, { color: theme.onSurface }]}
+              value={generatedSections.conclusion}
+              onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, conclusion: text }))}
+              multiline
+              textAlignVertical="top"
+              placeholder="La conclusión aparecerá aquí..."
+              placeholderTextColor={theme.outline}
+              scrollEnabled={false}
+            />
+          </ScrollView>
         </View>
         
         <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.outline }]}>
@@ -486,22 +497,28 @@ REGLAS IMPORTANTES:
             </Text>
             <TouchableOpacity 
               style={[styles.copyButton, { backgroundColor: (generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? theme.primary : theme.surface, borderColor: theme.outline }]}
-              onPress={() => copyToClipboard(generatedSections.differentials, 'Diferenciales')}
+              onPress={() => copyToClipboard(generatedSections.differentials)}
               disabled={!generatedSections.differentials || generatedSections.differentials.toLowerCase() === 'no aplica'}
             >
               <Copy size={14} color={(generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? '#FFFFFF' : theme.outline} />
               <Text style={[styles.copyButtonText, { color: (generatedSections.differentials && generatedSections.differentials.toLowerCase() !== 'no aplica') ? '#FFFFFF' : theme.outline }]}>Copiar</Text>
             </TouchableOpacity>
           </View>
-          <TextInput
-            style={[styles.sectionContent, { color: theme.onSurface, borderColor: theme.outline }]}
-            value={generatedSections.differentials}
-            onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, differentials: text }))}
-            multiline
-            textAlignVertical="top"
-            placeholder="Los diferenciales aparecerán aquí..."
-            placeholderTextColor={theme.outline}
-          />
+          <ScrollView 
+            style={[styles.sectionContentScroll, { borderColor: theme.outline }]}
+            nestedScrollEnabled={true}
+          >
+            <TextInput
+              style={[styles.sectionContent, { color: theme.onSurface }]}
+              value={generatedSections.differentials}
+              onChangeText={(text) => setGeneratedSections(prev => ({ ...prev, differentials: text }))}
+              multiline
+              textAlignVertical="top"
+              placeholder="Los diferenciales aparecerán aquí..."
+              placeholderTextColor={theme.outline}
+              scrollEnabled={false}
+            />
+          </ScrollView>
         </View>
       </ScrollView>
       
@@ -687,12 +704,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  sectionContentScroll: {
+    maxHeight: 200,
+    borderWidth: 1,
+    borderRadius: 8,
+  },
   sectionContent: {
     minHeight: 100,
     fontSize: 15,
     lineHeight: 22,
-    borderWidth: 1,
-    borderRadius: 8,
     padding: 12,
   },
   recordingContainer: {
