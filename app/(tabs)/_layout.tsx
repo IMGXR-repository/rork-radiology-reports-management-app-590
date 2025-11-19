@@ -1,5 +1,5 @@
-import { Tabs, router } from 'expo-router';
-import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, FileEdit, Brain, RefreshCw, Sparkles } from 'lucide-react-native';
+import { Tabs } from 'expo-router';
+import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, Brain, RefreshCw, Sparkles, Zap } from 'lucide-react-native';
 import React from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -24,7 +24,7 @@ export default function TabLayout() {
         name="recording"
         options={{
           title: 'RAD IA-1',
-          tabBarIcon: ({ color, size }) => <Brain color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Zap color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -44,14 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create-report-tab"
         options={{
-          title: 'Crear',
-          tabBarIcon: ({ color, size }) => <FileEdit color={color} size={size} />,
-        }}
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
-            router.push('/create-report');
-          },
+          href: null,
         }}
       />
       <Tabs.Screen
