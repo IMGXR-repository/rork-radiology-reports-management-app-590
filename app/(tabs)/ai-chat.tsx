@@ -343,9 +343,13 @@ ${systemInstructions}${redirectInstruction}${contextReports}`;
           )}
         </View>
         
-        <View style={styles.messageContent}>
+        <ScrollView 
+          style={styles.messageContent}
+          nestedScrollEnabled={true}
+          showsVerticalScrollIndicator={true}
+        >
           {renderFormattedText(item.content, item.role === 'user')}
-        </View>
+        </ScrollView>
         
         <Text style={[
           styles.timestamp,
@@ -829,6 +833,7 @@ const styles = StyleSheet.create({
   },
   messageContent: {
     marginBottom: 6,
+    maxHeight: 300,
   },
   messageText: {
     fontSize: 16,
