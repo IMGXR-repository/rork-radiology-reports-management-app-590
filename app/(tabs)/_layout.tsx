@@ -23,8 +23,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="recording"
         options={{
-          title: 'RAD-IA',
+          title: 'RAD IA-1',
           tabBarIcon: ({ color, size }) => <FileBarChart color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="radia-2"
+        options={{
+          title: 'RAD IA-2',
+          tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -66,13 +73,6 @@ export default function TabLayout() {
         options={{
           title: 'Iterar',
           tabBarIcon: ({ color, size }) => <RefreshCw color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="radia-2"
-        options={{
-          title: 'RAD IA-2',
-          tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
         }}
       />
       <Tabs.Screen
