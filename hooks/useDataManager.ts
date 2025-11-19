@@ -820,8 +820,12 @@ export function useDataManager() {
       }
       
       console.log('🔍 [Import] Claves encontradas:', Object.keys(data));
+      console.log('🔍 [Import] Número de informes:', data.reports?.length || 0);
+      console.log('🔍 [Import] Número de frases:', data.phrases?.length || 0);
+      console.log('🔍 [Import] Número de categorías de informes:', data.reportCategories?.length || 0);
+      console.log('🔍 [Import] Número de filtros de informes:', data.reportFilters?.length || 0);
       
-      // Import categories and filters FIRST before reports and phrases
+      // PASO 1: Import categories and filters FIRST before reports and phrases
       // This ensures filters are available when editing
       
       // Handle new format categories and filters
@@ -830,24 +834,48 @@ export function useDataManager() {
         const importedCategories = Array.isArray(data.reportCategories) ? data.reportCategories : [];
         await storage.setItem(STORAGE_KEYS.REPORT_CATEGORIES, JSON.stringify(importedCategories));
         setReportCategories(importedCategories);
+        console.log('✅ [Import] Categorías de informes guardadas en storage');
+      } else if (!data.reportCategories && !data.categories) {
+        console.log('⚠️ [Import] No se encontraron categorías, usando las por defecto');
+        await storage.setItem(STORAGE_KEYS.REPORT_CATEGORIES, JSON.stringify(defaultReportCategories));
+        setReportCategories(defaultReportCategories);
       }
+      
       if (data.reportFilters) {
         console.log('🏷️ [Import] Importando', data.reportFilters.length, 'filtros de informes...');
         const importedFilters = Array.isArray(data.reportFilters) ? data.reportFilters : [];
         await storage.setItem(STORAGE_KEYS.REPORT_FILTERS, JSON.stringify(importedFilters));
         setReportFilters(importedFilters);
+        console.log('✅ [Import] Filtros de informes guardados en storage');
+        console.log('🔍 [Import] IDs de filtros importados:', importedFilters.map((f: ReportFilter) => f.id));
+      } else if (!data.reportFilters && !data.filters) {
+        console.log('⚠️ [Import] No se encontraron filtros, usando los por defecto');
+        await storage.setItem(STORAGE_KEYS.REPORT_FILTERS, JSON.stringify(defaultReportFilters));
+        setReportFilters(defaultReportFilters);
       }
+      
       if (data.phraseCategories) {
         console.log('📂 [Import] Importando', data.phraseCategories.length, 'categorías de frases...');
         const importedCategories = Array.isArray(data.phraseCategories) ? data.phraseCategories : [];
         await storage.setItem(STORAGE_KEYS.PHRASE_CATEGORIES, JSON.stringify(importedCategories));
         setPhraseCategories(importedCategories);
+        console.log('✅ [Import] Categorías de frases guardadas en storage');
+      } else if (!data.phraseCategories) {
+        console.log('⚠️ [Import] No se encontraron categorías de frases, usando las por defecto');
+        await storage.setItem(STORAGE_KEYS.PHRASE_CATEGORIES, JSON.stringify(defaultPhraseCategories));
+        setPhraseCategories(defaultPhraseCategories);
       }
+      
       if (data.phraseFilters) {
         console.log('🏷️ [Import] Importando', data.phraseFilters.length, 'filtros de frases...');
         const importedFilters = Array.isArray(data.phraseFilters) ? data.phraseFilters : [];
         await storage.setItem(STORAGE_KEYS.PHRASE_FILTERS, JSON.stringify(importedFilters));
         setPhraseFilters(importedFilters);
+        console.log('✅ [Import] Filtros de frases guardados en storage');
+      } else if (!data.phraseFilters) {
+        console.log('⚠️ [Import] No se encontraron filtros de frases, usando los por defecto');
+        await storage.setItem(STORAGE_KEYS.PHRASE_FILTERS, JSON.stringify(defaultPhraseFilters));
+        setPhraseFilters(defaultPhraseFilters);
       }
       
       // Handle legacy format
@@ -856,49 +884,84 @@ export function useDataManager() {
         const importedCategories = Array.isArray(data.categories) ? data.categories : [];
         await storage.setItem(STORAGE_KEYS.REPORT_CATEGORIES, JSON.stringify(importedCategories));
         setReportCategories(importedCategories);
+        console.log('✅ [Import] Categorías (legacy) guardadas en storage');
       }
       if (data.filters && !data.reportFilters) {
         console.log('🏷️ [Import] Importando filtros (formato legacy)...');
         const importedFilters = Array.isArray(data.filters) ? data.filters : [];
         await storage.setItem(STORAGE_KEYS.REPORT_FILTERS, JSON.stringify(importedFilters));
         setReportFilters(importedFilters);
+        console.log('✅ [Import] Filtros (legacy) guardados en storage');
+        console.log('🔍 [Import] IDs de filtros importados (legacy):', importedFilters.map((f: ReportFilter) => f.id));
       }
       
-      // Now import reports and phrases
+      // PASO 2: Now import reports and phrases
       if (data.reports) {
         console.log('📝 [Import] Importando', data.reports.length, 'informes...');
         const importedReports = Array.isArray(data.reports) ? data.reports : [];
+        
+        // Log sample of report filters
+        if (importedReports.length > 0) {
+          console.log('🔍 [Import] Ejemplo de filtros en informes:', {
+            reportId: importedReports[0].id,
+            filters: importedReports[0].filters,
+            categoryId: importedReports[0].categoryId
+          });
+        }
+        
         await storage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(importedReports));
         setReports(importedReports);
+        console.log('✅ [Import] Informes guardados en storage');
       }
       
       if (data.phrases) {
         console.log('💬 [Import] Importando', data.phrases.length, 'frases...');
         const importedPhrases = Array.isArray(data.phrases) ? data.phrases : [];
+        
+        // Log sample of phrase filters
+        if (importedPhrases.length > 0) {
+          console.log('🔍 [Import] Ejemplo de filtros en frases:', {
+            phraseId: importedPhrases[0].id,
+            filters: importedPhrases[0].filters,
+            categoryId: importedPhrases[0].categoryId
+          });
+        }
+        
         await storage.setItem(STORAGE_KEYS.PHRASES, JSON.stringify(importedPhrases));
         setPhrases(importedPhrases);
+        console.log('✅ [Import] Frases guardadas en storage');
       }
       
+      // PASO 3: Import other data
       if (data.savedTranscriptions) {
         console.log('🎤 [Import] Importando', data.savedTranscriptions.length, 'transcripciones...');
         const importedTranscriptions = Array.isArray(data.savedTranscriptions) ? data.savedTranscriptions : [];
         await storage.setItem(STORAGE_KEYS.SAVED_TRANSCRIPTIONS, JSON.stringify(importedTranscriptions));
         setSavedTranscriptions(importedTranscriptions);
+        console.log('✅ [Import] Transcripciones guardadas en storage');
       }
       if (data.settings) {
         console.log('⚙️ [Import] Importando configuración...');
         await storage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data.settings));
         setSettings(data.settings);
+        console.log('✅ [Import] Configuración guardada en storage');
       }
       if (data.stats) {
         console.log('📊 [Import] Importando estadísticas...');
         await storage.setItem(STORAGE_KEYS.STATS, JSON.stringify(data.stats));
         setStats(data.stats);
+        console.log('✅ [Import] Estadísticas guardadas en storage');
       }
       
       console.log('✅ [Import] Importación completada con éxito');
-      console.log('📊 [Import] Estado actualizado - Informes:', reports.length, '-> ', data.reports?.length || 0);
-      console.log('📊 [Import] Estado actualizado - Frases:', phrases.length, '-> ', data.phrases?.length || 0);
+      console.log('📊 [Import] Resumen final:');
+      console.log('  - Informes:', data.reports?.length || 0);
+      console.log('  - Frases:', data.phrases?.length || 0);
+      console.log('  - Categorías de informes:', data.reportCategories?.length || data.categories?.length || 0);
+      console.log('  - Filtros de informes:', data.reportFilters?.length || data.filters?.length || 0);
+      console.log('  - Categorías de frases:', data.phraseCategories?.length || 0);
+      console.log('  - Filtros de frases:', data.phraseFilters?.length || 0);
+      
       return true;
     } catch (error) {
       console.error('❌ [Import] Error general en importación:', error);
