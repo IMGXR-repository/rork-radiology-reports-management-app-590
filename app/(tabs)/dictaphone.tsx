@@ -12,13 +12,12 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Sparkles, Copy, Brain, Save, Move } from 'lucide-react-native';
+import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Brain, Save, ExternalLink } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { Audio } from 'expo-av';
-import { FloatingMicButton } from '@/components/FloatingMicButton';
 
 interface Recording {
   id: string;
@@ -47,7 +46,7 @@ export default function DictaphoneScreen() {
   const [naturalText, setNaturalText] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [apiInfo, setApiInfo] = useState<string | null>(null);
-  const [showFloatingButton, setShowFloatingButton] = useState<boolean>(false);
+  const [miniWindowOpened, setMiniWindowOpened] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -837,17 +836,34 @@ ${text}
     );
   }
 
+  const openMiniWindow = () => {
+    if (Platform.OS === 'web') {
+      const miniWindow = window.open(
+        '/dictaphone-mini',
+        'DictaphoneMini',
+        'width=250,height=320,resizable=yes,scrollbars=no,status=no,menubar=no,toolbar=no,location=no'
+      );
+      
+      if (miniWindow) {
+        setMiniWindowOpened(true);
+        miniWindow.focus();
+        
+        const checkClosed = setInterval(() => {
+          if (miniWindow.closed) {
+            setMiniWindowOpened(false);
+            clearInterval(checkClosed);
+          }
+        }, 500);
+      } else {
+        alert('No se pudo abrir la ventana. Verifica que los pop-ups estén permitidos.');
+      }
+    } else {
+      alert('Esta función solo está disponible en web.');
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {showFloatingButton && (
-        <FloatingMicButton
-          isRecording={isRecording}
-          onStartRecording={startRecording}
-          onStopRecording={stopRecording}
-          theme={theme}
-        />
-      )}
-      
       <View style={[
         styles.header,
         {
@@ -862,10 +878,10 @@ ${text}
             Dictáfono
           </Text>
           <TouchableOpacity
-            onPress={() => setShowFloatingButton(!showFloatingButton)}
-            style={[styles.floatingToggleButton, { backgroundColor: showFloatingButton ? theme.primary : theme.surfaceVariant }]}
+            onPress={openMiniWindow}
+            style={[styles.floatingToggleButton, { backgroundColor: miniWindowOpened ? theme.primary : theme.surfaceVariant }]}
           >
-            <Move size={18} color={showFloatingButton ? theme.onPrimary : theme.onSurface} />
+            <ExternalLink size={18} color={miniWindowOpened ? theme.onPrimary : theme.onSurface} />
           </TouchableOpacity>
         </View>
         <Text style={[styles.headerSubtitle, { color: theme.outline }]}>
