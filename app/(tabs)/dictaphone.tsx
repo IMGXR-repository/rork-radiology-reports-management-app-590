@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Sparkles, Copy, Brain, Save } from 'lucide-react-native';
+import { Mic, Square, Play, Pause, Trash2, FileText, Eraser, Send, Sparkles, Copy, Brain, Save, Move } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { Audio } from 'expo-av';
+import { FloatingMicButton } from '@/components/FloatingMicButton';
 
 interface Recording {
   id: string;
@@ -46,6 +47,7 @@ export default function DictaphoneScreen() {
   const [naturalText, setNaturalText] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [apiInfo, setApiInfo] = useState<string | null>(null);
+  const [showFloatingButton, setShowFloatingButton] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -837,6 +839,15 @@ ${text}
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {showFloatingButton && (
+        <FloatingMicButton
+          isRecording={isRecording}
+          onStartRecording={startRecording}
+          onStopRecording={stopRecording}
+          theme={theme}
+        />
+      )}
+      
       <View style={[
         styles.header,
         {
@@ -850,6 +861,12 @@ ${text}
           <Text style={[styles.headerTitle, { color: theme.onSurface }]}>
             Dictáfono
           </Text>
+          <TouchableOpacity
+            onPress={() => setShowFloatingButton(!showFloatingButton)}
+            style={[styles.floatingToggleButton, { backgroundColor: showFloatingButton ? theme.primary : theme.surfaceVariant }]}
+          >
+            <Move size={18} color={showFloatingButton ? theme.onPrimary : theme.onSurface} />
+          </TouchableOpacity>
         </View>
         <Text style={[styles.headerSubtitle, { color: theme.outline }]}>
           Graba y transcribe audio en tiempo real
@@ -1123,6 +1140,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 4,
+  },
+  floatingToggleButton: {
+    marginLeft: 'auto',
+    padding: 8,
+    borderRadius: 20,
   },
   headerTitle: {
     fontSize: 20,
