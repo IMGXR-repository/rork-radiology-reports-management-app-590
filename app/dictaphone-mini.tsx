@@ -461,7 +461,7 @@ ${text}
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.content, { backgroundColor: theme.surface }]}>
+      <View style={[styles.content, { backgroundColor: 'transparent' }]}>
         {isRecording && (
           <View style={styles.recordingIndicator}>
             <View style={styles.recordingDot} />
@@ -484,9 +484,9 @@ ${text}
           {isTranscribing ? (
             <ActivityIndicator size="large" color="#FFFFFF" />
           ) : isRecording ? (
-            <Square size={40} color="#FFFFFF" fill="#FFFFFF" />
+            <Square size={32} color="#FFFFFF" fill="#FFFFFF" />
           ) : (
-            <Mic size={40} color="#FFFFFF" />
+            <Mic size={32} color="#FFFFFF" />
           )}
         </TouchableOpacity>
 
@@ -507,47 +507,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    padding: 20,
-    borderRadius: 20,
+    padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 180,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   recordingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 12,
+    gap: 4,
+    marginBottom: 8,
   },
   recordingDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#FF6B6B',
   },
   recordingText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
     color: '#FF6B6B',
   },
   durationText: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 12,
     fontVariant: ['tabular-nums'] as any,
   },
   recordButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -560,8 +550,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   statusText: {
-    fontSize: 12,
-    marginTop: 12,
+    fontSize: 10,
+    marginTop: 8,
     fontStyle: 'italic',
   },
 });
