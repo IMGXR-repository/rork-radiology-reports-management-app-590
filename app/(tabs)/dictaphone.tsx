@@ -653,9 +653,11 @@ ${text}
         
         if (enhancedText) {
           await addSavedTranscription(enhancedText, 'ia');
+          await copyToClipboard(enhancedText);
         }
       } else if (transcriptionMode === 'natural' && transcription) {
         await addSavedTranscription(transcription, 'natural');
+        await copyToClipboard(transcription);
       }
     } catch (error) {
       console.error('Error transcribing:', error);
@@ -745,9 +747,11 @@ ${text}
         
         if (enhancedText) {
           await addSavedTranscription(enhancedText, 'ia');
+          await copyToClipboard(enhancedText);
         }
       } else if (transcriptionMode === 'natural' && transcription) {
         await addSavedTranscription(transcription, 'natural');
+        await copyToClipboard(transcription);
       }
     } catch (error) {
       console.error('Error transcribing:', error);
