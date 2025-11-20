@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, StyleSheet, Platform, View, Text } from 'react-native';
 import { Smartphone } from 'lucide-react-native';
+import { usePathname } from 'expo-router';
 
 const MOBILE_WINDOW_CONFIG = {
   width: 390,
@@ -13,6 +14,7 @@ const STORAGE_KEY = 'mobile_window_config';
 
 export function MobileViewButton() {
   const [isInMobileWindow, setIsInMobileWindow] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -89,7 +91,7 @@ export function MobileViewButton() {
     }
   };
 
-  if (Platform.OS !== 'web' || isInMobileWindow) {
+  if (Platform.OS !== 'web' || isInMobileWindow || pathname === '/dictaphone-mini') {
     return null;
   }
 

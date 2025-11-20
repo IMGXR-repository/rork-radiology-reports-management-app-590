@@ -68,6 +68,12 @@ function RootLayoutNav() {
             }} 
           />
           <Stack.Screen 
+            name="dictaphone-mini" 
+            options={{ 
+              headerShown: false
+            }} 
+          />
+          <Stack.Screen 
             name="create-report" 
             options={{ 
               headerShown: true,
