@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Platform,
@@ -441,11 +440,7 @@ ${text}
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -462,17 +457,6 @@ ${text}
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.content, { backgroundColor: 'transparent' }]}>
-        {isRecording && (
-          <View style={styles.recordingIndicator}>
-            <View style={styles.recordingDot} />
-            <Text style={styles.recordingText}>REC</Text>
-          </View>
-        )}
-        
-        <Text style={[styles.durationText, { color: theme.onSurface }]}>
-          {formatDuration(recordingDuration)}
-        </Text>
-
         <TouchableOpacity
           style={[
             styles.recordButton,
@@ -482,19 +466,13 @@ ${text}
           disabled={isTranscribing}
         >
           {isTranscribing ? (
-            <ActivityIndicator size="large" color="#FFFFFF" />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : isRecording ? (
-            <Square size={32} color="#FFFFFF" fill="#FFFFFF" />
+            <Square size={18} color="#FFFFFF" fill="#FFFFFF" />
           ) : (
-            <Mic size={32} color="#FFFFFF" />
+            <Mic size={18} color="#FFFFFF" />
           )}
         </TouchableOpacity>
-
-        {isTranscribing && (
-          <Text style={[styles.statusText, { color: theme.outline }]}>
-            Transcribiendo...
-          </Text>
-        )}
       </View>
     </View>
   );
@@ -507,51 +485,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    padding: 12,
+    padding: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  recordingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 8,
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF6B6B',
-  },
-  recordingText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FF6B6B',
-  },
-  durationText: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 12,
-    fontVariant: ['tabular-nums'] as any,
-  },
   recordButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
-  statusText: {
-    fontSize: 10,
-    marginTop: 8,
-    fontStyle: 'italic',
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 5,
   },
 });

@@ -841,7 +841,7 @@ ${text}
       const miniWindow = window.open(
         '/dictaphone-mini',
         'DictaphoneMini',
-        'width=180,height=240,resizable=yes,scrollbars=no,status=no,menubar=no,toolbar=no,location=no'
+        'width=80,height=80,resizable=yes,scrollbars=no,status=no,menubar=no,toolbar=no,location=no'
       );
       
       if (miniWindow) {
