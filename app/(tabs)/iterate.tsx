@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -90,6 +91,10 @@ IMPORTANTE:
   const handleCopy = async () => {
     if (outputText.trim()) {
       await Clipboard.setStringAsync(outputText);
+      if (Platform.OS !== 'web') {
+        const Haptics = require('expo-haptics');
+        Haptics.selectionAsync();
+      }
       console.log('📋 [Iterate] Text copied to clipboard');
     }
   };

@@ -27,7 +27,6 @@ export function PhraseCard({ phrase, onEdit }: PhraseCardProps) {
         Haptics.selectionAsync();
       }
       
-      // Actualizar estadísticas de productividad
       trackCopy('phrase');
       
       console.log('Frase copiada al portapapeles');

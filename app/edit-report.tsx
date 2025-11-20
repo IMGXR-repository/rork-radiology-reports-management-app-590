@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Save, X, Tag } from 'lucide-react-native';
+import { Save, Tag } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { Report } from '@/types';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -87,12 +87,6 @@ export default function EditReportScreen() {
         content: content.trim(),
         filters: selectedFilters,
       });
-      
-      if (Platform.OS === 'web') {
-        alert('Informe actualizado exitosamente');
-      } else {
-        Alert.alert('Éxito', 'Informe actualizado exitosamente');
-      }
       
       router.back();
     } catch (error) {

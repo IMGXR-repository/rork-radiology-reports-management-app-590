@@ -36,7 +36,6 @@ export function ReportCard({ report, onEdit }: ReportCardProps) {
         Haptics.selectionAsync();
       }
       
-      // Actualizar estadísticas de productividad
       trackCopy('report');
       
       console.log('Informe copiado al portapapeles');

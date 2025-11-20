@@ -304,6 +304,10 @@ REGLAS IMPORTANTES:
   const copyToClipboard = async (text: string) => {
     try {
       await Clipboard.setStringAsync(text);
+      if (Platform.OS !== 'web') {
+        const Haptics = require('expo-haptics');
+        Haptics.selectionAsync();
+      }
     } catch (error) {
       console.error('Error al copiar:', error);
     }
