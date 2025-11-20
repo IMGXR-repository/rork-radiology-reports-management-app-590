@@ -691,6 +691,16 @@ export function useDataManager() {
     await saveSavedTranscriptions([]);
   };
 
+  const reloadTranscriptions = async () => {
+    try {
+      const savedTranscriptionsData = await storage.getItem(STORAGE_KEYS.SAVED_TRANSCRIPTIONS);
+      setSavedTranscriptions(savedTranscriptionsData ? JSON.parse(savedTranscriptionsData) : []);
+      console.log('✅ Transcripciones recargadas desde storage');
+    } catch (error) {
+      console.error('Error reloading transcriptions:', error);
+    }
+  };
+
   const clearNewlyCreatedFlag = async () => {
     const updatedReports = reports.map(report => ({
       ...report,
@@ -1016,6 +1026,7 @@ export function useDataManager() {
     addSavedTranscription,
     deleteSavedTranscription,
     clearAllSavedTranscriptions,
+    reloadTranscriptions,
     // Legacy compatibility
     categories,
     filters,

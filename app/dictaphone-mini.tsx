@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,6 +12,8 @@ import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
 import { Audio } from 'expo-av';
 
+const BROADCAST_CHANNEL_NAME = 'radia-app-sync';
+
 export default function DictaphoneMiniScreen() {
   const { settings, addSavedTranscription } = useApp();
   const theme = settings?.theme === 'dark' ? darkTheme : lightTheme;
@@ -21,6 +23,18 @@ export default function DictaphoneMiniScreen() {
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof BroadcastChannel !== 'undefined') {
+      broadcastChannelRef.current = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+      console.log('📡 [Mini] BroadcastChannel inicializado');
+      
+      return () => {
+        broadcastChannelRef.current?.close();
+      };
+    }
+  }, []);
 
   const startRecording = async () => {
     try {
@@ -397,6 +411,11 @@ ${text}
       if (enhancedText) {
         await addSavedTranscription(enhancedText, 'ia');
         await Clipboard.setStringAsync(enhancedText);
+        
+        if (broadcastChannelRef.current) {
+          console.log('📶 [Mini] Enviando notificación de transcripción (móvil)...');
+          broadcastChannelRef.current.postMessage({ type: 'transcription-added' });
+        }
       }
     } catch (error) {
       console.error('Error transcribing:', error);
@@ -431,6 +450,11 @@ ${text}
       if (enhancedText) {
         await addSavedTranscription(enhancedText, 'ia');
         await Clipboard.setStringAsync(enhancedText);
+        
+        if (broadcastChannelRef.current) {
+          console.log('📶 [Mini] Enviando notificación de transcripción (web)...');
+          broadcastChannelRef.current.postMessage({ type: 'transcription-added' });
+        }
       }
     } catch (error) {
       console.error('Error transcribing:', error);
