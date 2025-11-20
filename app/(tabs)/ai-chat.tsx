@@ -14,7 +14,7 @@ import {
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Send, Brain, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Send, Brain, User, Stethoscope, MessageSquare, FileText, Link, Zap, ChevronDown, ChevronUp, Mic } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -22,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MEDICAL_SPECIALTIES } from '@/constants/userOptions';
 import { CustomPicker } from '@/components/CustomPicker';
 import { aiService } from '@/lib/ai-service';
+import { useAudioRecording } from '@/hooks/useAudioRecording';
 
 
 
@@ -50,6 +51,23 @@ export default function AIChatScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const flatListRef = useRef<FlatList>(null);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
+
+  const {
+    recordingState,
+    isTranscribing,
+    startRecording,
+    stopRecording,
+  } = useAudioRecording({
+    onTranscriptionComplete: (text: string) => {
+      setNewMessage(prev => prev ? `${prev} ${text}` : text);
+      setRecordingError(null);
+    },
+    onError: (errorMsg: string) => {
+      setRecordingError(errorMsg);
+      console.error('Recording error:', errorMsg);
+    },
+  });
 
   useEffect(() => {
     if (params.initialText) {
@@ -673,6 +691,14 @@ ${systemInstructions}${redirectInstruction}`;
         </View>
       )}
 
+      {recordingError && (
+        <View style={[styles.errorContainer, { backgroundColor: '#FF6B6B20', borderColor: '#FF6B6B' }]}>
+          <Text style={[styles.errorText, { color: '#FF6B6B' }]}>
+            {recordingError}
+          </Text>
+        </View>
+      )}
+
       {isLoading && (
         <View style={[styles.loadingContainer, { backgroundColor: theme.surface, borderTopColor: theme.outline }]}>
           <ActivityIndicator size="small" color={theme.primary} />
@@ -705,7 +731,30 @@ ${systemInstructions}${redirectInstruction}`;
           onChangeText={setNewMessage}
           multiline
           maxLength={500}
+          editable={!recordingState.isRecording && !isTranscribing}
         />
+        <TouchableOpacity
+          style={[
+            styles.micButton,
+            {
+              backgroundColor: recordingState.isRecording ? '#FF4444' : theme.primary,
+            },
+          ]}
+          onPress={async () => {
+            if (recordingState.isRecording) {
+              await stopRecording();
+            } else {
+              await startRecording();
+            }
+          }}
+          disabled={isTranscribing || isLoading}
+        >
+          {isTranscribing ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Mic size={20} color="#FFFFFF" />
+          )}
+        </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.sendButton,
@@ -714,7 +763,7 @@ ${systemInstructions}${redirectInstruction}`;
             },
           ]}
           onPress={handleSendMessage}
-          disabled={!newMessage.trim() || isLoading}
+          disabled={!newMessage.trim() || isLoading || recordingState.isRecording || isTranscribing}
         >
           <Send size={20} color="#FFFFFF" />
         </TouchableOpacity>
@@ -962,6 +1011,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     maxHeight: 100,
+  },
+  micButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sendButton: {
     width: 44,
