@@ -36,6 +36,18 @@ export default function DictaphoneMiniScreen() {
     }
   }, []);
 
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRecording]);
+
   const startRecording = async () => {
     try {
       if (Platform.OS === 'web') {
@@ -463,20 +475,6 @@ ${text}
       setIsTranscribing(false);
     }
   };
-
-
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRecording]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
