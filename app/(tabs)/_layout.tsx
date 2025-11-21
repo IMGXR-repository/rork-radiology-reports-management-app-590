@@ -23,13 +23,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="recording"
         options={{
-          href: null,
+          title: 'Informes',
+          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="radia-2"
         options={{
-          href: null,
+          title: 'Radia',
+          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -42,7 +44,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create-report-tab"
         options={{
-          href: null,
+          title: 'Crear Informe',
+          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -55,25 +58,29 @@ export default function TabLayout() {
       <Tabs.Screen
         name="iterate"
         options={{
-          href: null,
+          title: 'Iterar',
+          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="ai-chat"
         options={{
-          href: null,
+          title: 'Chat IA',
+          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="phrases"
         options={{
-          href: null,
+          title: 'Frases',
+          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
-          href: null,
+          title: 'Categorías',
+          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -100,7 +107,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="backup-management"
         options={{
-          href: null,
+          title: 'Copias de Seguridad',
+          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
         }}
       />
     </Tabs>
