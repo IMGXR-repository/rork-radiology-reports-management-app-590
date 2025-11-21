@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic, Brain, RefreshCw, Sparkles, Zap } from 'lucide-react-native';
+import { FileText, Settings as SettingsIcon, TrendingUp, MessageCircle, Mic } from 'lucide-react-native';
 import React from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { lightTheme, darkTheme } from '@/constants/theme';
@@ -23,15 +23,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="recording"
         options={{
-          title: 'RAD IA-1',
-          tabBarIcon: ({ color, size }) => <Zap color={color} size={size} />,
+          href: null,
         }}
       />
       <Tabs.Screen
         name="radia-2"
         options={{
-          title: 'RAD IA-2',
-          tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -57,15 +55,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="iterate"
         options={{
-          title: 'Iterar',
-          tabBarIcon: ({ color, size }) => <RefreshCw color={color} size={size} />,
+          href: null,
         }}
       />
       <Tabs.Screen
         name="ai-chat"
         options={{
-          title: 'Chat IA',
-          tabBarIcon: ({ color, size }) => <Brain color={color} size={size} />,
+          href: null,
         }}
       />
       <Tabs.Screen
